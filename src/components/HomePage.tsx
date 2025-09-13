@@ -3,6 +3,7 @@ import { Header } from './Header';
 import { Menu } from './Menu';
 import { Cart } from './Cart';
 import { PromotionModal } from './PromotionModal';
+import { Footer } from './Footer'; // Importando o novo componente Footer
 import { User, CartItem, Product, Order } from '../App';
 import { supabase } from '../integrations/supabase/client';
 
@@ -127,7 +128,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col"> {/* Adicionado flex flex-col */}
       <Header 
         selectedCity={selectedCity}
         user={user}
@@ -140,7 +141,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         logoUrl={logoUrl}
       />
 
-      <main>
+      <main className="flex-grow"> {/* Adicionado flex-grow */}
         <Menu 
           onAddToCart={handleAddToCart} 
           selectedCategory={menuFilter}
@@ -185,6 +186,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           onViewPromotion={handleViewPromotion}
         />
       )}
+      <Footer /> {/* Adicionando o Footer aqui */}
     </div>
   );
 };
