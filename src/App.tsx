@@ -587,6 +587,7 @@ function App() {
           onClose={() => setShowProfile(false)}
           onLogout={handleLogout}
           onViewOrder={handleViewOrder}
+          onUserUpdate={refetchUser} // Passando a função refetchUser aqui
         />
       )}
       <Toaster />
