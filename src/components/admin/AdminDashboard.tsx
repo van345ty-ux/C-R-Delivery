@@ -5,6 +5,7 @@ import { useQuery } from '../../hooks/useQuery';
 
 interface Order {
   id: string;
+  order_number: number; // Adicionado order_number
   customer_name: string;
   total: number;
   status: string;
@@ -18,7 +19,7 @@ const fetchDashboardData = async () => {
   console.log('AdminDashboard: fetchDashboardData called.'); // Adicionado log aqui
   const { data: orders, error } = await supabase
     .from('orders')
-    .select('id, customer_name, total, status, created_at, items, payment_method, user_id')
+    .select('id, customer_name, total, status, created_at, items, payment_method, user_id, order_number') // Seleciona order_number
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -135,7 +136,7 @@ export const AdminDashboard: React.FC = () => {
               {recentOrders.map((order) => (
                 <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div>
-                    <p className="font-medium text-gray-900">#{order.id.substring(0, 6)}</p>
+                    <p className="font-medium text-gray-900">#C&R{order.order_number.toString().padStart(2, '0')}</p> {/* Usando order_number */}
                     <p className="text-sm text-gray-600">{order.customer_name}</p>
                   </div>
                   <div className="text-right">

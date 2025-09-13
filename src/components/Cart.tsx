@@ -228,7 +228,7 @@ export const Cart: React.FC<CartProps> = ({
     const { data: newOrder, error } = await supabase
       .from('orders')
       .insert(orderPayload)
-      .select()
+      .select('*, order_number') // Seleciona o novo order_number
       .single();
 
     if (error) {
@@ -255,6 +255,7 @@ export const Cart: React.FC<CartProps> = ({
 
     const formattedOrder: Order = {
       id: newOrder.id,
+      orderNumber: newOrder.order_number, // Mapeia o order_number
       items: items,
       total: newOrder.total,
       deliveryFee: newOrder.delivery_fee,

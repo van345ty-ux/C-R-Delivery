@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 interface Order {
   id: string;
   user_id: string; // Adicionado user_id para associar o pedido ao cliente
+  order_number: number; // Adicionado order_number
   customer_name: string;
   customer_phone: string;
   items: Array<{ name: string; quantity: number; price: number; observations?: string }>;
@@ -34,7 +35,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
     setLoading(true);
     const { data, error } = await supabase
       .from('orders')
-      .select('*')
+      .select('*') // Seleciona order_number também
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -241,7 +242,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
                   <div className="p-6 border-b">
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">Pedido #{order.id.substring(0, 6)}</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">Pedido #C&R{order.order_number.toString().padStart(2, '0')}</h3> {/* Usando order_number */}
                         <p className="text-sm text-gray-600">{order.customer_name} • {order.customer_phone}</p>
                       </div>
                       <div className="text-right">

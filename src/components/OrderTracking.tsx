@@ -18,7 +18,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ order: initialOrde
     const fetchOrderStatus = async () => {
       const { data, error } = await supabase
         .from('orders')
-        .select('status')
+        .select('status, order_number') // Seleciona order_number também
         .eq('id', order.id)
         .single();
 
@@ -28,10 +28,11 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ order: initialOrde
         return;
       }
 
-      if (data && data.status !== order.status) {
+      if (data && (data.status !== order.status || data.order_number !== order.orderNumber)) {
         setOrder((prevOrder) => ({
           ...prevOrder,
           status: data.status,
+          orderNumber: data.order_number, // Atualiza orderNumber se necessário
         }));
         toast.success(`Status do pedido atualizado para: ${data.status}`);
       }
@@ -45,7 +46,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ order: initialOrde
     return () => {
       clearInterval(intervalId);
     };
-  }, [order.id, order.status]); // Dependência de order.status para re-renderizar e atualizar o UI
+  }, [order.id, order.status, order.orderNumber]); // Dependência de order.status e order.orderNumber para re-renderizar e atualizar o UI
 
   const getDeliverySteps = () => {
     return [
@@ -103,7 +104,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ order: initialOrde
             </button>
             <div>
               <h1 className="text-xl font-bold text-gray-900">Acompanhar Pedido</h1>
-              <p className="text-sm text-gray-600">Pedido #{order.id.substring(0, 8)}</p>
+              <p className="text-sm text-gray-600">Pedido #C&R{order.orderNumber.toString().padStart(2, '0')}</p>
             </div>
           </div>
         </div>

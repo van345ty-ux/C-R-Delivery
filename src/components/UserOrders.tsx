@@ -10,6 +10,7 @@ interface UserOrdersProps {
 
 interface DbOrder {
   id: string;
+  order_number: number; // Adicionado order_number
   items: Array<{ name: string; quantity: number; price: number; observations?: string; product_id: string }>;
   total: number;
   delivery_fee: number;
@@ -64,6 +65,7 @@ export const UserOrders: React.FC<UserOrdersProps> = ({ userId, onViewOrder }) =
 
     const formattedOrder: Order = {
       id: dbOrder.id,
+      orderNumber: dbOrder.order_number, // Mapeia o order_number
       items: formattedItems,
       total: dbOrder.total,
       deliveryFee: dbOrder.delivery_fee,
@@ -107,7 +109,7 @@ export const UserOrders: React.FC<UserOrdersProps> = ({ userId, onViewOrder }) =
         <div>
           <div className="flex items-center text-sm text-gray-500 mb-1">
             <Hash className="w-3 h-3 mr-1" />
-            <span>Pedido #{order.id.substring(0, 6)}</span>
+            <span>Pedido #C&R{order.order_number.toString().padStart(2, '0')}</span> {/* Usando order_number */}
             <span className="mx-2">•</span>
             <Calendar className="w-3 h-3 mr-1" />
             <span>{new Date(order.created_at).toLocaleDateString('pt-BR')}</span>

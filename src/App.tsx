@@ -53,6 +53,7 @@ export interface CartItem {
 
 export interface Order {
   id: string;
+  orderNumber: number; // Nova propriedade para o número sequencial do pedido
   items: CartItem[];
   total: number;
   deliveryFee: number;
