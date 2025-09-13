@@ -1,0 +1,252 @@
+import React, { useState, useEffect } from 'react';
+import { Search } from 'lucide-react';
+import { ProductCard } from './ProductCard';
+import { HighlightCard } from './HighlightCard';
+import { Product, Highlight } from '../App';
+import { supabase } from '../integrations/supabase/client';
+import toast from 'react-hot-toast';
+
+interface MenuProps {
+  onAddToCart: (product: Product, quantity?: number, observations?: string) => void;
+  selectedCategory: string;
+  onCategoryChange: (category: string) => void;
+  isStoreOpen: boolean;
+  heroImageUrl: string;
+  // Novas props para o título e subtítulo do hero
+  heroTitleText: string;
+  heroTitleFontSize: string;
+  heroTitleFontColor: string;
+  heroTitleBorderColor: string;
+  heroSubtitleText: string;
+  heroSubtitleFontSize: string;
+  heroSubtitleFontColor: string;
+  heroSubtitleBorderColor: string;
+}
+
+const categories = [
+  'Todos',
+  'Promoções',
+  'Sushi',
+  'Temaki',
+  'Combinados',
+  'Sashimi',
+  'Bebidas'
+];
+
+export const Menu: React.FC<MenuProps> = ({ 
+  onAddToCart, 
+  selectedCategory, 
+  onCategoryChange, 
+  isStoreOpen, 
+  heroImageUrl,
+  // Novas props
+  heroTitleText,
+  heroTitleFontSize,
+  heroTitleFontColor,
+  heroTitleBorderColor,
+  heroSubtitleText,
+  heroSubtitleFontSize,
+  heroSubtitleFontColor,
+  heroSubtitleBorderColor,
+}) => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [highlights, setHighlights] = useState<Highlight[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      
+      const { data: productsData, error: productsError } = await supabase
+        .from('products')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (productsError) {
+        console.error('Error fetching products:', productsError);
+        toast.error('Erro ao carregar produtos.');
+      } else {
+        setProducts(productsData || []);
+      }
+
+      const { data: highlightsData, error: highlightsError } = await supabase
+        .from('highlights')
+        .select('*')
+        .order('order_index', { ascending: true });
+
+      if (highlightsError) {
+        console.error('Error fetching highlights:', highlightsError);
+        toast.error('Erro ao carregar destaques.');
+      } else {
+        setHighlights(highlightsData || []);
+      }
+
+      setLoading(false);
+    };
+
+    fetchData();
+  }, []);
+
+  const filteredProducts = products
+    .filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+      if (!product.available || !matchesSearch) return false;
+
+      if (selectedCategory === 'Todos') {
+        return true;
+      }
+
+      if (selectedCategory === 'Promoções') {
+        return product.category === 'Promoção';
+      }
+
+      if (product.category === 'Promoção') {
+        return false;
+      }
+      
+      return product.category && product.category.trim().toLowerCase() === selectedCategory.trim().toLowerCase();
+    })
+    .sort((a, b) => {
+      if (selectedCategory === 'Todos') {
+        const aIsPromo = a.category === 'Promoção';
+        const bIsPromo = b.category === 'Promoção';
+
+        if (aIsPromo && !bIsPromo) return -1;
+        if (!aIsPromo && bIsPromo) return 1;
+      }
+      return 0;
+    });
+
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500 text-lg">Carregando cardápio...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Hero Section */}
+      <div className="mb-4">
+        <div className="relative h-48 bg-gradient-to-r from-red-600 to-red-800 rounded-2xl overflow-hidden">
+          <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+          <img
+            src={heroImageUrl}
+            alt="Sushi Hero"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center p-4">
+              <h2 
+                className="text-4xl sm:text-5xl font-extrabold mb-2 drop-shadow-lg"
+                style={{ 
+                  fontSize: heroTitleFontSize, 
+                  color: heroTitleFontColor, 
+                  textShadow: `1px 1px 0 ${heroTitleBorderColor}, -1px -1px 0 ${heroTitleBorderColor}, 1px -1px 0 ${heroTitleBorderColor}, -1px 1px 0 ${heroTitleBorderColor}` 
+                }}
+              >
+                {heroTitleText}
+              </h2>
+              <p 
+                className="text-lg sm:text-xl font-medium drop-shadow-md"
+                style={{ 
+                  fontSize: heroSubtitleFontSize, 
+                  color: heroSubtitleFontColor, 
+                  textShadow: `1px 1px 0 ${heroSubtitleBorderColor}, -1px -1px 0 ${heroSubtitleBorderColor}, 1px -1px 0 ${heroSubtitleBorderColor}, -1px 1px 0 ${heroSubtitleBorderColor}` 
+                }}
+              >
+                {heroSubtitleText}
+              </p>
+            </div>
+          </div>
+
+          {/* Store Status - Moved inside Hero Section and positioned absolutely */}
+          <div className="absolute top-[10px] left-[9px] z-10">
+            <div className={`inline-flex items-center font-medium px-4 py-2 rounded-full text-sm shadow-sm ${isStoreOpen ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              <div className={`w-2.5 h-2.5 rounded-full mr-2 ${isStoreOpen ? 'bg-green-500 animate-pulse-fade' : 'bg-red-500'}`}></div>
+              <span>{isStoreOpen ? 'Atendendo' : 'Fechado'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="mb-4">
+        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar produtos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        {/* Category Filters */}
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {categories.map((category) => (
+            <button
+              key={category}
+              onClick={() => onCategoryChange(category)}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                selectedCategory === category
+                  ? 'bg-red-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Highlights Section */}
+      {highlights.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-xl font-bold text-gray-900 mb-2">Destaques</h3>
+          <div className="flex overflow-x-auto space-x-4 pb-2">
+            {highlights.map((highlight) => (
+              <HighlightCard
+                key={highlight.id}
+                name={highlight.name}
+                price={highlight.price}
+                imageUrl={highlight.image_url}
+                borderColor={highlight.border_color}
+                shadowSize={highlight.shadow_size}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Products Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        {filteredProducts.map((product) => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            onAddToCart={onAddToCart}
+          />
+        ))}
+      </div>
+
+      {filteredProducts.length === 0 && (
+        <div className="text-center py-12">
+          {selectedCategory === 'Promoções' ? (
+            <>
+              <p className="text-gray-500 text-lg mb-2">Nenhuma promoção ativa no momento.</p>
+              <p className="text-gray-500 text-sm">Crie uma promoção no painel de admin para que ela apareça aqui.</p>
+            </>
+          ) : (
+            <p className="text-gray-500 text-lg">Nenhum produto encontrado</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};

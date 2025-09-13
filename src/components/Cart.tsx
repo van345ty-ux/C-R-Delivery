@@ -1,0 +1,535 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Plus, Minus, CreditCard, Smartphone, DollarSign, Copy, Gift } from 'lucide-react'; // Adicionado Copy e Gift icon
+import { CartItem, Order, User } from '../App';
+import { supabase } from '../integrations/supabase/client';
+import toast from 'react-hot-toast';
+
+interface CartProps {
+  items: CartItem[];
+  onClose: () => void;
+  onUpdateQuantity: (productId: string, quantity: number) => void;
+  onRemoveItem: (productId: string) => void;
+  onOrderCreated: (order: Order) => void;
+  user: User | null;
+  isStoreOpen: boolean;
+}
+
+interface Coupon {
+  id: string;
+  name: string;
+  code: string;
+  discount: number;
+  type: 'birthday' | 'loyalty' | 'promotion';
+  valid_from: string;
+  valid_to: string;
+  active: boolean;
+  usage_limit?: number;
+  usage_count: number;
+  user_id?: string;
+}
+
+export const Cart: React.FC<CartProps> = ({
+  items,
+  onClose,
+  onUpdateQuantity,
+  onRemoveItem,
+  onOrderCreated,
+  user,
+  isStoreOpen
+}) => {
+  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'cash'>('pix');
+  const [address, setAddress] = useState('');
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{id: string; code: string; discount: number} | null>(null);
+  const [loadingCoupon, setLoadingCoupon] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deliveryFeeValue, setDeliveryFeeValue] = useState(3.00); // Default value
+  const [pixKeyValue, setPixKeyValue] = useState(''); // Novo estado para a chave Pix
+  const [firstAvailableCoupon, setFirstAvailableCoupon] = useState<Coupon | null>(null); // Armazena o primeiro cupom disponível
+  const couponInputRef = useRef<HTMLInputElement>(null); // Referência para o input do cupom
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('key, value');
+
+      if (!error && data) {
+        const settingsMap = data.reduce((acc, { key, value }) => {
+          acc[key] = value;
+          return acc;
+        }, {} as { [key: string]: string });
+
+        if (!isNaN(parseFloat(settingsMap.delivery_fee))) {
+          setDeliveryFeeValue(parseFloat(settingsMap.delivery_fee));
+        } else {
+          console.warn('Could not fetch delivery fee setting, using default value.');
+        }
+        setPixKeyValue(settingsMap.pix_key || '');
+      } else {
+        console.warn('Could not fetch settings, using default values.');
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
+  // Efeito para verificar se o usuário tem cupons disponíveis
+  useEffect(() => {
+    const checkAvailableCoupons = async () => {
+      if (!user?.id) {
+        setFirstAvailableCoupon(null);
+        return;
+      }
+
+      const { data: couponsData, error: couponsError } = await supabase
+        .from('coupons')
+        .select('*')
+        .or(`user_id.eq.${user.id},user_id.is.null`) // Cupons específicos do usuário ou universais
+        .eq('active', true) // Apenas cupons ativos
+        .eq('is_pending_admin_approval', false); // Apenas cupons já aprovados
+
+      if (couponsError) {
+        console.error('Error fetching user coupons for notification:', couponsError);
+        setFirstAvailableCoupon(null);
+        return;
+      }
+
+      const today = new Date();
+      const availableCoupons = (couponsData || []).filter((coupon: Coupon) => {
+        const validFrom = new Date(coupon.valid_from);
+        const validTo = new Date(coupon.valid_to);
+        validTo.setHours(23, 59, 59, 999); // Considerar o dia inteiro
+
+        const isCurrentlyValid = today >= validFrom && today <= validTo;
+        const hasUsagesLeft = coupon.usage_limit === null || coupon.usage_count < coupon.usage_limit;
+
+        // Validação adicional: cupons de aniversário e fidelidade DEVEM ser específicos do usuário
+        if ((coupon.type === 'birthday' || coupon.type === 'loyalty') && !coupon.user_id) {
+          return false; 
+        }
+        return isCurrentlyValid && hasUsagesLeft;
+      });
+      
+      if (availableCoupons.length > 0) {
+        setFirstAvailableCoupon(availableCoupons[0]); // Armazena o primeiro cupom disponível
+      } else {
+        setFirstAvailableCoupon(null);
+      }
+    };
+
+    checkAvailableCoupons();
+  }, [user?.id]); // Depende do ID do usuário
+
+  const subtotal = items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const deliveryFee = deliveryType === 'delivery' ? deliveryFeeValue : 0;
+  const discount = appliedCoupon ? (subtotal * appliedCoupon.discount / 100) : 0;
+  const total = subtotal + deliveryFee - discount;
+
+  const handleApplyCoupon = async (codeToApply?: string) => {
+    const code = codeToApply || couponCode; // Usa o código passado ou o do estado
+    
+    if (!user) {
+      toast.error('Você precisa fazer login para aplicar cupons de desconto.');
+      return;
+    }
+    if (!code.trim()) {
+      toast.error('Por favor, insira um código de cupom.');
+      return;
+    }
+    setLoadingCoupon(true);
+    setAppliedCoupon(null); // Reset previous applied coupon
+
+    const { data, error } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('code', code.toUpperCase())
+      .eq('active', true) // Apenas cupons ativos
+      .eq('is_pending_admin_approval', false) // Apenas cupons já aprovados
+      .or(`user_id.is.null,user_id.eq.${user.id}`) // Busca cupons gerais ou específicos do usuário
+      .single();
+
+    setLoadingCoupon(false);
+
+    if (error || !data) {
+      toast.error('Cupom inválido, inativo ou não aplicável a você.');
+      return;
+    }
+
+    const coupon: Coupon = data;
+    const today = new Date();
+    const validFrom = new Date(coupon.valid_from);
+    const validTo = new Date(coupon.valid_to);
+    validTo.setHours(23, 59, 59, 999); // Considerar o dia inteiro
+
+    if (today < validFrom || today > validTo) {
+      toast.error('Cupom expirado ou ainda não é válido.');
+      return;
+    }
+
+    if (coupon.usage_limit !== null && coupon.usage_count >= coupon.usage_limit) {
+      toast.error('Este cupom atingiu o limite de usos.');
+      return;
+    }
+
+    // Se o cupom é específico do usuário, garante que pertence ao usuário atual
+    if (coupon.user_id && coupon.user_id !== user.id) {
+      toast.error('Este cupom não é seu.');
+      return;
+    }
+
+    setAppliedCoupon({ id: coupon.id, code: coupon.code, discount: coupon.discount });
+    setCouponCode(code); // Atualiza o input com o código aplicado
+    toast.success('Cupom aplicado com sucesso!');
+  };
+
+  const handleFinishOrder = async () => {
+    if (!isStoreOpen) {
+      toast.error('Desculpe, o restaurante está fechado no momento.');
+      return;
+    }
+    if (!user) {
+      toast.error('Você precisa fazer login para finalizar o pedido.');
+      return;
+    }
+    if (items.length === 0) return;
+    if (deliveryType === 'delivery' && !address.trim()) {
+      toast.error('Por favor, informe o endereço para entrega');
+      return;
+    }
+    if (paymentMethod === 'pix' && !pixKeyValue) {
+      toast.error('A chave Pix não foi configurada. Por favor, escolha outra forma de pagamento.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const orderPayload = {
+      user_id: user.id,
+      items: items.map(item => ({
+        product_id: item.product.id,
+        name: item.product.name,
+        quantity: item.quantity,
+        price: item.product.price,
+        observations: item.observations
+      })),
+      total,
+      delivery_fee: deliveryFee,
+      delivery_type: deliveryType,
+      payment_method: paymentMethod,
+      address: deliveryType === 'delivery' ? address : null,
+      status: 'Pedido recebido',
+      customer_name: user.name,
+      customer_phone: user.phone,
+      coupon_used: appliedCoupon?.code
+    };
+
+    const { data: newOrder, error } = await supabase
+      .from('orders')
+      .insert(orderPayload)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating order:', error);
+      toast.error('Ocorreu um erro ao finalizar seu pedido. Tente novamente.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (appliedCoupon) {
+      const { data: currentCoupon, error: fetchError } = await supabase
+        .from('coupons')
+        .select('usage_count')
+        .eq('id', appliedCoupon.id)
+        .single();
+
+      if (!fetchError && currentCoupon) {
+        await supabase
+          .from('coupons')
+          .update({ usage_count: currentCoupon.usage_count + 1 })
+          .eq('id', appliedCoupon.id);
+      }
+    }
+
+    const formattedOrder: Order = {
+      id: newOrder.id,
+      items: items,
+      total: newOrder.total,
+      deliveryFee: newOrder.delivery_fee,
+      deliveryType: newOrder.delivery_type,
+      paymentMethod: newOrder.payment_method,
+      address: newOrder.address,
+      status: newOrder.status,
+      customerName: newOrder.customer_name,
+      customerPhone: newOrder.customer_phone,
+      createdAt: newOrder.created_at,
+      couponUsed: newOrder.coupon_used
+    };
+
+    onOrderCreated(formattedOrder);
+    onClose();
+    setIsSubmitting(false);
+    toast.success('Pedido finalizado com sucesso!');
+  };
+
+  const copyPixKey = () => {
+    if (pixKeyValue) {
+      navigator.clipboard.writeText(pixKeyValue);
+      toast.success('Chave Pix copiada!');
+    }
+  };
+
+  if (items.length === 0) {
+    return (
+      <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-xl z-50">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-lg font-semibold">Carrinho</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="text-center">
+            <p className="text-gray-500 mb-4">Seu carrinho está vazio</p>
+            <button
+              onClick={onClose}
+              className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700"
+            >
+              Ver Cardápio
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-xl z-50 flex flex-col">
+      <div className="flex items-center justify-between p-4 border-b">
+        <h2 className="text-lg font-semibold">Carrinho</h2>
+        <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <X className="w-6 h-6" />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {items.map((item) => (
+          <div key={item.product.id} className="bg-gray-50 rounded-lg p-3">
+            <div className="flex justify-between items-start mb-2">
+              <h4 className="font-medium">{item.product.name}</h4>
+              <button
+                onClick={() => onRemoveItem(item.product.id)}
+                className="text-red-500 text-sm"
+              >
+                Remover
+              </button>
+            </div>
+            
+            {item.observations && (
+              <p className="text-sm text-gray-600 mb-2">Obs: {item.observations}</p>
+            )}
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
+                  className="bg-gray-300 hover:bg-gray-400 rounded-full p-1"
+                >
+                  <Minus className="w-3 h-3" />
+                </button>
+                <span className="w-8 text-center">{item.quantity}</span>
+                <button
+                  onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
+                  className="bg-gray-300 hover:bg-gray-400 rounded-full p-1"
+                >
+                  <Plus className="w-3 h-3" />
+                </button>
+              </div>
+              <span className="font-medium">
+                R$ {(item.product.price * item.quantity).toFixed(2)}
+              </span>
+            </div>
+          </div>
+        ))}
+
+        <div className="border-t pt-4">
+          {!user ? (
+            <div className="text-center text-sm text-gray-600 bg-gray-100 p-3 rounded-lg">
+              <p>Faça login para aplicar cupons de desconto.</p>
+            </div>
+          ) : (
+            <>
+              {firstAvailableCoupon && !appliedCoupon && (
+                <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded-lg text-sm flex items-center justify-between mb-3">
+                  <div className="flex items-center">
+                    <Gift className="w-4 h-4 mr-2" />
+                    <span>Você tem cupom disponível!</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (firstAvailableCoupon) {
+                        handleApplyCoupon(firstAvailableCoupon.code);
+                      }
+                    }}
+                    className="ml-2 px-3 py-1 rounded-md bg-green-100 hover:bg-green-200 text-green-800 font-medium"
+                  >
+                    Clique para aplicar
+                  </button>
+                </div>
+              )}
+              <div className="flex space-x-2 mb-2">
+                <input
+                  type="text"
+                  placeholder="Cupom de desconto"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                  className="flex-1 p-2 border rounded-lg text-sm"
+                  disabled={loadingCoupon}
+                  ref={couponInputRef} // Associar a referência ao input
+                />
+                <button
+                  onClick={() => handleApplyCoupon()} // Chama sem argumento para usar o estado `couponCode`
+                  className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
+                  disabled={loadingCoupon}
+                >
+                  {loadingCoupon ? '...' : 'Aplicar'}
+                </button>
+              </div>
+              {appliedCoupon && (
+                <p className="text-green-600 text-sm">
+                  Cupom {appliedCoupon.code} aplicado! {appliedCoupon.discount}% de desconto
+                </p>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="border-t pt-4">
+          <h3 className="font-medium mb-3">Tipo de Entrega</h3>
+          <div className="space-y-2">
+            <label className="flex items-center">
+              <input
+                type="radio"
+                checked={deliveryType === 'delivery'}
+                onChange={() => setDeliveryType('delivery')}
+                className="mr-2"
+              />
+              <span>Delivery (+R$ {deliveryFeeValue.toFixed(2)})</span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="radio"
+                checked={deliveryType === 'pickup'}
+                onChange={() => setDeliveryType('pickup')}
+                className="mr-2"
+              />
+              <span>Retirada no local (Grátis)</span>
+            </label>
+          </div>
+        </div>
+
+        {deliveryType === 'delivery' && (
+          <div>
+            <label className="block text-sm font-medium mb-2">Endereço para entrega</label>
+            <textarea
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Rua, número, bairro..."
+              className="w-full p-3 border rounded-lg text-sm"
+              rows={3}
+            />
+          </div>
+        )}
+
+        <div className="border-t pt-4">
+          <h3 className="font-medium mb-3">Forma de Pagamento</h3>
+          <div className="space-y-2">
+            <label className="flex items-center">
+              <input
+                type="radio"
+                checked={paymentMethod === 'pix'}
+                onChange={() => setPaymentMethod('pix')}
+                className="mr-2"
+              />
+              <Smartphone className="w-4 h-4 mr-2" />
+              <span>PIX</span>
+            </label>
+            {paymentMethod === 'pix' && pixKeyValue && (
+              <div className="bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg text-sm flex items-center justify-between mt-2">
+                <span>Chave Pix: <span className="font-semibold">{pixKeyValue}</span></span>
+                <button onClick={copyPixKey} className="ml-2 p-1 rounded-md hover:bg-blue-100">
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            {!pixKeyValue && paymentMethod === 'pix' && (
+              <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm mt-2">
+                Atenção: A chave Pix não foi configurada no painel administrativo. Por favor, escolha outra forma de pagamento.
+              </div>
+            )}
+            <label className="flex items-center">
+              <input
+                type="radio"
+                checked={paymentMethod === 'card'}
+                onChange={() => setPaymentMethod('card')}
+                className="mr-2"
+              />
+              <CreditCard className="w-4 h-4 mr-2" />
+              <span>Cartão (na entrega)</span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="radio"
+                checked={paymentMethod === 'cash'}
+                onChange={() => setPaymentMethod('cash')}
+                className="mr-2"
+              />
+              <DollarSign className="w-4 h-4 mr-2" />
+              <span>Dinheiro (na entrega)</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t p-4 bg-gray-50">
+        <div className="space-y-2 text-sm mb-4">
+          <div className="flex justify-between">
+            <span>Subtotal:</span>
+            <span>R$ {subtotal.toFixed(2)}</span>
+          </div>
+          {deliveryFee > 0 && (
+            <div className="flex justify-between">
+              <span>Taxa de entrega:</span>
+              <span>R$ {deliveryFee.toFixed(2)}</span>
+            </div>
+          )}
+          {discount > 0 && (
+            <div className="flex justify-between text-green-600">
+              <span>Desconto:</span>
+              <span>-R$ {discount.toFixed(2)}</span>
+            </div>
+          )}
+          <div className="flex justify-between font-bold text-lg border-t pt-2">
+            <span>Total:</span>
+            <span>R$ {total.toFixed(2)}</span>
+          </div>
+        </div>
+
+        {!isStoreOpen && (
+          <div className="mb-4 p-3 bg-red-100 text-red-800 text-sm rounded-lg text-center">
+            O restaurante está fechado. Não é possível finalizar o pedido agora.
+          </div>
+        )}
+        <button
+          onClick={handleFinishOrder}
+          disabled={isSubmitting || !isStoreOpen || (paymentMethod === 'pix' && !pixKeyValue)}
+          className="w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? 'Finalizando...' : 'Finalizar Pedido'}
+        </button>
+      </div>
+    </div>
+  );
+};
