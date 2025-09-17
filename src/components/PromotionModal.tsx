@@ -1,5 +1,5 @@
 import React from 'react';
-import { Product } => '../App';
+import { Product } from '../App';
 import { X } from 'lucide-react';
 
 interface PromotionModalProps {
