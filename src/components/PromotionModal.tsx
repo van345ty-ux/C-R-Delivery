@@ -47,7 +47,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onCl
                   </div>
                   <Button
                     onClick={() => onAddToCart(promo)}
-                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg shadow-md flex items-center"
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-0.5 rounded-lg shadow-md flex items-center"
                   >
                     <Plus className="h-3 w-3 mr-1" />
                     Adicionar
