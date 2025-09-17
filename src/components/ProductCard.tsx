@@ -29,18 +29,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
   return (
     <div className={cn(
       "group flex flex-col rounded-lg shadow-sm border h-full relative",
-      isPromotion ? "p-4 bg-red-50 border-red-300 shadow-md" : "p-2  bg-white border-gray-200",
+      isPromotion ? "p-4 bg-red-50 border-red-300 shadow-md" : "p-2 bg-white border-gray-200",
       "overflow-visible"
     )}>
       {/* Imagem e informações básicas no topo */}
       <div className={cn(
         "flex items-center",
-        isPromotion ? "gap-2 mb-1" : "gap-2 mb-1"
+        isPromotion ? "gap-4 mb-2" : "gap-2 mb-1"
       )}>
         <div
           className={cn(
             "relative rounded-md flex-shrink-0 overflow-hidden",
-            isPromotion ? "w-[62%] h-[100%] " : "w-[46%] h-[100%]",
+            isPromotion ? "w-32 h-32" : "w-16 h-16",
             "lg:cursor-pointer" // Indica que é clicável em desktop
           )}
           onMouseEnter={() => setShowAmplifyText(true)}
@@ -64,7 +64,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
             isPromotion ? "text-base" : "text-base"
           )}>{product.name}</h3>
           {product.badge_text && (
-            <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full mt-1 mb-1 block w-fit line-clamp-1">
+            <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full mt-1 mb-1 block w-fit whitespace-nowrap">
               {product.badge_text}
             </span>
           )}
