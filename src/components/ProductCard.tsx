@@ -1,181 +1,43 @@
-import React, { useState } from 'react';
-import { Plus, Minus } from 'lucide-react';
+import React from 'react';
 import { Product } from '../App';
+import { Button } from './ui/button';
+import { Plus } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
-  onAddToCart: (product: Product, quantity?: number, observations?: string) => void;
+  onAddToCart: (product: Product) => void;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
-  const [quantity, setQuantity] = useState(1);
-  const [observations, setObservations] = useState('');
-  const [showDetails, setShowDetails] = useState(false);
-
-  const handleAddToCart = () => {
-    onAddToCart(product, quantity, observations || undefined);
-    setQuantity(1);
-    setObservations('');
-    setShowDetails(false);
-  };
-
-  const isPromotionDisplay = product.original_price && product.original_price > product.price;
-  const isPromotionCategory = product.category === 'Promoção';
-
-  // Definindo classes de tamanho para o contêiner da imagem
-  // Usaremos flex-shrink-0 para que a imagem não encolha e w-2/5 para ocupar 40% da largura do card.
-  // A altura será automática com object-cover para manter a proporção.
-  const imageContainerClasses = isPromotionCategory
-    ? `w-2/5 flex-shrink-0 rounded-lg`
-    : `w-1/3 flex-shrink-0 rounded-lg`; // Para produtos padrão, pode ser um pouco menor
-
   return (
-    <>
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex w-full">
-        {/* Image Section */}
-        <div className={imageContainerClasses}>
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover rounded-lg"
-          />
-        </div>
-
-        {/* Content Section */}
-        <div className="p-2 flex flex-col flex-grow">
-          <div className="flex-grow">
-            <div className="flex items-start justify-between mb-1">
-              <h3 className="font-semibold text-gray-900 text-base">{product.name}</h3>
-              {product.badge_text && (
-                <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full ml-2 flex-shrink-0 whitespace-nowrap">
-                  {product.badge_text}
-                </span>
-              )}
-            </div>
-            <p className="text-gray-600 text-xs mb-2 line-clamp-2">
-              {product.description}
-            </p>
-          </div>
-
-          <div className="flex items-end justify-between mt-2">
-            <div>
-              {isPromotionDisplay ? (
-                <>
-                  <span className="text-xs text-gray-500 line-through">
-                    R$ {product.original_price!.toFixed(2)}
-                  </span>
-                  <span className="text-base font-bold text-red-600 block">
-                    R$ {product.price.toFixed(2)}
-                  </span>
-                </>
-              ) : (
-                <span className="text-base font-bold text-red-600">
-                  R$ {product.price.toFixed(2)}
-                </span>
-              )}
-            </div>
-            <button
-              onClick={() => setShowDetails(true)}
-              className="bg-red-600 text-white py-1.5 px-3 rounded-lg hover:bg-red-700 transition-colors font-normal text-sm"
-            >
-              Adicionar
-            </button>
-          </div>
+    <div className="flex items-center gap-4 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+      <img src={product.image} alt={product.name} className="w-24 h-24 object-cover rounded-md flex-shrink-0" />
+      <div className="flex-grow">
+        <h3 className="font-semibold text-gray-900 text-base">{product.name}</h3>
+        {product.badge_text && (
+          <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full mt-1 mb-1 block w-fit">
+            {product.badge_text}
+          </span>
+        )}
+        <p className="text-sm text-gray-600 line-clamp-2 mb-2">{product.description}</p>
+        <div className="flex items-baseline gap-2">
+          {product.original_price && (
+            <span className="text-sm text-gray-500 line-through">
+              R$ {product.original_price.toFixed(2)}
+            </span>
+          )}
+          <span className="text-lg font-bold text-red-600">
+            R$ {product.price.toFixed(2)}
+          </span>
         </div>
       </div>
-
-      {/* Product Details Modal */}
-      {showDetails && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="relative">
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-48 object-cover"
-              />
-              <button
-                onClick={() => setShowDetails(false)}
-                className="absolute top-2 right-2 bg-white rounded-full p-2 shadow-md hover:bg-gray-50"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">{product.name}</h3>
-              <p className="text-gray-600 mb-4">{product.description}</p>
-              <div className="flex items-baseline space-x-2 mb-6">
-                {isPromotionDisplay ? (
-                  <>
-                    <p className="text-lg text-gray-500 line-through">
-                      R$ {product.original_price!.toFixed(2)}
-                    </p>
-                    <p className="text-2xl font-bold text-red-600">
-                      R$ {product.price.toFixed(2)}
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-2xl font-bold text-red-600">
-                    R$ {product.price.toFixed(2)}
-                  </p>
-                )}
-              </div>
-
-              {/* Quantity Selector */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Quantidade
-                </label>
-                <div className="flex items-center space-x-3">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="bg-gray-200 hover:bg-gray-300 rounded-full p-1"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="text-lg font-medium w-8 text-center">{quantity}</span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="bg-gray-200 hover:bg-gray-300 rounded-full p-1"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Observations */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Observações (opcional)
-                </label>
-                <textarea
-                  value={observations}
-                  onChange={(e) => setObservations(e.target.value)}
-                  placeholder="Alguma preferência ou observação especial..."
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => setShowDetails(false)}
-                  className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400 transition-colors font-medium"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleAddToCart}
-                  className="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-colors font-medium"
-                >
-                  Adicionar (R$ {(product.price * quantity).toFixed(2)})
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+      <Button
+        onClick={() => onAddToCart(product)}
+        className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-full shadow-md flex-shrink-0"
+        size="icon"
+      >
+        <Plus className="h-5 w-5" />
+      </Button>
+    </div>
   );
 };
