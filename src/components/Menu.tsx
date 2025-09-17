@@ -225,7 +225,7 @@ export const Menu: React.FC<MenuProps> = ({
       {productsToDisplayIn3ColGrid.length > 0 && (
         <div className="mb-8">
           {selectedCategory === 'Todos' && <h3 className="text-xl font-bold text-gray-900 mb-2">Promoções</h3>}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
             {productsToDisplayIn3ColGrid.map((product) => (
               <ProductCard
                 key={product.id}
