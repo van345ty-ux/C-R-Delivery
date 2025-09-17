@@ -1,41 +1,43 @@
 import React from 'react';
 import { Product } from '../App';
-import { Plus } from 'lucide-react';
 import { Button } from './ui/button';
+import { Plus } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product) => void;
-  isStoreOpen: boolean;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, isStoreOpen }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full">
-      <div className="relative w-full h-48">
-        <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+    <div className="flex items-center gap-4 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+      <img src={product.image} alt={product.name} className="w-24 h-24 object-cover rounded-md flex-shrink-0" />
+      <div className="flex-grow">
+        <h3 className="font-semibold text-gray-900 text-base">{product.name}</h3>
         {product.badge_text && (
-          <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+          <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full mt-1 mb-1 block w-fit">
             {product.badge_text}
           </span>
         )}
-      </div>
-      <div className="p-4 flex-grow flex flex-col">
-        <h3 className="font-semibold text-lg text-gray-900 mb-1">{product.name}</h3>
-        <p className="text-sm text-gray-600 mb-3 flex-grow line-clamp-2">{product.description}</p>
-        <div className="flex items-baseline justify-between mt-auto">
-          <div className="flex items-baseline gap-2">
-            {product.original_price && (
-              <span className="text-sm text-gray-500 line-through">
-                R$ {product.original_price.toFixed(2)}
-              </span>
-            )}
-            <span className="text-xl font-bold text-red-600">
-              R$ {product.price.toFixed(2)}
+        <p className="text-sm text-gray-600 line-clamp-2 mb-2">{product.description}</p>
+        <div className="flex items-baseline gap-2">
+          {product.original_price && (
+            <span className="text-sm text-gray-500 line-through">
+              R$ {product.original_price.toFixed(2)}
             </span>
-          </div>
+          )}
+          <span className="text-lg font-bold text-red-600">
+            R$ {product.price.toFixed(2)}
+          </span>
         </div>
       </div>
+      <Button
+        onClick={() => onAddToCart(product)}
+        className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-full shadow-md flex-shrink-0"
+        size="icon"
+      >
+        <Plus className="h-5 w-5" />
+      </Button>
     </div>
   );
 };
