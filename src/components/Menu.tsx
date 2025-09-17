@@ -30,7 +30,7 @@ const categories = [
   'Sushi',
   'Temaki',
   'Combinados',
-  'Sashimi',
+  'Especiais',
   'Bebidas'
 ];
 
