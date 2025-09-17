@@ -68,8 +68,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
             R$ {product.price.toFixed(2)}
           </span>
         </div>
+        {/* Chama onProductClick */}
         <Button
-          onClick={() => onProductClick(product)} {/* Chama onProductClick */}
+          onClick={() => onProductClick(product)}
           className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-md flex-shrink-0 h-8 w-8 flex items-center justify-center"
           size="icon"
         >
