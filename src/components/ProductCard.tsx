@@ -20,7 +20,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
         src={product.image} 
         alt={product.name} 
         className={cn(
-          "object-cover rounded-md flex-shrink-0",
+          "object-contain rounded-md flex-shrink-0",
           isPromotion ? "w-40 h-28" : "w-24 h-24" // Tamanho maior para promoções
         )} 
       />
