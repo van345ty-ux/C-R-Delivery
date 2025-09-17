@@ -27,7 +27,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
           alt={product.name} 
           className={cn(
             "object-left rounded-md flex-shrink-0 transition-transform duration-300 relative", // Removido z-10 da base
-            isPromotion ? "w-[52%] h-[100%]" : "w-36 h-32", 
+            isPromotion ? "w-[52%] h-[100%]" : "w-36 h-[92%]", 
             "lg:group-hover:scale-200 lg:group-hover:z-50 lg:group-hover:shadow-lg" // Apenas em desktop, escala aumentada, z-index mais alto
           )} 
         />
