@@ -13,9 +13,9 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, isPromotion = false }) => {
   return (
     <div className={cn(
-      "group flex flex-col rounded-lg shadow-sm border h-full relative", // Adicionado 'group' e 'relative'
+      "group flex flex-col rounded-lg shadow-sm border h-full relative",
       isPromotion ? "p-4 bg-red-50 border-red-300 shadow-md" : "p-2 bg-white border-gray-200",
-      "overflow-visible" // Permite que o conteúdo (imagem) transborde o card
+      "overflow-visible" // Crucial para a imagem 'estourar' para fora do card
     )}>
       {/* Imagem e informações básicas no topo */}
       <div className={cn(
@@ -26,9 +26,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
           src={product.image} 
           alt={product.name} 
           className={cn(
-            "object-cover rounded-md flex-shrink-0 transition-transform duration-300 relative z-10", // Adicionado 'relative z-10' e transição
+            "object-cover rounded-md flex-shrink-0 transition-transform duration-300 relative", // Removido z-10 da base
             isPromotion ? "w-32 h-32" : "w-16 h-16", 
-            "group-hover:scale-175 group-hover:z-20 group-hover:shadow-lg" // Efeito de pop-up ao passar o mouse
+            "lg:group-hover:scale-200 lg:group-hover:z-50 lg:group-hover:shadow-lg" // Apenas em desktop, escala aumentada, z-index mais alto
           )} 
         />
         <div className="flex-grow">
