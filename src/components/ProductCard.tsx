@@ -20,8 +20,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
         src={product.image} 
         alt={product.name} 
         className={cn(
-          "object-cover object-left rounded-md flex-shrink-0",
-          isPromotion ? "w-44 h-36" : "w-24 h-24" // Tamanho maior para promoções
+          "object-cover rounded-md flex-shrink-0",
+          isPromotion ? "w-32 h-32" : "w-24 h-24" // Tamanho maior para promoções
         )} 
       />
       <div className="flex-grow">
@@ -45,7 +45,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
       </div>
       <Button
         onClick={() => onAddToCart(product)}
-        className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-full shadow-md flex-shrink-0"
+        className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-md flex-shrink-0"
         size="icon"
       >
         <Plus className="h-5 w-5" />
