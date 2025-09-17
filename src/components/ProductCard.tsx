@@ -17,7 +17,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
       isPromotion ? "bg-red-50 border-red-300 shadow-md" : "bg-white border-gray-200"
     )}>
       {/* Imagem e informações básicas no topo */}
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex items-center gap-4 mb-2">
         <img 
           src={product.image} 
           alt={product.name} 
