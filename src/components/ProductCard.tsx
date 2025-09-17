@@ -19,20 +19,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
       {/* Imagem e informações básicas no topo */}
       <div className={cn(
         "flex items-center",
-        isPromotion ? "gap-4 mb-2" : "gap-2 mb-1"
+        isPromotion ? "gap-4 mb-2" : "gap-1 mb-1"
       )}>
         <img 
           src={product.image} 
           alt={product.name} 
           className={cn(
             "object-cover rounded-md flex-shrink-0",
-            isPromotion ? "w-32 h-32" : "w-28 h-28"
+            isPromotion ? "w-32 h-32" : "w-24 h-24"
           )} 
         />
         <div className="flex-grow">
           <h3 className={cn(
             "font-semibold text-gray-900",
-            isPromotion ? "text-base" : "text-sm"
+            isPromotion ? "text-base" : "text-xs"
           )}>{product.name}</h3>
           {product.badge_text && (
             <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full mt-1 mb-1 block w-fit whitespace-nowrap">
@@ -50,7 +50,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
       
       {/* Preço e botão no canto inferior direito */}
       <div className="flex items-baseline justify-between mt-auto">
-        <div className="flex items-baseline gap-2">
+        <div className="flex items-baseline gap-1">
           {product.original_price && (
             <span className={cn(
               "text-gray-500 line-through",
@@ -61,17 +61,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
           )}
           <span className={cn(
             "font-bold text-red-600",
-            isPromotion ? "text-lg" : "text-base"
+            isPromotion ? "text-lg" : "text-sm"
           )}>
             R$ {product.price.toFixed(2)}
           </span>
         </div>
         <Button
           onClick={() => onAddToCart(product)}
-          className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-md flex-shrink-0"
-          size="icon"
+          className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-md flex-shrink-0 h-8 w-8 flex items-center justify-center"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-4 w-4" />
         </Button>
       </div>
     </div>
