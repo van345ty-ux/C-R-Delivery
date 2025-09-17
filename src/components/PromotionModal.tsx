@@ -26,7 +26,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onCl
               <img 
     src={promo.image} 
     alt={promo.name} 
-    className="w-[100%] h-full object-cover -translate-x-[20%]" 
+    className="w-[90%] h-full object-cover -translate-x-[20%]" 
   />
               <div className="flex-grow">
                 <h3 className="font-semibold text-gray-900 mb-1">{promo.name}</h3>
