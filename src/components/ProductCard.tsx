@@ -22,14 +22,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
           src={product.image} 
           alt={product.name} 
           className={cn(
-            "object-cover object-left rounded-md flex-shrink-0",
-            isPromotion ? "w-40 h-32" : "w-24 h-24" // Tamanho maior para promoções
+            "object-cover rounded-md flex-shrink-0",
+            isPromotion ? "w-32 h-32" : "w-24 h-24" // Tamanho maior para promoções
           )} 
         />
         <div className="flex-grow">
           <h3 className="font-semibold text-gray-900 text-base">{product.name}</h3>
           {product.badge_text && (
-            <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full mt-1 mb-1 block w-fit">
+            <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full mt-1 mb-1 block w-fit whitespace-nowrap"> {/* Adicionado whitespace-nowrap */}
               {product.badge_text}
             </span>
           )}
