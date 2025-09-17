@@ -22,7 +22,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onCl
 
         <div className="p-6 overflow-y-auto space-y-4">
           {promotions.map((promo) => (
-            <div key={promo.id} className="flex items-center gap-4 bg-gray-50 p-8 rounded-lg">
+            <div key={promo.id} className="flex items-center gap-4 bg-gray-50 p-10 rounded-lg">
              <img 
     src={promo.image} 
     alt={promo.name} 
