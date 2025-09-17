@@ -88,35 +88,28 @@ export const Menu: React.FC<MenuProps> = ({
     fetchData();
   }, []);
 
-  const filteredProducts = products
-    .filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-      if (!product.available || !matchesSearch) return false;
+  // Filtra todos os produtos disponíveis e que correspondem ao termo de busca
+  const allAvailableAndSearchedProducts = products.filter(product => 
+    product.available && product.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-      if (selectedCategory === 'Todos') {
-        return true;
-      }
+  // Separa promoções e produtos regulares
+  const promotions = allAvailableAndSearchedProducts.filter(product => product.category === 'Promoção');
+  const regularProducts = allAvailableAndSearchedProducts.filter(product => product.category !== 'Promoção');
 
-      if (selectedCategory === 'Promoções') {
-        return product.category === 'Promoção';
-      }
+  let productsToDisplayIn3ColGrid: Product[] = [];
+  let productsToDisplayIn5ColGrid: Product[] = [];
 
-      if (product.category === 'Promoção') {
-        return false;
-      }
-      
-      return product.category && product.category.trim().toLowerCase() === selectedCategory.trim().toLowerCase();
-    })
-    .sort((a, b) => {
-      if (selectedCategory === 'Todos') {
-        const aIsPromo = a.category === 'Promoção';
-        const bIsPromo = b.category === 'Promoção';
-
-        if (aIsPromo && !bIsPromo) return -1;
-        if (!aIsPromo && bIsPromo) return 1;
-      }
-      return 0;
-    });
+  if (selectedCategory === 'Todos') {
+    productsToDisplayIn3ColGrid = promotions;
+    productsToDisplayIn5ColGrid = regularProducts;
+  } else if (selectedCategory === 'Promoções') {
+    productsToDisplayIn3ColGrid = promotions;
+  } else { // Categoria específica selecionada
+    productsToDisplayIn5ColGrid = regularProducts.filter(product => 
+      product.category && product.category.trim().toLowerCase() === selectedCategory.trim().toLowerCase()
+    );
+  }
 
   if (loading) {
     return (
@@ -125,10 +118,6 @@ export const Menu: React.FC<MenuProps> = ({
       </div>
     );
   }
-
-  // Dividir os produtos para a primeira linha e o restante
-  const firstRowProducts = filteredProducts.slice(0, 3);
-  const remainingProducts = filteredProducts.slice(3);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -232,35 +221,42 @@ export const Menu: React.FC<MenuProps> = ({
         </div>
       )}
 
-      {/* Products Grid - First Row (3 cards on desktop) */}
-      {firstRowProducts.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 mb-4">
-          {firstRowProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onAddToCart={onAddToCart}
-              isPromotion={product.category === 'Promoção'}
-            />
-          ))}
+      {/* Promotions Grid (3 cards on desktop) */}
+      {productsToDisplayIn3ColGrid.length > 0 && (
+        <div className="mb-8">
+          {selectedCategory === 'Todos' && <h3 className="text-xl font-bold text-gray-900 mb-2">Promoções</h3>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+            {productsToDisplayIn3ColGrid.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onAddToCart={onAddToCart}
+                isPromotion={true}
+              />
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Products Grid - Remaining Rows (5 cards on desktop) */}
-      {remainingProducts.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-4">
-          {remainingProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onAddToCart={onAddToCart}
-              isPromotion={product.category === 'Promoção'}
-            />
-          ))}
+      {/* Regular Products Grid (5 cards on desktop) */}
+      {productsToDisplayIn5ColGrid.length > 0 && (
+        <div className="mb-8">
+          {selectedCategory === 'Todos' && <h3 className="text-xl font-bold text-gray-900 mb-2">Cardápio</h3>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-4">
+            {productsToDisplayIn5ColGrid.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onAddToCart={onAddToCart}
+                isPromotion={false}
+              />
+            ))}
+          </div>
         </div>
       )}
 
-      {filteredProducts.length === 0 && (
+      {/* Handle no products found */}
+      {productsToDisplayIn3ColGrid.length === 0 && productsToDisplayIn5ColGrid.length === 0 && (
         <div className="text-center py-12">
           {selectedCategory === 'Promoções' ? (
             <>
