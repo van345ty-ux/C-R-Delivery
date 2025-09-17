@@ -29,7 +29,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
         <div className="flex-grow">
           <h3 className="font-semibold text-gray-900 text-base">{product.name}</h3>
           {product.badge_text && (
-            <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full mt-1 mb-1 block w-fit whitespace-nowrap">
+            <span className="bg-red-600 text-white text-xs font-bold px-4 py-1 rounded-full mt-1 mb-1 block w-fit whitespace-nowrap">
               {product.badge_text}
             </span>
           )}
