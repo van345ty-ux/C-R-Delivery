@@ -235,6 +235,7 @@ export const Menu: React.FC<MenuProps> = ({
             key={product.id}
             product={product}
             onAddToCart={onAddToCart}
+            isPromotion={product.category === 'Promoção'} // Passa a prop isPromotion
           />
         ))}
       </div>
