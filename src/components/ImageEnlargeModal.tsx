@@ -23,7 +23,7 @@ export const ImageEnlargeModal: React.FC<ImageEnlargeModalProps> = ({ imageUrl, 
           className="absolute top-3 right-3 text-white bg-gray-800 bg-opacity-50 rounded-full p-1 hover:bg-opacity-75 transition-colors z-10"
           title="Fechar"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
         <img
           src={imageUrl}
