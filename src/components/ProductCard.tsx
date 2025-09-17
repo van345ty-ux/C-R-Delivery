@@ -14,7 +14,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
   return (
     <div className={cn(
       "group flex flex-col rounded-lg shadow-sm border h-full relative",
-      isPromotion ? "p-1 bg-red-50 border-red-300 shadow-md" : "p-2 bg-white border-gray-200",
+      isPromotion ? "p-2 bg-red-50 border-red-300 shadow-md" : "p-2 bg-white border-gray-200",
       "overflow-visible" // Crucial para a imagem 'estourar' para fora do card
     )}>
       {/* Imagem e informações básicas no topo */}
