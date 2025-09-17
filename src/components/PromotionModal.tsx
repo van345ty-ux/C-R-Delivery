@@ -12,7 +12,7 @@ interface PromotionModalProps {
 export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onClose, title, onViewPromotion }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col animate-scale-in">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col animate-scale-in">
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-xl font-bold text-gray-800">{title}</h2>
           <button onClick={() => onClose('x_button')} className="text-gray-500 hover:text-gray-700">
@@ -22,8 +22,8 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onCl
 
         <div className="p-6 overflow-y-auto space-y-4">
           {promotions.map((promo) => (
-            <div key={promo.id} className="flex items-center gap-6 bg-gray-50 p-3 rounded-lg">
-              <img src={promo.image} alt={promo.name} className="w-48 h-28 object-cover rounded-md flex-shrink-0" />
+            <div key={promo.id} className="flex items-center gap-4 bg-gray-50 p-3 rounded-lg">
+              <img src={promo.image} alt={promo.name} className="w-44 h-28 object-cover rounded-md flex-shrink-0" />
               <div className="flex-grow">
                 <h3 className="font-semibold text-gray-900 mb-1">{promo.name}</h3>
                 {promo.badge_text && (
