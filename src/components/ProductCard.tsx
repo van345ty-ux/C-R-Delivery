@@ -23,30 +23,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }
   const isPromotionCategory = product.category === 'Promoção';
 
   // Definindo classes de tamanho para o contêiner da imagem
-  // Para promoções, usaremos w-40 h-[135px]
-  // Para produtos padrão, aumentamos para w-[114px] h-[89px] (112px+2px e 87px+2px)
+  // Usaremos flex-shrink-0 para que a imagem não encolha e w-2/5 para ocupar 40% da largura do card.
+  // A altura será automática com object-cover para manter a proporção.
   const imageContainerClasses = isPromotionCategory
-    ? `w-40 h-[135px] flex-shrink-0 rounded-lg`
-    : `w-[114px] h-[89px] flex-shrink-0 rounded-lg`;
-
-  const imageStyle = isPromotionCategory
-    ? { transform: 'translateY(3px) translateX(2px)' } // Ajustado de 4px para 3px para subir 1px
-    : {
-        transform: 'translateY(9.5%) translateX(5%)',
-      };
+    ? `w-2/5 flex-shrink-0 rounded-lg`
+    : `w-1/3 flex-shrink-0 rounded-lg`; // Para produtos padrão, pode ser um pouco menor
 
   return (
     <>
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex w-full">
         {/* Image Section */}
-        <div
-          className={imageContainerClasses}
-        >
+        <div className={imageContainerClasses}>
           <img
             src={product.image}
             alt={product.name}
             className="w-full h-full object-cover rounded-lg"
-            style={imageStyle}
           />
         </div>
 
@@ -56,7 +47,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }
             <div className="flex items-start justify-between mb-1">
               <h3 className="font-semibold text-gray-900 text-base">{product.name}</h3>
               {product.badge_text && (
-                <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full ml-2 flex-shrink-0">
+                <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full ml-2 flex-shrink-0 whitespace-nowrap">
                   {product.badge_text}
                 </span>
               )}
@@ -67,18 +58,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }
           </div>
 
           <div className="flex items-end justify-between mt-2">
-            <div style={isPromotionDisplay ? { transform: 'translateY(-2px)' } : {}}>
+            <div>
               {isPromotionDisplay ? (
                 <>
                   <span className="text-xs text-gray-500 line-through">
                     R$ {product.original_price!.toFixed(2)}
                   </span>
-                  <span className="text-base font-bold text-red-600 block"> {/* Alterado para text-red-600 */}
+                  <span className="text-base font-bold text-red-600 block">
                     R$ {product.price.toFixed(2)}
                   </span>
                 </>
               ) : (
-                <span className="text-base font-bold text-red-600"> {/* Alterado para text-red-600 */}
+                <span className="text-base font-bold text-red-600">
                   R$ {product.price.toFixed(2)}
                 </span>
               )}
@@ -86,7 +77,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }
             <button
               onClick={() => setShowDetails(true)}
               className="bg-red-600 text-white py-1.5 px-3 rounded-lg hover:bg-red-700 transition-colors font-normal text-sm"
-              style={isPromotionDisplay ? { transform: 'translateY(-2px)' } : {}}
             >
               Adicionar
             </button>
@@ -121,12 +111,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }
                     <p className="text-lg text-gray-500 line-through">
                       R$ {product.original_price!.toFixed(2)}
                     </p>
-                    <p className="text-2xl font-bold text-red-600"> {/* Alterado para text-red-600 */}
+                    <p className="text-2xl font-bold text-red-600">
                       R$ {product.price.toFixed(2)}
                     </p>
                   </>
                 ) : (
-                  <p className="text-2xl font-bold text-red-600"> {/* Alterado para text-red-600 */}
+                  <p className="text-2xl font-bold text-red-600">
                     R$ {product.price.toFixed(2)}
                   </p>
                 )}

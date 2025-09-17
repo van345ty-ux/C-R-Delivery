@@ -37,7 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <img src={logoUrl} alt="C&R Sushi Logo" className="h-10 w-10 mr-2 rounded-full relative right-0.5" />
+            <img src={logoUrl} alt="C&R Sushi Logo" className="h-10 w-10 mr-2 rounded-full" />
             <div>
               <h1 className="text-xl font-bold text-red-600 whitespace-nowrap">C&R SUSHI</h1>
               <div className="flex items-center text-sm">
@@ -54,9 +54,9 @@ export const Header: React.FC<HeaderProps> = ({
             {user ? (
               <button
                 onClick={onProfileClick}
-                className="flex items-center space-x-2 text-left hover:bg-gray-100 p-2 rounded-lg transition-colors translate-x-[10px]"
+                className="flex items-center space-x-2 text-left hover:bg-gray-100 p-2 rounded-lg transition-colors"
               >
-                <div className="text-sm pl-[18px]">
+                <div className="text-sm">
                   <p className="font-medium text-gray-900">{user.name}</p>
                   <div className="flex items-center text-yellow-500">
                     {Array.from({ length: user.purchaseCount % 10 }, (_, i) => (
@@ -72,7 +72,7 @@ export const Header: React.FC<HeaderProps> = ({
             ) : (
               <button
                 onClick={onLogin}
-                className="flex items-center text-sm font-medium text-gray-700 hover:text-red-600 ml-0.5"
+                className="flex items-center text-sm font-medium text-gray-700 hover:text-red-600"
               >
                 <UserIcon className="w-4 h-4 mr-1" />
                 Entrar
