@@ -99,7 +99,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 onClick={() => handleQuantityChange(1)}
                 className="bg-gray-200 hover:bg-gray-300 rounded-full p-2"
               >
-                <Plus className="w-3 h-4" />
+                <Plus className="w-2 h-4" />
               </button>
             </div>
             <Button
