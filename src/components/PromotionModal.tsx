@@ -20,11 +20,19 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onCl
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto space-y-4">
-          {promotions.map((promo) => (
-            <div key={promo.id} className="flex items-center gap-4 bg-gray-50 p-3 rounded-lg">
-              <img src={promo.image} alt={promo.name} className="w-40 h-28 object-cover rounded-md flex-shrink-0" 
-  style={{ clipPath: "inset(0 18% 0 0)" }} />
+        <div className="p-6 overflow-y-auto space-y-4"> 
+  {promotions.map((promo) => (
+    <div key={promo.id} className="flex items-center gap-4 bg-gray-50 p-3 rounded-lg">
+      
+      {/* Container para aplicar o border-radius */}
+      <div className="w-40 h-28 rounded-md overflow-hidden flex-shrink-0">
+        <img 
+          src={promo.image} 
+          alt={promo.name} 
+          className="w-full h-full object-cover" 
+          style={{ clipPath: "inset(0 18% 0 0)" }} 
+        />
+      </div>
               <div className="flex-grow">
                 <h3 className="font-semibold text-gray-900 mb-1">{promo.name}</h3>
                 {promo.badge_text && (
