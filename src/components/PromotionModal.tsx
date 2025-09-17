@@ -34,7 +34,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onCl
                   </span>
                 )}
                 <p className="text-sm text-gray-600 line-clamp-2">{promo.description}</p>
-                <div className="flex items-center justify-between mt-2"> {/* Alterado para flex justify-between items-center */}
+                <div className="flex items-center justify-between mt-2">
                   <div className="flex items-baseline gap-2">
                     {promo.original_price && (
                       <span className="text-sm text-gray-500 line-through">
@@ -47,9 +47,9 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onCl
                   </div>
                   <Button
                     onClick={() => onAddToCart(promo)}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-md flex items-center"
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg shadow-md flex items-center"
                   >
-                    <Plus className="h-4 w-4 mr-1" />
+                    <Plus className="h-3 w-3 mr-1" />
                     Adicionar
                   </Button>
                 </div>
