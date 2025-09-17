@@ -1,15 +1,17 @@
 import React from 'react';
 import { Product } from '../App';
-import { X } from 'lucide-react';
+import { X, Plus } from 'lucide-react'; // Importando Plus
+import { Button } from './ui/button'; // Importando Button
 
 interface PromotionModalProps {
   promotions: Product[];
   onClose: (source?: 'full_menu' | 'x_button') => void;
   title: string;
   onViewPromotion: () => void;
+  onAddToCart: (product: Product, quantity?: number, observations?: string) => void; // Adicionando onAddToCart
 }
 
-export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onClose, title, onViewPromotion }) => {
+export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onClose, title, onViewPromotion, onAddToCart }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
       <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col animate-scale-in">
@@ -32,15 +34,24 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onCl
                   </span>
                 )}
                 <p className="text-sm text-gray-600 line-clamp-2">{promo.description}</p>
-                <div className="flex items-baseline gap-2 mt-1">
-                  {promo.original_price && (
-                    <span className="text-sm text-gray-500 line-through">
-                      R$ {promo.original_price.toFixed(2)}
+                <div className="flex items-center justify-between mt-2"> {/* Alterado para flex justify-between items-center */}
+                  <div className="flex items-baseline gap-2">
+                    {promo.original_price && (
+                      <span className="text-sm text-gray-500 line-through">
+                        R$ {promo.original_price.toFixed(2)}
+                      </span>
+                    )}
+                    <span className="text-lg font-bold text-red-600">
+                      R$ {promo.price.toFixed(2)}
                     </span>
-                  )}
-                  <span className="text-lg font-bold text-red-600">
-                    R$ {promo.price.toFixed(2)}
-                  </span>
+                  </div>
+                  <Button
+                    onClick={() => onAddToCart(promo)}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-md flex items-center"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Adicionar
+                  </Button>
                 </div>
               </div>
             </div>

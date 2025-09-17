@@ -181,6 +181,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           onClose={handleClosePromotionModal}
           title={promotionModalTitle}
           onViewPromotion={handleViewPromotion}
+          onAddToCart={handleAddToCart} {/* Passando onAddToCart aqui */}
         />
       )}
       <Footer /> {/* Adicionando o Footer aqui */}
