@@ -29,7 +29,7 @@ export const ImageEnlargeModal: React.FC<ImageEnlargeModalProps> = ({ imageUrl, 
           src={imageUrl}
           alt="Imagem ampliada"
           className="max-w-full max-h-full object-contain"
-          style={{ transform: 'scale(0.8)' }} // 70% maior
+          style={{ transform: 'scale(1.0)' }} // 70% maior
         />
       </div>
     </div>
