@@ -22,8 +22,8 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onCl
 
         <div className="p-6 overflow-y-auto space-y-4">
           {promotions.map((promo) => (
-            <div key={promo.id} className="flex items-center gap-2 bg-gray-50 p-4 rounded-lg">
-              <img src={promo.image} alt={promo.name} className="w-40 h-32 object-cover rounded-md flex-shrink-0" />
+            <div key={promo.id} className="flex items-center gap-4 bg-gray-50 p-3 rounded-lg">
+              <img src={promo.image} alt={promo.name} className="w-36 h-28 object-cover rounded-md flex-shrink-0" />
               <div className="flex-grow">
                 <h3 className="font-semibold text-gray-900 mb-1">{promo.name}</h3>
                 {promo.badge_text && (
@@ -47,7 +47,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onCl
           ))}
         </div>
 
-        <div className="p-4 bg-gray-50 border-t space-y-2">
+        <div className="p-5 bg-gray-50 border-t space-y-2">
           <button
             onClick={onViewPromotion}
             className="w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors"
