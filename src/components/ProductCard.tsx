@@ -14,7 +14,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
   return (
     <div className={cn(
       "flex flex-col rounded-lg shadow-sm border h-full",
-      isPromotion ? "p-1 bg-red-50 border-red-300 shadow-md" : "p-1 gap-1 bg-white border-gray-200" // Ajustado padding para p-2
+      isPromotion ? "p-1 bg-red-50 border-red-300 shadow-md" : "p-1 gap-0 bg-white border-gray-200" // Ajustado padding para p-2
     )}>
       {/* Imagem e informações básicas no topo */}
       <div className={cn(
