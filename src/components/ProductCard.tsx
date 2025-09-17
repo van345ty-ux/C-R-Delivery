@@ -13,7 +13,7 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, isPromotion = false }) => {
   return (
     <div className={cn(
-      "flex flex-col p-4 rounded-lg shadow-sm border h-full", // Alterado para flex-col e adicionado h-full
+      "flex flex-col p-3 rounded-lg shadow-sm border h-full", // Alterado p-4 para p-3
       isPromotion ? "bg-red-50 border-red-300 shadow-md" : "bg-white border-gray-200"
     )}>
       {/* Imagem e informações básicas no topo */}
@@ -23,13 +23,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
           alt={product.name} 
           className={cn(
             "object-cover rounded-md flex-shrink-0",
-            isPromotion ? "w-32 h-32" : "w-24 h-24" // Tamanho maior para promoções
+            isPromotion ? "w-32 h-32" : "w-20 h-20" // Alterado w-24 h-24 para w-20 h-20 para produtos normais
           )} 
         />
         <div className="flex-grow">
           <h3 className="font-semibold text-gray-900 text-base">{product.name}</h3>
           {product.badge_text && (
-            <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full mt-1 mb-1 block w-fit whitespace-nowrap"> {/* Adicionado whitespace-nowrap */}
+            <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full mt-1 mb-1 block w-fit whitespace-nowrap">
               {product.badge_text}
             </span>
           )}
