@@ -44,7 +44,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           </button>
         </div>
 
-        <div className="p-4 overflow-y-auto flex-grow">
+        <div className="p-6 overflow-y-auto flex-grow">
           <img
             src={product.image}
             alt={product.name}
