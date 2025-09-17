@@ -13,29 +13,31 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, isPromotion = false }) => {
   return (
     <div className={cn(
-      "flex flex-col rounded-lg shadow-sm border h-full",
-      isPromotion ? "p-4 bg-red-50 border-red-300 shadow-md" : "p-2 bg-white border-gray-200" // Ajustado padding para p-2
+      "group flex flex-col rounded-lg shadow-sm border h-full relative", // Adicionado 'group' e 'relative'
+      isPromotion ? "p-4 bg-red-50 border-red-300 shadow-md" : "p-2 bg-white border-gray-200",
+      "overflow-visible" // Permite que o conteúdo (imagem) transborde o card
     )}>
       {/* Imagem e informações básicas no topo */}
       <div className={cn(
         "flex items-center",
-        isPromotion ? "gap-4 mb-2" : "gap-2 mb-1" // Ajustado gap para o card normal
+        isPromotion ? "gap-4 mb-2" : "gap-2 mb-1"
       )}>
         <img 
           src={product.image} 
           alt={product.name} 
           className={cn(
-            "object-cover rounded-md flex-shrink-0",
-            isPromotion ? "w-32 h-32" : "w-16 h-16" // Reduzido o tamanho da imagem para o card normal
+            "object-cover rounded-md flex-shrink-0 transition-transform duration-300 relative z-10", // Adicionado 'relative z-10' e transição
+            isPromotion ? "w-32 h-32" : "w-16 h-16", 
+            "group-hover:scale-175 group-hover:z-20 group-hover:shadow-lg" // Efeito de pop-up ao passar o mouse
           )} 
         />
         <div className="flex-grow">
           <h3 className={cn(
             "font-semibold text-gray-900",
-            isPromotion ? "text-base" : "text-base" // Mantido text-base para o título
+            isPromotion ? "text-base" : "text-base"
           )}>{product.name}</h3>
           {product.badge_text && (
-            <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full mt-1 mb-1 block w-fit line-clamp-1"> {/* Removido whitespace-nowrap e adicionado line-clamp-1 */}
+            <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full mt-1 mb-1 block w-fit line-clamp-1">
               {product.badge_text}
             </span>
           )}
@@ -45,7 +47,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
       {/* Descrição do produto, ocupando o espaço restante */}
       <p className={cn(
         "text-gray-600 line-clamp-2 flex-grow",
-        isPromotion ? "text-sm mb-2" : "text-sm mb-1" // Mantido text-sm para a descrição
+        isPromotion ? "text-sm mb-2" : "text-sm mb-1"
       )}>{product.description}</p>
       
       {/* Preço e botão no canto inferior direito */}
@@ -54,14 +56,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
           {product.original_price && (
             <span className={cn(
               "text-gray-500 line-through",
-              isPromotion ? "text-sm" : "text-sm" // Mantido text-sm para o preço original
+              isPromotion ? "text-sm" : "text-sm"
             )}>
               R$ {product.original_price.toFixed(2)}
             </span>
           )}
           <span className={cn(
             "font-bold text-red-600",
-            isPromotion ? "text-lg" : "text-lg" // Mantido text-lg para o preço
+            isPromotion ? "text-lg" : "text-lg"
           )}>
             R$ {product.price.toFixed(2)}
           </span>
@@ -71,7 +73,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
           className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-md flex-shrink-0 h-8 w-8 flex items-center justify-center"
           size="icon"
         >
-          <Plus className="h-5 w-5" /> {/* Mantido h-5 w-5 para o ícone */}
+          <Plus className="h-5 w-5" />
         </Button>
       </div>
     </div>
