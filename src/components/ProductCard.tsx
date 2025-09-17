@@ -39,8 +39,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
       )}>
         <div
           className={cn(
-            "relative rounded-md flex-shrink-0 overflow-hidden",
-            isPromotion ? "w-44 h-32 object-left" : "w[50%] h-24",
+            "relative rounded-md object-left flex-shrink-0 overflow-hidden",
+            isPromotion ? "w-44 h-32 " : "w[50%] h-24",
             "lg:cursor-pointer" // Indica que é clicável em desktop
           )}
           onMouseEnter={() => setShowAmplifyText(true)}
