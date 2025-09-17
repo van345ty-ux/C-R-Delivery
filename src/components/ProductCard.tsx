@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Product } from '../App';
 import { Button } from './ui/button';
 import { Plus } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { ImageEnlargeModal } from './ImageEnlargeModal'; // Importando o novo componente
 
 interface ProductCardProps {
   product: Product;
@@ -11,26 +12,52 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, isPromotion = false }) => {
+  const [showAmplifyText, setShowAmplifyText] = useState(false);
+  const [showEnlargeModal, setShowEnlargeModal] = useState(false);
+  const [enlargedImageUrl, setEnlargedImageUrl] = useState('');
+
+  const handleImageClick = () => {
+    setEnlargedImageUrl(product.image);
+    setShowEnlargeModal(true);
+  };
+
+  const handleCloseEnlargeModal = () => {
+    setShowEnlargeModal(false);
+    setEnlargedImageUrl('');
+  };
+
   return (
     <div className={cn(
       "group flex flex-col rounded-lg shadow-sm border h-full relative",
       isPromotion ? "p-4 bg-red-50 border-red-300 shadow-md" : "p-2 bg-white border-gray-200",
-      "overflow-visible" // Crucial para a imagem 'estourar' para fora do card
+      "overflow-visible"
     )}>
       {/* Imagem e informações básicas no topo */}
       <div className={cn(
         "flex items-center",
         isPromotion ? "gap-4 mb-2" : "gap-2 mb-1"
       )}>
-        <img 
-          src={product.image} 
-          alt={product.name} 
+        <div
           className={cn(
-            "object-cover rounded-md flex-shrink-0 transition-transform duration-300 relative", // Removido z-10 da base
-            isPromotion ? "w-32 h-32" : "w-16 h-16", 
-            "lg:group-hover:scale-200 lg:group-hover:z-50 lg:group-hover:shadow-lg" // Apenas em desktop, escala aumentada, z-index mais alto
-          )} 
-        />
+            "relative rounded-md flex-shrink-0 overflow-hidden",
+            isPromotion ? "w-32 h-32" : "w-16 h-16",
+            "lg:cursor-pointer" // Indica que é clicável em desktop
+          )}
+          onMouseEnter={() => setShowAmplifyText(true)}
+          onMouseLeave={() => setShowAmplifyText(false)}
+          onClick={handleImageClick}
+        >
+          <img 
+            src={product.image} 
+            alt={product.name} 
+            className="w-full h-full object-cover transition-transform duration-300"
+          />
+          {showAmplifyText && (
+            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
+              <span className="text-white text-sm font-bold">Amplie</span>
+            </div>
+          )}
+        </div>
         <div className="flex-grow">
           <h3 className={cn(
             "font-semibold text-gray-900",
@@ -76,6 +103,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
           <Plus className="h-5 w-5" />
         </Button>
       </div>
+
+      {showEnlargeModal && (
+        <ImageEnlargeModal imageUrl={enlargedImageUrl} onClose={handleCloseEnlargeModal} />
+      )}
     </div>
   );
 };
