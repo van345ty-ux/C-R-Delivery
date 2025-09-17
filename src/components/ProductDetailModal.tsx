@@ -48,7 +48,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           <img
             src={product.image}
             alt={product.name}
-            className="w-full h-48 object-cover rounded-lg mb-2"
+            className="w-full h-48 object-cover rounded-lg mb-4"
           />
 
           {product.badge_text && (
