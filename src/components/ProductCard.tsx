@@ -35,7 +35,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
             isPromotion ? "text-base" : "text-base" // Mantido text-base para o título
           )}>{product.name}</h3>
           {product.badge_text && (
-            <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full mt-1 mb-1 block w-fit whitespace-nowrap">
+            <span className="bg-red-600 text-white text-xs font-bold px-4 py-1 rounded-full mt-1 mb-1 block w-fit whitespace-nowrap">
               {product.badge_text}
             </span>
           )}
