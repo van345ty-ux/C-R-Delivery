@@ -19,20 +19,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
       {/* Imagem e informações básicas no topo */}
       <div className={cn(
         "flex items-center",
-        isPromotion ? "gap-4 mb-2" : "gap-1 mb-1"
+        isPromotion ? "gap-4 mb-2" : "gap-1 mb-1" // Reduzindo o gap para o card normal
       )}>
         <img 
           src={product.image} 
           alt={product.name} 
           className={cn(
             "object-cover rounded-md flex-shrink-0",
-            isPromotion ? "w-32 h-32" : "w-24 h-24"
+            isPromotion ? "w-32 h-32" : "w-20 h-20" // Reduzindo o tamanho da imagem para o card normal
           )} 
         />
         <div className="flex-grow">
           <h3 className={cn(
             "font-semibold text-gray-900",
-            isPromotion ? "text-base" : "text-xs"
+            isPromotion ? "text-base" : "text-sm" // Mantendo o tamanho da fonte do título
           )}>{product.name}</h3>
           {product.badge_text && (
             <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full mt-1 mb-1 block w-fit whitespace-nowrap">
@@ -45,32 +45,33 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
       {/* Descrição do produto, ocupando o espaço restante */}
       <p className={cn(
         "text-gray-600 line-clamp-2 flex-grow",
-        isPromotion ? "text-sm mb-2" : "text-xs mb-1"
+        isPromotion ? "text-sm mb-2" : "text-xs mb-1" // Mantendo o tamanho da fonte da descrição
       )}>{product.description}</p>
       
       {/* Preço e botão no canto inferior direito */}
       <div className="flex items-baseline justify-between mt-auto">
-        <div className="flex items-baseline gap-1">
+        <div className="flex items-baseline gap-1"> {/* Reduzindo o gap para o card normal */}
           {product.original_price && (
             <span className={cn(
               "text-gray-500 line-through",
-              isPromotion ? "text-sm" : "text-xs"
+              isPromotion ? "text-sm" : "text-xs" // Mantendo o tamanho da fonte do preço original
             )}>
               R$ {product.original_price.toFixed(2)}
             </span>
           )}
           <span className={cn(
             "font-bold text-red-600",
-            isPromotion ? "text-lg" : "text-sm"
+            isPromotion ? "text-lg" : "text-base" // Mantendo o tamanho da fonte do preço
           )}>
             R$ {product.price.toFixed(2)}
           </span>
         </div>
         <Button
           onClick={() => onAddToCart(product)}
-          className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-md flex-shrink-0 h-8 w-8 flex items-center justify-center"
+          className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-md flex-shrink-0 h-8 w-8 flex items-center justify-center" // Mantendo o tamanho do botão
+          size="icon"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-5 w-5" /> {/* Mantendo o tamanho do ícone */}
         </Button>
       </div>
     </div>
