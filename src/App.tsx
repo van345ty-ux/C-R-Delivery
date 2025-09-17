@@ -508,16 +508,23 @@ function App() {
   };
 
   const addToCart = (product: Product, quantity: number = 1, observations?: string) => {
-    const existingItem = cart.find(item => item.product.id === product.id);
-    if (existingItem) {
-      setCart(cart.map(item =>
-        item.product.id === product.id
-          ? { ...item, quantity: item.quantity + quantity, observations }
-          : item
-      ));
-    } else {
-      setCart([...cart, { product, quantity, observations }]);
-    }
+    setCart(prevCart => {
+      const existingItemIndex = prevCart.findIndex(item => item.product.id === product.id);
+  
+      if (existingItemIndex > -1) {
+        // Atualiza item existente
+        const updatedCart = [...prevCart];
+        updatedCart[existingItemIndex] = {
+          ...updatedCart[existingItemIndex],
+          quantity: updatedCart[existingItemIndex].quantity + quantity,
+          observations: observations // Mantém ou atualiza observações
+        };
+        return updatedCart;
+      } else {
+        // Adiciona novo item
+        return [...prevCart, { product, quantity, observations }];
+      }
+    });
   };
 
   const removeFromCart = (productId: string) => {
