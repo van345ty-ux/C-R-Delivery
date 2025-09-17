@@ -26,7 +26,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
           alt={product.name} 
           className={cn(
             "object-cover rounded-md flex-shrink-0",
-            isPromotion ? "w-36 h-32" : "w-32 h-24" // Reduzido o tamanho da imagem para o card normal
+            isPromotion ? "w-36 h-32" : "w-36 h-24" // Reduzido o tamanho da imagem para o card normal
           )} 
         />
         <div className="flex-grow">
