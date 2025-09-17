@@ -6,28 +6,28 @@ import { cn } from '../utils/cn';
 
 interface ProductCardProps {
   product: Product;
-  onAddToCart: (product: Product) => void;
+  onProductClick: (product: Product) => void; // Alterado para onProductClick
   isPromotion?: boolean;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, isPromotion = false }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick, isPromotion = false }) => {
   return (
     <div className={cn(
       "group flex flex-col rounded-lg shadow-sm border h-full relative",
-      isPromotion ? "p-2 bg-red-50 border-red-300 shadow-md" : "p-2 bg-white border-gray-200",
+      isPromotion ? "p-4 bg-red-50 border-red-300 shadow-md" : "p-2 bg-white border-gray-200",
       "overflow-visible" // Crucial para a imagem 'estourar' para fora do card
     )}>
       {/* Imagem e informações básicas no topo */}
       <div className={cn(
         "flex items-center",
-        isPromotion ? "gap-4 mb-4" : "gap-2 mb-1"
+        isPromotion ? "gap-4 mb-2" : "gap-2 mb-1"
       )}>
         <img 
           src={product.image} 
           alt={product.name} 
           className={cn(
             "object-cover rounded-md flex-shrink-0 transition-transform duration-300 relative", // Removido z-10 da base
-            isPromotion ? "w-[50%] h-[100%]" : "w-[40%] h-26", 
+            isPromotion ? "w-32 h-32" : "w-16 h-16", 
             "lg:group-hover:scale-200 lg:group-hover:z-50 lg:group-hover:shadow-lg" // Apenas em desktop, escala aumentada, z-index mais alto
           )} 
         />
@@ -69,7 +69,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
           </span>
         </div>
         <Button
-          onClick={() => onAddToCart(product)}
+          onClick={() => onProductClick(product)} {/* Chama onProductClick */}
           className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-md flex-shrink-0 h-8 w-8 flex items-center justify-center"
           size="icon"
         >

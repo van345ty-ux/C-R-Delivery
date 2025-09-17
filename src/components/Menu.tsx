@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { ProductCard } from './ProductCard';
 import { HighlightCard } from './HighlightCard';
+import { ProductDetailModal } from './ProductDetailModal'; // Importando o novo modal
 import { Product, Highlight } from '../App';
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
@@ -29,7 +30,7 @@ const categories = [
   'Sushi',
   'Temaki',
   'Combinados',
-  'Especiais',
+  'Sashimi',
   'Bebidas'
 ];
 
@@ -53,6 +54,8 @@ export const Menu: React.FC<MenuProps> = ({
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showProductDetailModal, setShowProductDetailModal] = useState(false); // Estado para o modal
+  const [selectedProductForDetail, setSelectedProductForDetail] = useState<Product | null>(null); // Produto selecionado
 
   useEffect(() => {
     const fetchData = async () => {
@@ -87,6 +90,12 @@ export const Menu: React.FC<MenuProps> = ({
 
     fetchData();
   }, []);
+
+  // Handler para abrir o modal de detalhes do produto
+  const handleProductClick = (product: Product) => {
+    setSelectedProductForDetail(product);
+    setShowProductDetailModal(true);
+  };
 
   // Filtra todos os produtos disponíveis e que correspondem ao termo de busca
   const allAvailableAndSearchedProducts = products.filter(product => 
@@ -230,7 +239,7 @@ export const Menu: React.FC<MenuProps> = ({
               <ProductCard
                 key={product.id}
                 product={product}
-                onAddToCart={onAddToCart}
+                onProductClick={handleProductClick} // Passa o novo handler
                 isPromotion={true}
               />
             ))}
@@ -247,7 +256,7 @@ export const Menu: React.FC<MenuProps> = ({
               <ProductCard
                 key={product.id}
                 product={product}
-                onAddToCart={onAddToCart}
+                onProductClick={handleProductClick} // Passa o novo handler
                 isPromotion={false}
               />
             ))}
@@ -267,6 +276,16 @@ export const Menu: React.FC<MenuProps> = ({
             <p className="text-gray-500 text-lg">Nenhum produto encontrado</p>
           )}
         </div>
+      )}
+
+      {/* Product Detail Modal */}
+      {showProductDetailModal && selectedProductForDetail && (
+        <ProductDetailModal
+          product={selectedProductForDetail}
+          onClose={() => setShowProductDetailModal(false)}
+          onAddToCart={onAddToCart}
+          isStoreOpen={isStoreOpen}
+        />
       )}
     </div>
   );
