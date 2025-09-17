@@ -14,12 +14,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
   return (
     <div className={cn(
       "flex flex-col rounded-lg shadow-sm border h-full",
-      isPromotion ? "p-4 bg-red-50 border-red-300 shadow-md" : "p-2 bg-white border-gray-200"
+      isPromotion ? "p-4 bg-red-50 border-red-300 shadow-md" : "p-1 bg-white border-gray-200"
     )}>
       {/* Imagem e informações básicas no topo */}
       <div className={cn(
-        "flex items-center mb-2",
-        isPromotion ? "gap-4" : "gap-2"
+        "flex items-center",
+        isPromotion ? "gap-4 mb-2" : "gap-2 mb-1"
       )}>
         <img 
           src={product.image} 
@@ -44,8 +44,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
 
       {/* Descrição do produto, ocupando o espaço restante */}
       <p className={cn(
-        "text-gray-600 line-clamp-2 mb-2 flex-grow",
-        isPromotion ? "text-sm" : "text-xs"
+        "text-gray-600 line-clamp-2 flex-grow",
+        isPromotion ? "text-sm mb-2" : "text-xs mb-1"
       )}>{product.description}</p>
       
       {/* Preço e botão no canto inferior direito */}
