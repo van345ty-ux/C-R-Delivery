@@ -31,7 +31,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
         />
         <div className="flex-grow">
           <h3 className={cn(
-            "font-semibold text-gray-700",
+            "font-semibold text-gray-900",
             isPromotion ? "text-base" : "text-base" // Mantido text-base para o título
           )}>{product.name}</h3>
           {product.badge_text && (
