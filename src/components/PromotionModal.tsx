@@ -27,7 +27,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onCl
               <div className="flex-grow">
                 <h3 className="font-semibold text-gray-900 mb-1">{promo.name}</h3>
                 {promo.badge_text && (
-                  <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap block w-fit mb-1">
+                  <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full block w-fit mb-1">
                     {promo.badge_text}
                   </span>
                 )}
