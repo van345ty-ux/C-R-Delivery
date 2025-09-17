@@ -105,7 +105,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             <Button
               onClick={handleAddToCartClick}
               disabled={!isStoreOpen}
-              className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg shadow-md flex items-center text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg shadow-md flex items-center text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus className="h-5 w-5 mr-2" />
               Adicionar ao Carrinho
