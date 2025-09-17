@@ -1,44 +1,69 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import React from 'react';
+import { Product } from '../App';
+import { X } from 'lucide-react';
 
-export function PromotionModal({ promotion, isOpen, onClose }) {
-  if (!promotion) {
-    return null;
-  }
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] bg-white p-6 rounded-lg shadow-lg">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-gray-800">{promotion.title}</DialogTitle>
-          <DialogDescription className="text-gray-600 mt-2">
-            {promotion.description}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="mt-4">
-          <img src={promotion.image} alt={promotion.title} className="w-full h-48 object-cover rounded-md" />
-        </div>
-        <div className="mt-4 flex justify-between items-center">
-          <div>
-            <p className="text-sm text-gray-500">Válido de {new Date(promotion.valid_from).toLocaleDateString()}</p>
-            <p className="text-sm text-gray-500">Até {new Date(promotion.valid_to).toLocaleDateString()}</p>
-          </div>
-          {promotion.badge_text && (
-            <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
-              {promotion.badge_text}
-            </span>
-          )}
-        </div>
-        <div className="mt-4 text-center">
-          <Badge variant="destructive" className="text-lg p-2">
-            {promotion.discount}% de desconto
-          </Badge>
-        </div>
-        <div className="mt-6 flex justify-end">
-          <Button onClick={onClose} variant="outline">Fechar</Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+interface PromotionModalProps {
+  promotions: Product[];
+  onClose: (source?: 'full_menu' | 'x_button') => void;
+  title: string;
+  onViewPromotion: () => void;
 }
+
+export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onClose, title, onViewPromotion }) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col animate-scale-in">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-xl font-bold text-gray-800">{title}</h2>
+          <button onClick={() => onClose('x_button')} className="text-gray-500 hover:text-gray-700">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="p-6 overflow-y-auto space-y-4">
+          {promotions.map((promo) => (
+            <div key={promo.id} className="flex items-center gap-4 bg-gray-50 p-3 rounded-lg">
+              <img src={promo.image} alt={promo.name} className="w-20 h-20 object-cover rounded-md flex-shrink-0" />
+              <div className="flex-grow">
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="font-semibold text-gray-900">{promo.name}</h3>
+                  {promo.badge_text && (
+                    <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap ml-2">
+                      {promo.badge_text}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600 line-clamp-2">{promo.description}</p>
+                <div className="flex items-baseline gap-2 mt-1">
+                  {promo.original_price && (
+                    <span className="text-sm text-gray-500 line-through">
+                      R$ {promo.original_price.toFixed(2)}
+                    </span>
+                  )}
+                  <span className="text-lg font-bold text-red-600">
+                    R$ {promo.price.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="p-4 bg-gray-50 border-t space-y-2">
+          <button
+            onClick={onViewPromotion}
+            className="w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors"
+          >
+            Ver no Cardápio
+          </button>
+          <button
+            onClick={() => onClose('full_menu')}
+            className="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+          >
+            Ver Cardápio Completo
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
