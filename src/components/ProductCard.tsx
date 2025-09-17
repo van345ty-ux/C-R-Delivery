@@ -53,7 +53,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
         </div>
         <Button
           onClick={() => onAddToCart(product)}
-          className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-md flex-shrink-0"
+          className="bg-red-600 hover:bg-red-700 text-white p-4 rounded-full shadow-md flex-shrink-0"
           size="icon"
         >
           <Plus className="h-5 w-5" />
