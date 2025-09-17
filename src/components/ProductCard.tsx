@@ -45,7 +45,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
       {/* Descrição do produto, ocupando o espaço restante */}
       <p className={cn(
         "text-gray-600 line-clamp-2 flex-grow",
-        isPromotion ? "text-sm mb-2" : "text-sm mb-1" // Mantido text-sm para a descrição
+        isPromotion ? "text-sm mb-4" : "text-sm mb-1" // Mantido text-sm para a descrição
       )}>{product.description}</p>
       
       {/* Preço e botão no canto inferior direito */}
