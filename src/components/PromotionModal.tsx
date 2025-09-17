@@ -25,7 +25,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onCl
     <div key={promo.id} className="flex items-center gap-4 bg-gray-50 p-3 rounded-lg">
       
       {/* Container para aplicar o border-radius */}
-      <div className="w-40 h-28 rounded-md overflow-hidden flex-shrink-0">
+      <div className="w-44 h-28 rounded-md overflow-hidden flex-shrink-0">
         <img 
           src={promo.image} 
           alt={promo.name} 
