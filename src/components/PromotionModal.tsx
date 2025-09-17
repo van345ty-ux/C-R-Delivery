@@ -26,8 +26,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onCl
               <img 
     src={promo.image} 
     alt={promo.name} 
-    className="w-full h-full object-cover" 
-    style={{ clipPath: "inset(0 20% 0 0)" }} 
+    className="w-[120%] h-full object-cover -translate-x-[20%]" 
   />
               <div className="flex-grow">
                 <h3 className="font-semibold text-gray-900 mb-1">{promo.name}</h3>
