@@ -23,12 +23,10 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onCl
         <div className="p-6 overflow-y-auto space-y-4">
           {promotions.map((promo) => (
             <div key={promo.id} className="flex items-center gap-4 bg-gray-50 p-3 rounded-lg">
-              <img src={promo.image} alt={promo.name} className="w-20 h-20 object-cover rounded-md flex-shrink-0" />
+              <img src={promo.image} alt={promo.name} className="w-24 h-24 object-cover rounded-md flex-shrink-0" />
               <div className="flex-grow">
-                {/* O nome da promoção agora ocupa sua própria linha */}
                 <h3 className="font-semibold text-gray-900 mb-1">{promo.name}</h3>
                 {promo.badge_text && (
-                  // O selo agora é um elemento de bloco e aparece abaixo do nome
                   <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap block w-fit mb-1">
                     {promo.badge_text}
                   </span>
