@@ -20,7 +20,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
       {/* Imagem e informações básicas no topo */}
       <div className={cn(
         "flex items-center",
-        isPromotion ? "gap-4 mb-1" : "gap-2 mb-1"
+        isPromotion ? "gap-3 mb-1" : "gap-2 mb-1"
       )}>
         <img 
           src={product.image} 
