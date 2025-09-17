@@ -13,7 +13,7 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, isPromotion = false }) => {
   return (
     <div className={cn(
-      "flex flex-col p-3 rounded-lg shadow-sm border h-full", // Alterado p-4 para p-3
+      "flex flex-col p-1 rounded-lg shadow-sm border h-full", // Alterado p-4 para p-3
       isPromotion ? "bg-red-50 border-red-300 shadow-md" : "bg-white border-gray-200"
     )}>
       {/* Imagem e informações básicas no topo */}
