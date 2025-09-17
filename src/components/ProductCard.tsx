@@ -2,32 +2,38 @@ import React from 'react';
 import { Product } from '../App';
 import { Button } from './ui/button';
 import { Plus } from 'lucide-react';
-import { cn } from '../utils/cn'; // Importando cn para combinar classes
+import { cn } from '../utils/cn';
 
 interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product) => void;
-  isPromotion?: boolean; // Nova prop para identificar promoções
+  isPromotion?: boolean;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, isPromotion = false }) => {
   return (
     <div className={cn(
-      "flex flex-col p-2 rounded-lg shadow-sm border h-full", // Alterado p-4 para p-3
-      isPromotion ? "bg-red-50 border-red-300 shadow-md" : "bg-white border-gray-200"
+      "flex flex-col rounded-lg shadow-sm border h-full",
+      isPromotion ? "p-4 bg-red-50 border-red-300 shadow-md" : "p-2 bg-white border-gray-200"
     )}>
       {/* Imagem e informações básicas no topo */}
-      <div className="flex items-center gap-4 mb-2">
+      <div className={cn(
+        "flex items-center mb-2",
+        isPromotion ? "gap-4" : "gap-2"
+      )}>
         <img 
           src={product.image} 
           alt={product.name} 
           className={cn(
             "object-cover rounded-md flex-shrink-0",
-            isPromotion ? "w-32 h-32" : "w-20 h-20" // Alterado w-24 h-24 para w-20 h-20 para produtos normais
+            isPromotion ? "w-32 h-32" : "w-20 h-20"
           )} 
         />
         <div className="flex-grow">
-          <h3 className="font-semibold text-gray-900 text-base">{product.name}</h3>
+          <h3 className={cn(
+            "font-semibold text-gray-900",
+            isPromotion ? "text-base" : "text-sm"
+          )}>{product.name}</h3>
           {product.badge_text && (
             <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full mt-1 mb-1 block w-fit whitespace-nowrap">
               {product.badge_text}
@@ -37,17 +43,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
       </div>
 
       {/* Descrição do produto, ocupando o espaço restante */}
-      <p className="text-sm text-gray-600 line-clamp-2 mb-2 flex-grow">{product.description}</p>
+      <p className={cn(
+        "text-gray-600 line-clamp-2 mb-2 flex-grow",
+        isPromotion ? "text-sm" : "text-xs"
+      )}>{product.description}</p>
       
       {/* Preço e botão no canto inferior direito */}
-      <div className="flex items-baseline justify-between mt-auto"> {/* mt-auto para empurrar para baixo, justify-between para alinhar */}
+      <div className="flex items-baseline justify-between mt-auto">
         <div className="flex items-baseline gap-2">
           {product.original_price && (
-            <span className="text-sm text-gray-500 line-through">
+            <span className={cn(
+              "text-gray-500 line-through",
+              isPromotion ? "text-sm" : "text-xs"
+            )}>
               R$ {product.original_price.toFixed(2)}
             </span>
           )}
-          <span className="text-lg font-bold text-red-600">
+          <span className={cn(
+            "font-bold text-red-600",
+            isPromotion ? "text-lg" : "text-base"
+          )}>
             R$ {product.price.toFixed(2)}
           </span>
         </div>
