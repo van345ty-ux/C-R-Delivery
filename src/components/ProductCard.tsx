@@ -2,16 +2,28 @@ import React from 'react';
 import { Product } from '../App';
 import { Button } from './ui/button';
 import { Plus } from 'lucide-react';
+import { cn } from '../utils/cn'; // Importando cn para combinar classes
 
 interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product) => void;
+  isPromotion?: boolean; // Nova prop para identificar promoções
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, isPromotion = false }) => {
   return (
-    <div className="flex items-center gap-4 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-      <img src={product.image} alt={product.name} className="w-24 h-24 object-cover rounded-md flex-shrink-0" />
+    <div className={cn(
+      "flex items-center gap-4 p-4 rounded-lg shadow-sm border",
+      isPromotion ? "bg-red-50 border-red-300 shadow-md" : "bg-white border-gray-200"
+    )}>
+      <img 
+        src={product.image} 
+        alt={product.name} 
+        className={cn(
+          "object-cover rounded-md flex-shrink-0",
+          isPromotion ? "w-28 h-28" : "w-24 h-24" // Tamanho maior para promoções
+        )} 
+      />
       <div className="flex-grow">
         <h3 className="font-semibold text-gray-900 text-base">{product.name}</h3>
         {product.badge_text && (
