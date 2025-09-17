@@ -23,7 +23,8 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onCl
         <div className="p-6 overflow-y-auto space-y-4">
           {promotions.map((promo) => (
             <div key={promo.id} className="flex items-center gap-4 bg-gray-50 p-3 rounded-lg">
-              <img src={promo.image} alt={promo.name} className="w-[100%] h-full object-cover -translate-x-[20%]" />
+              <img src={promo.image} alt={promo.name} className="w-[120%] h-full object-cover translate-x-[20%]" 
+  />
               <div className="flex-grow">
                 <h3 className="font-semibold text-gray-900 mb-1">{promo.name}</h3>
                 {promo.badge_text && (
