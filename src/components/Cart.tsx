@@ -66,7 +66,11 @@ export const Cart: React.FC<CartProps> = ({
   const [firstAvailableCoupon, setFirstAvailableCoupon] = useState<Coupon | null>(null); // Armazena o primeiro cupom disponível
   const couponInputRef = useRef<HTMLInputElement>(null); // Referência para o input do cupom
   const [showMercadoPagoWarning, setShowMercadoPagoWarning] = useState(false); // Estado para o pop-up de aviso
-  const [hasSeenMercadoPagoWarning, setHasSeenMercadoPagoWarning] = useState(false); // Para evitar que o pop-up apareça novamente
+  
+  // Novo estado para controlar se o redirecionamento do Mercado Pago foi reconhecido
+  const [isMercadoPagoAcknowledged, setIsMercadoPagoAcknowledged] = useState(() => {
+    return JSON.parse(localStorage.getItem('hasSeenMercadoPagoWarning') || 'false');
+  });
 
   // Effect to save form data to localStorage
   useEffect(() => {
@@ -75,15 +79,16 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.setItem('cartAddress', address);
     localStorage.setItem('cartCouponCode', couponCode);
     localStorage.setItem('cartAppliedCoupon', JSON.stringify(appliedCoupon));
-    localStorage.setItem('hasSeenMercadoPagoWarning', JSON.stringify(hasSeenMercadoPagoWarning)); // Persistir o estado do aviso
-  }, [deliveryType, paymentMethod, address, couponCode, appliedCoupon, hasSeenMercadoPagoWarning]);
+    // hasSeenMercadoPagoWarning é gerenciado diretamente em handleMercadoPagoConfirm e handleFinishOrder
+  }, [deliveryType, paymentMethod, address, couponCode, appliedCoupon]);
 
-  // Effect to load hasSeenMercadoPagoWarning from localStorage on mount
+  // Listener para mudanças no localStorage (útil para sincronizar entre abas ou após reload)
   useEffect(() => {
-    const savedWarning = localStorage.getItem('hasSeenMercadoPagoWarning');
-    if (savedWarning) {
-      setHasSeenMercadoPagoWarning(JSON.parse(savedWarning));
-    }
+    const handleStorageChange = () => {
+      setIsMercadoPagoAcknowledged(JSON.parse(localStorage.getItem('hasSeenMercadoPagoWarning') || 'false'));
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   useEffect(() => {
@@ -241,9 +246,13 @@ export const Cart: React.FC<CartProps> = ({
       return;
     }
 
-    if (paymentMethod === 'card' && !hasSeenMercadoPagoWarning) {
-      setShowMercadoPagoWarning(true);
-      return; // Interrompe o fluxo para mostrar o aviso
+    if (paymentMethod === 'card') {
+      // Verifica a flag diretamente do localStorage para garantir o estado mais recente
+      const acknowledged = JSON.parse(localStorage.getItem('hasSeenMercadoPagoWarning') || 'false');
+      if (!acknowledged) {
+        setShowMercadoPagoWarning(true);
+        return; // Interrompe o fluxo para mostrar o aviso
+      }
     }
 
     setIsSubmitting(true);
@@ -315,14 +324,16 @@ export const Cart: React.FC<CartProps> = ({
     onOrderCreated(formattedOrder);
     onClose();
     setIsSubmitting(false);
-    setHasSeenMercadoPagoWarning(false); // Resetar após finalizar o pedido
+    localStorage.removeItem('hasSeenMercadoPagoWarning'); // Limpa a flag após finalizar o pedido
     localStorage.removeItem('hasInitiatedMercadoPagoPayment'); // Limpa a flag após finalizar o pedido
+    setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
     toast.success('Pedido finalizado com sucesso!');
   };
 
   const handleMercadoPagoConfirm = () => {
     setShowMercadoPagoWarning(false);
-    setHasSeenMercadoPagoWarning(true); // Marca que o usuário já viu o aviso
+    localStorage.setItem('hasSeenMercadoPagoWarning', 'true'); // Define a flag no localStorage
+    setIsMercadoPagoAcknowledged(true); // Atualiza o estado local
     localStorage.setItem('hasInitiatedMercadoPagoPayment', 'true'); // Sinaliza que o pagamento via MP foi iniciado
     window.open(mercadoPagoLink, '_blank'); // Abre o link em uma nova aba
     // O carrinho permanece aberto para o usuário retornar e finalizar o pedido
@@ -504,7 +515,11 @@ export const Cart: React.FC<CartProps> = ({
               <input
                 type="radio"
                 checked={paymentMethod === 'pix'}
-                onChange={() => { setPaymentMethod('pix'); setHasSeenMercadoPagoWarning(false); }}
+                onChange={() => { 
+                  setPaymentMethod('pix'); 
+                  localStorage.removeItem('hasSeenMercadoPagoWarning'); // Limpa a flag se mudar de cartão
+                  setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
+                }}
                 className="mr-2"
               />
               <Smartphone className="w-4 h-4 mr-2" />
@@ -527,7 +542,10 @@ export const Cart: React.FC<CartProps> = ({
               <input
                 type="radio"
                 checked={paymentMethod === 'card'}
-                onChange={() => { setPaymentMethod('card'); setHasSeenMercadoPagoWarning(false); }}
+                onChange={() => { 
+                  setPaymentMethod('card'); 
+                  // Não limpa a flag aqui. A lógica de aviso em handleFinishOrder cuidará disso.
+                }}
                 className="mr-2"
               />
               <CreditCard className="w-4 h-4 mr-2" />
@@ -537,7 +555,11 @@ export const Cart: React.FC<CartProps> = ({
               <input
                 type="radio"
                 checked={paymentMethod === 'cash'}
-                onChange={() => { setPaymentMethod('cash'); setHasSeenMercadoPagoWarning(false); }}
+                onChange={() => { 
+                  setPaymentMethod('cash'); 
+                  localStorage.removeItem('hasSeenMercadoPagoWarning'); // Limpa a flag se mudar de cartão
+                  setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
+                }}
                 className="mr-2"
               />
               <DollarSign className="w-4 h-4 mr-2" />
@@ -580,7 +602,7 @@ export const Cart: React.FC<CartProps> = ({
           onClick={handleFinishOrder}
           disabled={isSubmitting || !isStoreOpen || (paymentMethod === 'pix' && !pixKeyValue)}
           className={`w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
-            ${paymentMethod === 'card' && hasSeenMercadoPagoWarning ? 'animate-pulse ring-4 ring-red-300' : ''}
+            ${paymentMethod === 'card' && isMercadoPagoAcknowledged ? 'animate-pulse ring-4 ring-red-300' : ''}
           `}
         >
           {isSubmitting ? 'Finalizando...' : 'Finalizar Pedido'}
