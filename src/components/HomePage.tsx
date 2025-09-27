@@ -72,6 +72,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   useEffect(() => {
     const fetchPromotionsAndSettings = async () => {
       const hasInitiatedMercadoPagoPayment = localStorage.getItem('hasInitiatedMercadoPagoPayment');
+      const hasSeenPromotionModal = localStorage.getItem('hasSeenPromotionModal'); // Nova flag
 
       if (hasInitiatedMercadoPagoPayment === 'true') {
         console.log('HomePage: Returning from Mercado Pago, suppressing promotion modal and opening cart.');
@@ -81,19 +82,23 @@ export const HomePage: React.FC<HomePageProps> = ({
         return; // Não busca promoções se estiver retornando do MP
       }
 
-      const { data: promotionsData, error: promotionsError } = await supabase
-        .from('products')
-        .select('*')
-        .eq('category', 'Promoção')
-        .eq('available', true);
+      // Só mostra o pop-up de promoção se ainda não foi visto
+      if (hasSeenPromotionModal !== 'true') {
+        const { data: promotionsData, error: promotionsError } = await supabase
+          .from('products')
+          .select('*')
+          .eq('category', 'Promoção')
+          .eq('available', true);
 
-      if (promotionsError) {
-        console.error('Error fetching promotions:', promotionsError);
-      } else if (promotionsData && promotionsData.length > 0) {
-        setPromotions(promotionsData);
-        const timer = setTimeout(() => {
-          setShowPromotions(true);
-        }, 1000);
+        if (promotionsError) {
+          console.error('Error fetching promotions:', promotionsError);
+        } else if (promotionsData && promotionsData.length > 0) {
+          setPromotions(promotionsData);
+          const timer = setTimeout(() => {
+            setShowPromotions(true);
+            localStorage.setItem('hasSeenPromotionModal', 'true'); // Define a flag após exibir
+          }, 1000);
+        }
       }
 
       const { data: settingsData, error: settingsError } = await supabase
