@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Minus, CreditCard, Smartphone, DollarSign, Copy, Gift } from 'lucide-react'; // Adicionado Copy e Gift icon
+import { X, Plus, Minus, CreditCard, Smartphone, DollarSign, Copy, Gift, ExternalLink } from 'lucide-react'; // Adicionado ExternalLink icon
 import { CartItem, Order, User } from '../App';
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
@@ -46,8 +46,11 @@ export const Cart: React.FC<CartProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deliveryFeeValue, setDeliveryFeeValue] = useState(3.00); // Default value
   const [pixKeyValue, setPixKeyValue] = useState(''); // Novo estado para a chave Pix
+  const [mercadoPagoLink, setMercadoPagoLink] = useState('https://link.mercadopago.com.br/sushicr'); // Link do Mercado Pago
   const [firstAvailableCoupon, setFirstAvailableCoupon] = useState<Coupon | null>(null); // Armazena o primeiro cupom disponível
   const couponInputRef = useRef<HTMLInputElement>(null); // Referência para o input do cupom
+  const [showMercadoPagoWarning, setShowMercadoPagoWarning] = useState(false); // Estado para o pop-up de aviso
+  const [hasSeenMercadoPagoWarning, setHasSeenMercadoPagoWarning] = useState(false); // Para evitar que o pop-up apareça novamente
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -67,6 +70,7 @@ export const Cart: React.FC<CartProps> = ({
           console.warn('Could not fetch delivery fee setting, using default value.');
         }
         setPixKeyValue(settingsMap.pix_key || '');
+        setMercadoPagoLink(settingsMap.mercado_pago_link || 'https://link.mercadopago.com.br/sushicr');
       } else {
         console.warn('Could not fetch settings, using default values.');
       }
@@ -203,6 +207,11 @@ export const Cart: React.FC<CartProps> = ({
       return;
     }
 
+    if (paymentMethod === 'card' && !hasSeenMercadoPagoWarning) {
+      setShowMercadoPagoWarning(true);
+      return; // Interrompe o fluxo para mostrar o aviso
+    }
+
     setIsSubmitting(true);
 
     const orderPayload = {
@@ -272,7 +281,15 @@ export const Cart: React.FC<CartProps> = ({
     onOrderCreated(formattedOrder);
     onClose();
     setIsSubmitting(false);
+    setHasSeenMercadoPagoWarning(false); // Resetar após finalizar o pedido
     toast.success('Pedido finalizado com sucesso!');
+  };
+
+  const handleMercadoPagoConfirm = () => {
+    setShowMercadoPagoWarning(false);
+    setHasSeenMercadoPagoWarning(true); // Marca que o usuário já viu o aviso
+    window.open(mercadoPagoLink, '_blank'); // Abre o link em uma nova aba
+    // O carrinho permanece aberto para o usuário retornar e finalizar o pedido
   };
 
   const copyPixKey = () => {
@@ -451,7 +468,7 @@ export const Cart: React.FC<CartProps> = ({
               <input
                 type="radio"
                 checked={paymentMethod === 'pix'}
-                onChange={() => setPaymentMethod('pix')}
+                onChange={() => { setPaymentMethod('pix'); setHasSeenMercadoPagoWarning(false); }}
                 className="mr-2"
               />
               <Smartphone className="w-4 h-4 mr-2" />
@@ -474,17 +491,17 @@ export const Cart: React.FC<CartProps> = ({
               <input
                 type="radio"
                 checked={paymentMethod === 'card'}
-                onChange={() => setPaymentMethod('card')}
+                onChange={() => { setPaymentMethod('card'); setHasSeenMercadoPagoWarning(false); }}
                 className="mr-2"
               />
               <CreditCard className="w-4 h-4 mr-2" />
-              <span>Cartão (na entrega)</span>
+              <span>Cartão - você será redirecionado para o mercado pago</span>
             </label>
             <label className="flex items-center">
               <input
                 type="radio"
                 checked={paymentMethod === 'cash'}
-                onChange={() => setPaymentMethod('cash')}
+                onChange={() => { setPaymentMethod('cash'); setHasSeenMercadoPagoWarning(false); }}
                 className="mr-2"
               />
               <DollarSign className="w-4 h-4 mr-2" />
@@ -531,6 +548,26 @@ export const Cart: React.FC<CartProps> = ({
           {isSubmitting ? 'Finalizando...' : 'Finalizar Pedido'}
         </button>
       </div>
+
+      {/* Mercado Pago Warning Pop-up */}
+      {showMercadoPagoWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-lg shadow-2xl max-w-sm w-full p-6 text-center animate-scale-in">
+            <ExternalLink className="w-12 h-12 mx-auto text-blue-600 mb-4" />
+            <h3 className="text-lg font-bold text-gray-800 mb-2">Atenção ao Pagamento!</h3>
+            <p className="text-gray-600 mb-4">
+              Você será redirecionado para o pagamento no cartão via link Mercado Pago.
+              Após o pagamento, retorne ao carrinho e finalize o pedido por favor!
+            </p>
+            <button
+              onClick={handleMercadoPagoConfirm}
+              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            >
+              Entendi
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
