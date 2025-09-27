@@ -51,6 +51,7 @@ export const Cart: React.FC<CartProps> = ({
   const couponInputRef = useRef<HTMLInputElement>(null); // Referência para o input do cupom
   const [showMercadoPagoWarning, setShowMercadoPagoWarning] = useState(false); // Estado para o pop-up de aviso
   const [hasSeenMercadoPagoWarning, setHasSeenMercadoPagoWarning] = useState(false); // Para evitar que o pop-up apareça novamente
+  const [highlightFinishOrderButton, setHighlightFinishOrderButton] = useState(false); // Novo estado para destacar o botão
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -125,6 +126,35 @@ export const Cart: React.FC<CartProps> = ({
 
     checkAvailableCoupons();
   }, [user?.id]); // Depende do ID do usuário
+
+  // Efeito para carregar o estado persistido do carrinho se retornar do Mercado Pago
+  useEffect(() => {
+    if (sessionStorage.getItem('mercadoPagoRedirected') === 'true') {
+      const savedDeliveryType = sessionStorage.getItem('savedDeliveryType');
+      const savedAddress = sessionStorage.getItem('savedAddress');
+      const savedAppliedCoupon = sessionStorage.getItem('savedAppliedCoupon');
+      const savedCouponCode = sessionStorage.getItem('savedCouponCode');
+
+      if (savedDeliveryType) setDeliveryType(savedDeliveryType as 'delivery' | 'pickup');
+      if (savedAddress) setAddress(savedAddress);
+      if (savedAppliedCoupon) setAppliedCoupon(JSON.parse(savedAppliedCoupon));
+      if (savedCouponCode) setCouponCode(savedCouponCode);
+
+      setHighlightFinishOrderButton(true); // Destaca o botão
+      sessionStorage.removeItem('mercadoPagoRedirected'); // Limpa a flag
+      sessionStorage.removeItem('savedDeliveryType');
+      sessionStorage.removeItem('savedAddress');
+      sessionStorage.removeItem('savedAppliedCoupon');
+      sessionStorage.removeItem('savedCouponCode');
+    }
+  }, []); // Executa apenas uma vez na montagem
+
+  // Limpa o destaque quando o carrinho é fechado ou o pedido é finalizado
+  useEffect(() => {
+    return () => {
+      setHighlightFinishOrderButton(false); // Reseta ao desmontar o componente
+    };
+  }, [onClose, onOrderCreated]); // Depende de onClose e onOrderCreated para resetar
 
   const subtotal = items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   const deliveryFee = deliveryType === 'delivery' ? deliveryFeeValue : 0;
@@ -282,12 +312,28 @@ export const Cart: React.FC<CartProps> = ({
     onClose();
     setIsSubmitting(false);
     setHasSeenMercadoPagoWarning(false); // Resetar após finalizar o pedido
+    setHighlightFinishOrderButton(false); // Reseta o destaque ao finalizar o pedido
     toast.success('Pedido finalizado com sucesso!');
   };
 
   const handleMercadoPagoConfirm = () => {
     setShowMercadoPagoWarning(false);
     setHasSeenMercadoPagoWarning(true); // Marca que o usuário já viu o aviso
+
+    // Salva o estado atual do carrinho no sessionStorage
+    sessionStorage.setItem('mercadoPagoRedirected', 'true');
+    sessionStorage.setItem('savedDeliveryType', deliveryType);
+    sessionStorage.setItem('savedAddress', address);
+    if (appliedCoupon) {
+      sessionStorage.setItem('savedAppliedCoupon', JSON.stringify(appliedCoupon));
+      sessionStorage.setItem('savedCouponCode', couponCode);
+    } else {
+      sessionStorage.removeItem('savedAppliedCoupon');
+      sessionStorage.removeItem('savedCouponCode');
+    }
+
+    setHighlightFinishOrderButton(true); // Destaca o botão imediatamente na aba atual
+
     window.open(mercadoPagoLink, '_blank'); // Abre o link em uma nova aba
     // O carrinho permanece aberto para o usuário retornar e finalizar o pedido
   };
@@ -405,10 +451,10 @@ export const Cart: React.FC<CartProps> = ({
                   onChange={(e) => setCouponCode(e.target.value)}
                   className="flex-1 p-2 border rounded-lg text-sm"
                   disabled={loadingCoupon}
-                  ref={couponInputRef} // Associar a referência ao input
+                  ref={couponInputRef}
                 />
                 <button
-                  onClick={() => handleApplyCoupon()} // Chama sem argumento para usar o estado `couponCode`
+                  onClick={() => handleApplyCoupon()}
                   className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
                   disabled={loadingCoupon}
                 >
@@ -543,7 +589,7 @@ export const Cart: React.FC<CartProps> = ({
         <button
           onClick={handleFinishOrder}
           disabled={isSubmitting || !isStoreOpen || (paymentMethod === 'pix' && !pixKeyValue)}
-          className="w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${highlightFinishOrderButton ? 'animate-pulse' : ''}`}
         >
           {isSubmitting ? 'Finalizando...' : 'Finalizar Pedido'}
         </button>
