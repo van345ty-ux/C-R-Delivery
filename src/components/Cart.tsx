@@ -75,7 +75,16 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.setItem('cartAddress', address);
     localStorage.setItem('cartCouponCode', couponCode);
     localStorage.setItem('cartAppliedCoupon', JSON.stringify(appliedCoupon));
-  }, [deliveryType, paymentMethod, address, couponCode, appliedCoupon]);
+    localStorage.setItem('hasSeenMercadoPagoWarning', JSON.stringify(hasSeenMercadoPagoWarning)); // Persistir o estado do aviso
+  }, [deliveryType, paymentMethod, address, couponCode, appliedCoupon, hasSeenMercadoPagoWarning]);
+
+  // Effect to load hasSeenMercadoPagoWarning from localStorage on mount
+  useEffect(() => {
+    const savedWarning = localStorage.getItem('hasSeenMercadoPagoWarning');
+    if (savedWarning) {
+      setHasSeenMercadoPagoWarning(JSON.parse(savedWarning));
+    }
+  }, []);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -307,12 +316,14 @@ export const Cart: React.FC<CartProps> = ({
     onClose();
     setIsSubmitting(false);
     setHasSeenMercadoPagoWarning(false); // Resetar após finalizar o pedido
+    localStorage.removeItem('hasInitiatedMercadoPagoPayment'); // Limpa a flag após finalizar o pedido
     toast.success('Pedido finalizado com sucesso!');
   };
 
   const handleMercadoPagoConfirm = () => {
     setShowMercadoPagoWarning(false);
     setHasSeenMercadoPagoWarning(true); // Marca que o usuário já viu o aviso
+    localStorage.setItem('hasInitiatedMercadoPagoPayment', 'true'); // Sinaliza que o pagamento via MP foi iniciado
     window.open(mercadoPagoLink, '_blank'); // Abre o link em uma nova aba
     // O carrinho permanece aberto para o usuário retornar e finalizar o pedido
   };

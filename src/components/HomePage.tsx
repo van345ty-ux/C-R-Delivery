@@ -71,6 +71,16 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   useEffect(() => {
     const fetchPromotionsAndSettings = async () => {
+      const hasInitiatedMercadoPagoPayment = localStorage.getItem('hasInitiatedMercadoPagoPayment');
+
+      if (hasInitiatedMercadoPagoPayment === 'true') {
+        console.log('HomePage: Returning from Mercado Pago, suppressing promotion modal and opening cart.');
+        setShowPromotions(false); // Suprime o modal de promoção
+        setShowCart(true); // Abre o carrinho automaticamente
+        localStorage.removeItem('hasInitiatedMercadoPagoPayment'); // Limpa a flag
+        return; // Não busca promoções se estiver retornando do MP
+      }
+
       const { data: promotionsData, error: promotionsError } = await supabase
         .from('products')
         .select('*')
