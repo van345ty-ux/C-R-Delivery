@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Minus, CreditCard, Smartphone, DollarSign, Copy, Gift, ExternalLink } from 'lucide-react'; // Adicionado ExternalLink icon
+import { X, Plus, Minus, CreditCard, Smartphone, DollarSign, Copy, Gift, ExternalLink } from 'lucide-react';
 import { CartItem, Order, User } from '../App';
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
@@ -37,11 +37,27 @@ export const Cart: React.FC<CartProps> = ({
   user,
   isStoreOpen
 }) => {
-  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
-  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'cash'>('pix');
-  const [address, setAddress] = useState('');
-  const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<{id: string; code: string; discount: number} | null>(null);
+  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>(() => {
+    // Initialize from localStorage or default
+    return localStorage.getItem('cartDeliveryType') as 'delivery' | 'pickup' || 'delivery';
+  });
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'cash'>(() => {
+    // Initialize from localStorage or default
+    return localStorage.getItem('cartPaymentMethod') as 'pix' | 'card' | 'cash' || 'pix';
+  });
+  const [address, setAddress] = useState(() => {
+    // Initialize from localStorage or default
+    return localStorage.getItem('cartAddress') || '';
+  });
+  const [couponCode, setCouponCode] = useState(() => {
+    // Initialize from localStorage or default
+    return localStorage.getItem('cartCouponCode') || '';
+  });
+  const [appliedCoupon, setAppliedCoupon] = useState<{id: string; code: string; discount: number} | null>(() => {
+    // Initialize from localStorage or default
+    const savedCoupon = localStorage.getItem('cartAppliedCoupon');
+    return savedCoupon ? JSON.parse(savedCoupon) : null;
+  });
   const [loadingCoupon, setLoadingCoupon] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deliveryFeeValue, setDeliveryFeeValue] = useState(3.00); // Default value
@@ -51,6 +67,15 @@ export const Cart: React.FC<CartProps> = ({
   const couponInputRef = useRef<HTMLInputElement>(null); // Referência para o input do cupom
   const [showMercadoPagoWarning, setShowMercadoPagoWarning] = useState(false); // Estado para o pop-up de aviso
   const [hasSeenMercadoPagoWarning, setHasSeenMercadoPagoWarning] = useState(false); // Para evitar que o pop-up apareça novamente
+
+  // Effect to save form data to localStorage
+  useEffect(() => {
+    localStorage.setItem('cartDeliveryType', deliveryType);
+    localStorage.setItem('cartPaymentMethod', paymentMethod);
+    localStorage.setItem('cartAddress', address);
+    localStorage.setItem('cartCouponCode', couponCode);
+    localStorage.setItem('cartAppliedCoupon', JSON.stringify(appliedCoupon));
+  }, [deliveryType, paymentMethod, address, couponCode, appliedCoupon]);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -543,7 +568,9 @@ export const Cart: React.FC<CartProps> = ({
         <button
           onClick={handleFinishOrder}
           disabled={isSubmitting || !isStoreOpen || (paymentMethod === 'pix' && !pixKeyValue)}
-          className="w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+            ${paymentMethod === 'card' && hasSeenMercadoPagoWarning ? 'animate-pulse ring-4 ring-red-300' : ''}
+          `}
         >
           {isSubmitting ? 'Finalizando...' : 'Finalizar Pedido'}
         </button>
