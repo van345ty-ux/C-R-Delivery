@@ -232,7 +232,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ order: initialOrde
         <div className="bg-red-50 rounded-lg p-4 text-center">
           <p className="text-red-800 font-medium mb-2">Precisa de ajuda?</p>
           <p className="text-red-600 text-sm">
-            Entre em contato conosco pelo WhatsApp: (73) 99999-9999
+            Entre em contato conosco pelo WhatsApp: (73) 99974-3274
           </p>
         </div>
       </div>
