@@ -186,6 +186,7 @@ function App() {
   const [pendingCouponNotificationUserId, setPendingCouponNotificationUserId] = useState<string | null>(null);
   const [operatingHours, setOperatingHours] = useState<OperatingHour[]>([]); // Novo estado para operatingHours
   const [showPreOrderModal, setShowPreOrderModal] = useState(false); // Novo estado para o modal de pré-pedido
+  const [showPreOrderBanner, setShowPreOrderBanner] = useState(false); // Novo estado para o banner de pré-pedido
 
   // Effect to save currentView to localStorage whenever it changes
   useEffect(() => {
@@ -216,8 +217,9 @@ function App() {
     console.log('App State - session:', session ? 'active' : 'null');
     console.log('App State - currentView:', currentView);
     console.log('App State - showPreOrderModal:', showPreOrderModal);
+    console.log('App State - showPreOrderBanner:', showPreOrderBanner); // Adicionado log
     console.log('App State - isStoreOpen:', isStoreOpen);
-  }, [pendingCouponNotificationUserId, showUserCouponNotification, user, session, currentView, showPreOrderModal, isStoreOpen]);
+  }, [pendingCouponNotificationUserId, showUserCouponNotification, user, session, currentView, showPreOrderModal, showPreOrderBanner, isStoreOpen]);
 
   const checkAndShowCouponNotification = useCallback(async (userId: string) => {
     console.log('checkAndShowCouponNotification called for userId:', userId);
@@ -325,9 +327,21 @@ function App() {
             } else {
               setShowPreOrderModal(false);
             }
+
+            // Show pre-order banner if:
+            // 1. Store is open today
+            // 2. Store is NOT currently open
+            // 3. Current time is before 17:00
+            if (todayHours.is_open && !isCurrentlyOpen && currentTime < '17:00') {
+              setShowPreOrderBanner(true);
+            } else {
+              setShowPreOrderBanner(false);
+            }
+
           } else {
             setIsStoreOpen(false);
             setShowPreOrderModal(false); // Store is closed all day, no pre-order
+            setShowPreOrderBanner(false); // Store is closed all day, no pre-order banner
           }
         }
       } catch (error) {
@@ -652,6 +666,7 @@ function App() {
         heroSubtitleBorderColor={heroSubtitleBorderColor}
         showPreOrderModal={showPreOrderModal} // Nova prop
         setShowPreOrderModal={setShowPreOrderModal} // Nova prop
+        showPreOrderBanner={showPreOrderBanner} // Nova prop
       />
     );
   };

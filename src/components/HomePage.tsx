@@ -36,6 +36,7 @@ interface HomePageProps {
   heroSubtitleBorderColor: string;
   showPreOrderModal: boolean; // Nova prop
   setShowPreOrderModal: (show: boolean) => void; // Nova prop
+  showPreOrderBanner: boolean; // Nova prop
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -66,6 +67,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   heroSubtitleBorderColor,
   showPreOrderModal, // Nova prop
   setShowPreOrderModal, // Nova prop
+  showPreOrderBanner, // Nova prop
 }) => {
   const [showCart, setShowCart] = useState(false);
   const [showPromotions, setShowPromotions] = useState(false);
@@ -177,6 +179,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           heroSubtitleFontSize={heroSubtitleFontSize}
           heroSubtitleFontColor={heroSubtitleFontColor}
           heroSubtitleBorderColor={heroSubtitleBorderColor}
+          showPreOrderBanner={showPreOrderBanner} // Nova prop
         />
       </main>
 

@@ -22,6 +22,7 @@ interface MenuProps {
   heroSubtitleFontSize: string;
   heroSubtitleFontColor: string;
   heroSubtitleBorderColor: string;
+  showPreOrderBanner: boolean; // Nova prop
 }
 
 const categories = [
@@ -49,6 +50,7 @@ export const Menu: React.FC<MenuProps> = ({
   heroSubtitleFontSize,
   heroSubtitleFontColor,
   heroSubtitleBorderColor,
+  showPreOrderBanner, // Nova prop
 }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
@@ -177,6 +179,15 @@ export const Menu: React.FC<MenuProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Pre-order Banner */}
+      {showPreOrderBanner && (
+        <div className="bg-red-50 border-l-4 border-red-500 text-red-800 p-4 rounded-lg mb-6">
+          <p className="text-sm font-medium">
+            Estaremos atendendo a partir das 18h, mas você pode deixar seu pedido agendado em nosso sistema.
+          </p>
+        </div>
+      )}
 
       {/* Search and Filters */}
       <div className="mb-4">
