@@ -79,7 +79,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   useEffect(() => {
     const fetchPromotionsAndSettings = async () => {
       const hasInitiatedMercadoPagoPayment = localStorage.getItem('hasInitiatedMercadoPagoPayment');
-      const hasSeenPromotionModal = localStorage.getItem('hasSeenPromotionModal'); // Nova flag
+      const hasSeenPromotionModal = localStorage.getItem('hasSeenPromotionModal');
 
       if (hasInitiatedMercadoPagoPayment === 'true') {
         console.log('HomePage: Returning from Mercado Pago, suppressing promotion modal and opening cart.');
@@ -101,10 +101,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           console.error('Error fetching promotions:', promotionsError);
         } else if (promotionsData && promotionsData.length > 0) {
           setPromotions(promotionsData);
-          const timer = setTimeout(() => {
-            setShowPromotions(true);
-            localStorage.setItem('hasSeenPromotionModal', 'true'); // Define a flag após exibir
-          }, 1000);
+          // Não define setShowPromotions(true) aqui, será feito após o PreOrderModal fechar
         }
       }
 
@@ -203,7 +200,15 @@ export const HomePage: React.FC<HomePageProps> = ({
 
       {/* PreOrderModal takes precedence */}
       {showPreOrderModal ? (
-        <PreOrderModal onClose={() => setShowPreOrderModal(false)} />
+        <PreOrderModal onClose={() => {
+          setShowPreOrderModal(false);
+          // Após fechar o modal de pré-pedido, verifica se o modal de promoção deve abrir
+          const hasSeenPromotionModal = localStorage.getItem('hasSeenPromotionModal');
+          if (hasSeenPromotionModal !== 'true' && promotions.length > 0) {
+            setShowPromotions(true);
+            localStorage.setItem('hasSeenPromotionModal', 'true');
+          }
+        }} />
       ) : (
         showPromotions && promotions.length > 0 && (
           <PromotionModal

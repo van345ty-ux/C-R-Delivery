@@ -273,7 +273,7 @@ function App() {
         const citiesPromise = supabase.from('cities').select('*').order('name', { ascending: true });
         const hoursPromise = supabase.from('operating_hours').select('*');
 
-        const [settingsResult, citiesResult, hoursResult] = await Promise.all([settingsPromise, citiesPromise, hoursPromise]);
+        const [settingsResult, citiesResult, hoursResult] = await Promise.all([settingsPromise, citiesPromise, hoursResult]);
 
         if (settingsResult.error) {
           toast.error('Erro ao carregar configurações.');
@@ -313,20 +313,8 @@ function App() {
             const isCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
             setIsStoreOpen(isCurrentlyOpen);
 
-            const todayDateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
-            const lastSeenPreOrderModalDate = localStorage.getItem('preOrderModalLastSeenDate');
-            const hasSeenPreOrderModalToday = lastSeenPreOrderModalDate === todayDateString;
-
-            // Show pre-order modal if:
-            // 1. Store is not currently open (but will open today)
-            // 2. Current time is before 17:00
-            // 3. User hasn't seen it today yet
-            if (!isCurrentlyOpen && currentTime < '17:00' && !hasSeenPreOrderModalToday) {
-              setShowPreOrderModal(true);
-              localStorage.setItem('preOrderModalLastSeenDate', todayDateString); // Mark as seen for today
-            } else {
-              setShowPreOrderModal(false);
-            }
+            // Initial load: do NOT show pre-order modal automatically, it will be triggered by city selection
+            setShowPreOrderModal(false); 
 
             // Show pre-order banner if:
             // 1. Store is open today
@@ -505,7 +493,25 @@ function App() {
     const city = cities.find(c => c.name === cityName);
     if (city?.active) {
       setSelectedCity(cityName);
-      setCurrentView('home');
+
+      const now = new Date();
+      const currentDay = now.getDay();
+      const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
+      const todayHours = operatingHours.find(h => h.day_of_week === currentDay);
+
+      // Check pre-order conditions:
+      // 1. Store is open today (todayHours.is_open)
+      // 2. Current time is before 17:00
+      // 3. Current time is before the store's opening time (meaning it's not currently open)
+      if (todayHours && todayHours.is_open && currentTime < '17:00' && currentTime < todayHours.open_time) {
+        console.log('handleCitySelect: Conditions met for pre-order modal. Showing modal.');
+        setCurrentView('home'); // Still go to home, but modal will overlay
+        setShowPreOrderModal(true);
+      } else {
+        console.log('handleCitySelect: Conditions NOT met for pre-order modal. Going to home directly.');
+        setCurrentView('home');
+        setShowPreOrderModal(false); // Ensure it's false if conditions aren't met
+      }
     }
   };
 
@@ -531,11 +537,11 @@ function App() {
       console.log('handleLogout: supabase.auth.signOut() promise resolved.'); // Adicionado log aqui
 
       if (error) {
-        console.error('handleLogout: Error during signOut:', error);
-        toast.error('Erro ao sair: ' + error.message);
+            console.error('handleLogout: Error during signOut:', error);
+            toast.error('Erro ao sair: ' + error.message);
       } else {
-        // O toast de sucesso e a limpeza de estado serão tratados pelo handleAuthChange
-        console.log('handleLogout: signOut initiated. State cleanup will be handled by onAuthStateChange.');
+            // O toast de sucesso e a limpeza de estado serão tratados pelo handleAuthChange
+            console.log('handleLogout: signOut initiated. State cleanup will be handled by onAuthStateChange.');
       }
     } catch (e) {
       console.error('handleLogout: Unexpected error during signOut:', e);
