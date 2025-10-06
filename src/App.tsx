@@ -184,6 +184,8 @@ function App() {
   const [isStoreOpen, setIsStoreOpen] = useState(true);
   const [showUserCouponNotification, setShowUserCouponNotification] = useState(false);
   const [pendingCouponNotificationUserId, setPendingCouponNotificationUserId] = useState<string | null>(null);
+  const [operatingHours, setOperatingHours] = useState<OperatingHour[]>([]); // Novo estado para operatingHours
+  const [showPreOrderModal, setShowPreOrderModal] = useState(false); // Novo estado para o modal de pré-pedido
 
   // Effect to save currentView to localStorage whenever it changes
   useEffect(() => {
@@ -213,7 +215,9 @@ function App() {
     console.log('App State - user:', user ? user.name : 'null');
     console.log('App State - session:', session ? 'active' : 'null');
     console.log('App State - currentView:', currentView);
-  }, [pendingCouponNotificationUserId, showUserCouponNotification, user, session, currentView]);
+    console.log('App State - showPreOrderModal:', showPreOrderModal);
+    console.log('App State - isStoreOpen:', isStoreOpen);
+  }, [pendingCouponNotificationUserId, showUserCouponNotification, user, session, currentView, showPreOrderModal, isStoreOpen]);
 
   const checkAndShowCouponNotification = useCallback(async (userId: string) => {
     console.log('checkAndShowCouponNotification called for userId:', userId);
@@ -293,19 +297,37 @@ function App() {
           toast.error('Erro ao verificar horário de funcionamento.');
           console.error('fetchInitialAppData: Operating hours error:', hoursResult.error);
         } else if (hoursResult.data) {
-          const operatingHours: OperatingHour[] = hoursResult.data;
+          const fetchedOperatingHours: OperatingHour[] = hoursResult.data;
+          setOperatingHours(fetchedOperatingHours); // Store operating hours in state
+
           const now = new Date();
           const currentDay = now.getDay();
-          const currentTime = now.toTimeString().slice(0, 5);
+          const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
 
-          const todayHours = operatingHours.find(h => h.day_of_week === currentDay);
+          const todayHours = fetchedOperatingHours.find(h => h.day_of_week === currentDay);
 
-          if (todayHours && todayHours.is_open && todayHours.open_time && todayHours.close_time) {
-            setIsStoreOpen(currentTime >= todayHours.open_time && currentTime < todayHours.close_time);
-            console.log(`fetchInitialAppData: Store open status: ${currentTime >= todayHours.open_time && currentTime < todayHours.close_time}`);
+          // Logic for pre-order modal and store open status
+          if (todayHours && todayHours.is_open) {
+            const isCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
+            setIsStoreOpen(isCurrentlyOpen);
+
+            const todayDateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
+            const lastSeenPreOrderModalDate = localStorage.getItem('preOrderModalLastSeenDate');
+            const hasSeenPreOrderModalToday = lastSeenPreOrderModalDate === todayDateString;
+
+            // Show pre-order modal if:
+            // 1. Store is not currently open (but will open today)
+            // 2. Current time is before 17:00
+            // 3. User hasn't seen it today yet
+            if (!isCurrentlyOpen && currentTime < '17:00' && !hasSeenPreOrderModalToday) {
+              setShowPreOrderModal(true);
+              localStorage.setItem('preOrderModalLastSeenDate', todayDateString); // Mark as seen for today
+            } else {
+              setShowPreOrderModal(false);
+            }
           } else {
             setIsStoreOpen(false);
-            console.log('fetchInitialAppData: Store is closed.');
+            setShowPreOrderModal(false); // Store is closed all day, no pre-order
           }
         }
       } catch (error) {
@@ -628,6 +650,8 @@ function App() {
         heroSubtitleFontSize={heroSubtitleFontSize}
         heroSubtitleFontColor={heroSubtitleFontColor}
         heroSubtitleBorderColor={heroSubtitleBorderColor}
+        showPreOrderModal={showPreOrderModal} // Nova prop
+        setShowPreOrderModal={setShowPreOrderModal} // Nova prop
       />
     );
   };

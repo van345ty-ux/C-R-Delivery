@@ -6,6 +6,7 @@ import { PromotionModal } from './PromotionModal';
 import { Footer } from './Footer'; // Importando o novo componente Footer
 import { User, CartItem, Product, Order } from '../App';
 import { supabase } from '../integrations/supabase/client';
+import { PreOrderModal } from './PreOrderModal'; // Importando o novo modal
 
 interface HomePageProps {
   selectedCity: string;
@@ -33,6 +34,8 @@ interface HomePageProps {
   heroSubtitleFontSize: string;
   heroSubtitleFontColor: string;
   heroSubtitleBorderColor: string;
+  showPreOrderModal: boolean; // Nova prop
+  setShowPreOrderModal: (show: boolean) => void; // Nova prop
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -61,6 +64,8 @@ export const HomePage: React.FC<HomePageProps> = ({
   heroSubtitleFontSize,
   heroSubtitleFontColor,
   heroSubtitleBorderColor,
+  showPreOrderModal, // Nova prop
+  setShowPreOrderModal, // Nova prop
 }) => {
   const [showCart, setShowCart] = useState(false);
   const [showPromotions, setShowPromotions] = useState(false);
@@ -82,8 +87,8 @@ export const HomePage: React.FC<HomePageProps> = ({
         return; // Não busca promoções se estiver retornando do MP
       }
 
-      // Só mostra o pop-up de promoção se ainda não foi visto
-      if (hasSeenPromotionModal !== 'true') {
+      // Só mostra o pop-up de promoção se ainda não foi visto E o modal de pré-pedido não estiver ativo
+      if (hasSeenPromotionModal !== 'true' && !showPreOrderModal) {
         const { data: promotionsData, error: promotionsError } = await supabase
           .from('products')
           .select('*')
@@ -114,8 +119,11 @@ export const HomePage: React.FC<HomePageProps> = ({
       }
     };
 
-    fetchPromotionsAndSettings();
-  }, []);
+    // Só busca promoções e configurações se o modal de pré-pedido não estiver ativo
+    if (!showPreOrderModal) {
+      fetchPromotionsAndSettings();
+    }
+  }, [showPreOrderModal]); // Adicionado showPreOrderModal como dependência
 
   const handleAddToCart = (product: Product, quantity = 1, observations?: string) => {
     onAddToCart(product, quantity, observations || undefined);
@@ -190,14 +198,19 @@ export const HomePage: React.FC<HomePageProps> = ({
         />
       )}
 
-      {showPromotions && promotions.length > 0 && (
-        <PromotionModal
-          promotions={promotions}
-          onClose={handleClosePromotionModal}
-          title={promotionModalTitle}
-          onViewPromotion={handleViewPromotion}
-          onAddToCart={handleAddToCart} 
-        />
+      {/* PreOrderModal takes precedence */}
+      {showPreOrderModal ? (
+        <PreOrderModal onClose={() => setShowPreOrderModal(false)} />
+      ) : (
+        showPromotions && promotions.length > 0 && (
+          <PromotionModal
+            promotions={promotions}
+            onClose={handleClosePromotionModal}
+            title={promotionModalTitle}
+            onViewPromotion={handleViewPromotion}
+            onAddToCart={handleAddToCart} 
+          />
+        )
       )}
       <Footer /> {/* Adicionando o Footer aqui */}
     </div>
