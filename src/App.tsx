@@ -273,10 +273,10 @@ function App() {
         const citiesPromise = supabase.from('cities').select('*').order('name', { ascending: true });
         const hoursPromise = supabase.from('operating_hours').select('*');
 
-        const [settingsResult, citiesResult, hoursResult] = await Promise.all([settingsPromise, citiesPromise, hoursResult]);
+        const [settingsResult, citiesResult, hoursResult] = await Promise.all([settingsPromise, citiesPromise, hoursPromise]);
 
         if (settingsResult.error) {
-          toast.error('Erro ao carregar configurações.');
+          toast.error('Erro ao carregar configurações: ' + settingsResult.error.message); // Adicionado mensagem de erro
           console.error('fetchInitialAppData: Settings error:', settingsResult.error);
         } else if (settingsResult.data) {
           const settingsMap = settingsResult.data.reduce((acc, { key, value }) => {
@@ -288,7 +288,7 @@ function App() {
         }
 
         if (citiesResult.error) {
-          toast.error('Erro ao carregar cidades.');
+          toast.error('Erro ao carregar cidades: ' + citiesResult.error.message); // Adicionado mensagem de erro
           console.error('fetchInitialAppData: Cities error:', citiesResult.error);
         } else {
           setCities(citiesResult.data || []);
@@ -296,7 +296,7 @@ function App() {
         }
 
         if (hoursResult.error) {
-          toast.error('Erro ao verificar horário de funcionamento.');
+          toast.error('Erro ao verificar horário de funcionamento: ' + hoursResult.error.message); // Adicionado mensagem de erro
           console.error('fetchInitialAppData: Operating hours error:', hoursResult.error);
         } else if (hoursResult.data) {
           const fetchedOperatingHours: OperatingHour[] = hoursResult.data;
@@ -332,9 +332,9 @@ function App() {
             setShowPreOrderBanner(false); // Store is closed all day, no pre-order banner
           }
         }
-      } catch (error) {
+      } catch (error: any) { // Explicitly type error as any to access message
         console.error("fetchInitialAppData: Critical error during initial app data fetching:", error);
-        toast.error("Falha crítica ao carregar dados iniciais do aplicativo.");
+        toast.error("Falha crítica ao carregar dados iniciais do aplicativo: " + (error.message || "Erro desconhecido")); // Adicionado mensagem de erro
       } finally {
         setInitialAppDataLoading(false); // Finaliza o carregamento de dados iniciais
         console.log('fetchInitialAppData: Initial app data fetch finished.');
