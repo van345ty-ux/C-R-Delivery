@@ -11,7 +11,8 @@ interface CartProps {
   onRemoveItem: (productId: string) => void;
   onOrderCreated: (order: Order) => void;
   user: User | null;
-  isStoreOpen: boolean;
+  isStoreOpen: boolean; // Manter para o status visual, mas usar canPlaceOrder para habilitar o botão
+  canPlaceOrder: boolean; // Nova prop
 }
 
 interface Coupon {
@@ -35,7 +36,8 @@ export const Cart: React.FC<CartProps> = ({
   onRemoveItem,
   onOrderCreated,
   user,
-  isStoreOpen
+  isStoreOpen, // Manter para o status visual
+  canPlaceOrder // Nova prop
 }) => {
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>(() => {
     // Initialize from localStorage or default
@@ -228,8 +230,8 @@ export const Cart: React.FC<CartProps> = ({
   };
 
   const handleFinishOrder = async () => {
-    if (!isStoreOpen) {
-      toast.error('Desculpe, o restaurante está fechado no momento.');
+    if (!canPlaceOrder) { // Usa canPlaceOrder para verificar se pode finalizar o pedido
+      toast.error('Desculpe, não é possível finalizar o pedido no momento.');
       return;
     }
     if (!user) {
@@ -593,14 +595,14 @@ export const Cart: React.FC<CartProps> = ({
           </div>
         </div>
 
-        {!isStoreOpen && (
+        {!canPlaceOrder && ( // Usa canPlaceOrder para a mensagem de aviso
           <div className="mb-4 p-3 bg-red-100 text-red-800 text-sm rounded-lg text-center">
-            O restaurante está fechado. Não é possível finalizar o pedido agora.
+            O restaurante está fechado. Pedidos agendados podem ser feitos a partir das 17h.
           </div>
         )}
         <button
           onClick={handleFinishOrder}
-          disabled={isSubmitting || !isStoreOpen || (paymentMethod === 'pix' && !pixKeyValue)}
+          disabled={isSubmitting || !canPlaceOrder || (paymentMethod === 'pix' && !pixKeyValue)}
           className={`w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
             ${paymentMethod === 'card' && isMercadoPagoAcknowledged ? 'animate-pulse ring-4 ring-red-300' : ''}
           `}
