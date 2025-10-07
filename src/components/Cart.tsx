@@ -605,9 +605,14 @@ export const Cart: React.FC<CartProps> = ({
             O restaurante está fechado, mas você pode agendar seu pedido para mais tarde.
           </div>
         )}
+        {!user && (
+          <div className="mb-4 p-3 bg-orange-100 text-orange-800 text-sm rounded-lg text-center">
+            Faça login para finalizar seu pedido.
+          </div>
+        )}
         <button
           onClick={handleFinishOrder}
-          disabled={isSubmitting || !canPlaceOrder || (paymentMethod === 'pix' && !pixKeyValue)}
+          disabled={isSubmitting || !canPlaceOrder || !user || (paymentMethod === 'pix' && !pixKeyValue)}
           className={`w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
             ${paymentMethod === 'card' && isMercadoPagoAcknowledged ? 'animate-pulse ring-4 ring-red-300' : ''}
           `}
