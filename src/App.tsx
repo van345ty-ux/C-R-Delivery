@@ -562,22 +562,30 @@ function App() {
   const handleLogout = async () => {
     console.log('handleLogout: Called.');
     setShowProfile(false); // Fecha o modal de perfil imediatamente
-
-    try {
-      const { error } = await supabase.auth.signOut();
-      console.log('handleLogout: supabase.auth.signOut() promise resolved.'); // Adicionado log aqui
-
-      if (error) {
-            console.error('handleLogout: Error during signOut:', error);
-            toast.error('Erro ao sair: ' + error.message);
-      } else {
-            // O toast de sucesso e a limpeza de estado serão tratados pelo handleAuthChange
-            console.log('handleLogout: signOut initiated. State cleanup will be handled by onAuthStateChange.');
-      }
-    } catch (e) {
-      console.error('handleLogout: Unexpected error during signOut:', e);
-      toast.error('Ocorreu um erro inesperado ao sair.');
+  
+    const { error } = await supabase.auth.signOut();
+  
+    // If there's an error (like AuthSessionMissingError), it often means the session is already invalid.
+    // In this case, the 'SIGNED_OUT' event might not fire.
+    // We'll perform a manual cleanup on the client-side as a robust fallback.
+    if (error) {
+      console.error('handleLogout: Error during signOut, performing manual client-side cleanup:', error);
+      
+      // Manually clear all user-related states
+      setSession(null);
+      setUser(null);
+      setCart([]);
+      // Don't clear selectedCity, let the user stay on the current menu
+      setCurrentView('home'); 
+      setPendingCouponNotificationUserId(null);
+      setShowUserCouponNotification(false);
+      
+      toast.success('Você foi desconectado.'); // Still inform the user of success
+      return; // Exit after manual cleanup
     }
+  
+    // If signOut is successful, the onAuthStateChange listener will handle the state cleanup and show the success toast.
+    console.log('handleLogout: signOut initiated successfully. State cleanup will be handled by onAuthStateChange.');
   };
 
   const addToCart = (product: Product, quantity: number = 1, observations?: string) => {
