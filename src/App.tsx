@@ -182,6 +182,7 @@ function App() {
   const [initialAppDataLoading, setInitialAppDataLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
   const [isStoreOpen, setIsStoreOpen] = useState(true);
+  const [canPlaceOrder, setCanPlaceOrder] = useState(false); // Novo estado para controlar se pode fazer pedido (incluindo pré-pedido)
   const [showUserCouponNotification, setShowUserCouponNotification] = useState(false);
   const [pendingCouponNotificationUserId, setPendingCouponNotificationUserId] = useState<string | null>(null);
   const [operatingHours, setOperatingHours] = useState<OperatingHour[]>([]); // Novo estado para operatingHours
@@ -217,9 +218,10 @@ function App() {
     console.log('App State - session:', session ? 'active' : 'null');
     console.log('App State - currentView:', currentView);
     console.log('App State - showPreOrderModal:', showPreOrderModal);
-    console.log('App State - showPreOrderBanner:', showPreOrderBanner); // Adicionado log
+    console.log('App State - showPreOrderBanner:', showPreOrderBanner);
     console.log('App State - isStoreOpen:', isStoreOpen);
-  }, [pendingCouponNotificationUserId, showUserCouponNotification, user, session, currentView, showPreOrderModal, showPreOrderBanner, isStoreOpen]);
+    console.log('App State - canPlaceOrder (incl. pre-order):', canPlaceOrder); // Adicionado log
+  }, [pendingCouponNotificationUserId, showUserCouponNotification, user, session, currentView, showPreOrderModal, showPreOrderBanner, isStoreOpen, canPlaceOrder]);
 
   const checkAndShowCouponNotification = useCallback(async (userId: string) => {
     console.log('checkAndShowCouponNotification called for userId:', userId);
@@ -276,7 +278,7 @@ function App() {
         const [settingsResult, citiesResult, hoursResult] = await Promise.all([settingsPromise, citiesPromise, hoursPromise]);
 
         if (settingsResult.error) {
-          toast.error('Erro ao carregar configurações: ' + settingsResult.error.message); // Adicionado mensagem de erro
+          toast.error('Erro ao carregar configurações: ' + settingsResult.error.message);
           console.error('fetchInitialAppData: Settings error:', settingsResult.error);
         } else if (settingsResult.data) {
           const settingsMap = settingsResult.data.reduce((acc, { key, value }) => {
@@ -288,7 +290,7 @@ function App() {
         }
 
         if (citiesResult.error) {
-          toast.error('Erro ao carregar cidades: ' + citiesResult.error.message); // Adicionado mensagem de erro
+          toast.error('Erro ao carregar cidades: ' + citiesResult.error.message);
           console.error('fetchInitialAppData: Cities error:', citiesResult.error);
         } else {
           setCities(citiesResult.data || []);
@@ -296,7 +298,7 @@ function App() {
         }
 
         if (hoursResult.error) {
-          toast.error('Erro ao verificar horário de funcionamento: ' + hoursResult.error.message); // Adicionado mensagem de erro
+          toast.error('Erro ao verificar horário de funcionamento: ' + hoursResult.error.message);
           console.error('fetchInitialAppData: Operating hours error:', hoursResult.error);
         } else if (hoursResult.data) {
           const fetchedOperatingHours: OperatingHour[] = hoursResult.data;
@@ -308,33 +310,48 @@ function App() {
 
           const todayHours = fetchedOperatingHours.find(h => h.day_of_week === currentDay);
 
-          // Logic for pre-order modal and store open status
+          let storeCurrentlyOpen = false;
+          let canPreOrder = false;
+          let showPreOrderModalOnLoad = false;
+          let showPreOrderBannerOnLoad = false;
+
           if (todayHours && todayHours.is_open) {
-            const isCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
-            setIsStoreOpen(isCurrentlyOpen);
+            storeCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
+            
+            // Logic for pre-order: store is open today, but not currently open, and it's before 17:00
+            canPreOrder = !storeCurrentlyOpen && currentTime < '17:00';
 
-            // Initial load: do NOT show pre-order modal automatically, it will be triggered by city selection
-            setShowPreOrderModal(false); 
+            // Show pre-order modal if conditions met and not yet seen today
+            const todayDateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
+            const lastSeenPreOrderModalDate = localStorage.getItem('preOrderModalLastSeenDate');
+            const hasSeenPreOrderModalToday = lastSeenPreOrderModalDate === todayDateString;
 
-            // Show pre-order banner if:
-            // 1. Store is open today
-            // 2. Store is NOT currently open
-            // 3. Current time is before 17:00
-            if (todayHours.is_open && !isCurrentlyOpen && currentTime < '17:00') {
-              setShowPreOrderBanner(true);
-            } else {
-              setShowPreOrderBanner(false);
+            if (canPreOrder && !hasSeenPreOrderModalToday) {
+              showPreOrderModalOnLoad = true;
+              localStorage.setItem('preOrderModalLastSeenDate', todayDateString); // Mark as seen for today
+            }
+
+            // Show pre-order banner if conditions met
+            if (canPreOrder) {
+              showPreOrderBannerOnLoad = true;
             }
 
           } else {
-            setIsStoreOpen(false);
-            setShowPreOrderModal(false); // Store is closed all day, no pre-order
-            setShowPreOrderBanner(false); // Store is closed all day, no pre-order banner
+            // Store is closed all day
+            storeCurrentlyOpen = false;
+            canPreOrder = false;
+            showPreOrderModalOnLoad = false;
+            showPreOrderBannerOnLoad = false;
           }
+
+          setIsStoreOpen(storeCurrentlyOpen);
+          setCanPlaceOrder(storeCurrentlyOpen || canPreOrder); // Pode fazer pedido se aberto ou em pré-pedido
+          setShowPreOrderModal(showPreOrderModalOnLoad);
+          setShowPreOrderBanner(showPreOrderBannerOnLoad);
         }
       } catch (error: any) { // Explicitly type error as any to access message
         console.error("fetchInitialAppData: Critical error during initial app data fetching:", error);
-        toast.error("Falha crítica ao carregar dados iniciais do aplicativo: " + (error.message || "Erro desconhecido")); // Adicionado mensagem de erro
+        toast.error("Falha crítica ao carregar dados iniciais do aplicativo: " + (error.message || "Erro desconhecido"));
       } finally {
         setInitialAppDataLoading(false); // Finaliza o carregamento de dados iniciais
         console.log('fetchInitialAppData: Initial app data fetch finished.');
@@ -499,19 +516,21 @@ function App() {
       const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
       const todayHours = operatingHours.find(h => h.day_of_week === currentDay);
 
-      // Check pre-order conditions:
-      // 1. Store is open today (todayHours.is_open)
-      // 2. Current time is before 17:00
-      // 3. Current time is before the store's opening time (meaning it's not currently open)
-      if (todayHours && todayHours.is_open && currentTime < '17:00' && currentTime < todayHours.open_time) {
-        console.log('handleCitySelect: Conditions met for pre-order modal. Showing modal.');
-        setCurrentView('home'); // Still go to home, but modal will overlay
-        setShowPreOrderModal(true);
-      } else {
-        console.log('handleCitySelect: Conditions NOT met for pre-order modal. Going to home directly.');
-        setCurrentView('home');
-        setShowPreOrderModal(false); // Ensure it's false if conditions aren't met
+      let shouldShowPreOrderModal = false;
+      if (todayHours && todayHours.is_open) {
+        const isCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
+        // Show pre-order modal if:
+        // 1. Store is open today
+        // 2. Store is NOT currently open
+        // 3. Current time is before 17:00
+        // 4. Current time is before the store's opening time
+        if (todayHours.is_open && !isCurrentlyOpen && currentTime < '17:00' && currentTime < todayHours.open_time) {
+          shouldShowPreOrderModal = true;
+        }
       }
+      
+      setCurrentView('home'); // Always go to home
+      setShowPreOrderModal(shouldShowPreOrderModal); // Show modal based on conditions
     }
   };
 
@@ -645,7 +664,7 @@ function App() {
         user={user}
         cart={cart}
         onAddToCart={addToCart}
-        onRemoveFromCart={removeFromCart}
+        onRemoveFromFromCart={removeFromCart}
         onUpdateCartItem={updateCartItem}
         onLogin={() => setCurrentView('auth')}
         onOrderCreated={(order) => {
@@ -658,6 +677,7 @@ function App() {
         logoUrl={logoUrl}
         heroImageUrl={heroImageUrl} 
         isStoreOpen={isStoreOpen}
+        canPlaceOrder={canPlaceOrder} // Passando o novo estado
         pendingCouponNotificationUserId={pendingCouponNotificationUserId}
         setPendingCouponNotificationUserId={setPendingCouponNotificationUserId}
         setShowUserCouponNotification={setShowUserCouponNotification}

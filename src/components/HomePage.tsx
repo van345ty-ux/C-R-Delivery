@@ -21,6 +21,7 @@ interface HomePageProps {
   onProfileClick: () => void;
   logoUrl: string;
   isStoreOpen: boolean;
+  canPlaceOrder: boolean; // Nova prop
   pendingCouponNotificationUserId: string | null;
   setPendingCouponNotificationUserId: (id: string | null) => void;
   setShowUserCouponNotification: (show: boolean) => void;
@@ -52,6 +53,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   onProfileClick,
   logoUrl,
   isStoreOpen,
+  canPlaceOrder, // Nova prop
   pendingCouponNotificationUserId,
   setPendingCouponNotificationUserId,
   setShowUserCouponNotification,
@@ -101,7 +103,10 @@ export const HomePage: React.FC<HomePageProps> = ({
           console.error('Error fetching promotions:', promotionsError);
         } else if (promotionsData && promotionsData.length > 0) {
           setPromotions(promotionsData);
-          // Não define setShowPromotions(true) aqui, será feito após o PreOrderModal fechar
+          const timer = setTimeout(() => {
+            setShowPromotions(true);
+            localStorage.setItem('hasSeenPromotionModal', 'true'); // Define a flag após exibir
+          }, 1000);
         }
       }
 
@@ -166,6 +171,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           selectedCategory={menuFilter}
           onCategoryChange={setMenuFilter}
           isStoreOpen={isStoreOpen}
+          canPlaceOrder={canPlaceOrder} // Passando o novo estado
           heroImageUrl={heroImageUrl} 
           // Passando as novas props
           heroTitleText={heroTitleText}

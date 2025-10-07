@@ -9,6 +9,7 @@ interface ProductDetailModalProps {
   onClose: () => void;
   onAddToCart: (product: Product, quantity: number, observations?: string) => void;
   isStoreOpen: boolean;
+  canPlaceOrder: boolean; // Nova prop
 }
 
 export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
@@ -16,6 +17,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onClose,
   onAddToCart,
   isStoreOpen,
+  canPlaceOrder, // Nova prop
 }) => {
   const [quantity, setQuantity] = useState(1);
   const [observations, setObservations] = useState('');
@@ -25,8 +27,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   };
 
   const handleAddToCartClick = () => {
-    if (!isStoreOpen) {
-      toast.error('Desculpe, o restaurante está fechado no momento.');
+    if (!canPlaceOrder) { // Verifica se pode fazer pedido (incluindo pré-pedido)
+      toast.error('Desculpe, não é possível adicionar itens ao carrinho no momento.');
       return;
     }
     onAddToCart(product, quantity, observations.trim() || undefined);
@@ -94,7 +96,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               >
                 <Minus className="w-4 h-4" />
               </button>
-              <span className="text-xl font-semibold">{quantity}</span>
+              <span className="w-8 text-center">{quantity}</span>
               <button
                 onClick={() => handleQuantityChange(1)}
                 className="bg-gray-200 hover:bg-gray-300 rounded-full p-2"
@@ -104,7 +106,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             </div>
             <Button
               onClick={handleAddToCartClick}
-              disabled={!isStoreOpen}
+              disabled={!canPlaceOrder} // Usa o novo estado para habilitar/desabilitar
               className="bg-red-600 hover:bg-red-700 text-white px-2 py-3 rounded-lg shadow-md flex items-center text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus className="h-5 w-5 mr-2" />

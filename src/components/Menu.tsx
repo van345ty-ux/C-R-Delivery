@@ -12,6 +12,7 @@ interface MenuProps {
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
   isStoreOpen: boolean;
+  canPlaceOrder: boolean; // Nova prop
   heroImageUrl: string;
   // Novas props para o título e subtítulo do hero
   heroTitleText: string;
@@ -40,6 +41,7 @@ export const Menu: React.FC<MenuProps> = ({
   selectedCategory, 
   onCategoryChange, 
   isStoreOpen, 
+  canPlaceOrder, // Nova prop
   heroImageUrl,
   // Novas props
   heroTitleText,
@@ -296,6 +298,7 @@ export const Menu: React.FC<MenuProps> = ({
           onClose={() => setShowProductDetailModal(false)}
           onAddToCart={onAddToCart}
           isStoreOpen={isStoreOpen}
+          canPlaceOrder={canPlaceOrder} // Passando o novo estado
         />
       )}
     </div>
