@@ -308,7 +308,14 @@ function App() {
           const currentDay = now.getDay();
           const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
 
+          console.log('--- Time and Operating Hours Debug ---');
+          console.log('Current Date/Time:', now.toLocaleString());
+          console.log('Current Day of Week (0=Sunday, 6=Saturday):', currentDay);
+          console.log('Current Time (HH:MM):', currentTime);
+          console.log('Fetched Operating Hours:', fetchedOperatingHours);
+
           const todayHours = fetchedOperatingHours.find(h => h.day_of_week === currentDay);
+          console.log('Today\'s Operating Hours:', todayHours);
 
           let storeCurrentlyOpen = false;
           let canPreOrder = false;
@@ -348,6 +355,12 @@ function App() {
           setCanPlaceOrder(storeCurrentlyOpen || canPreOrder); // Pode fazer pedido se aberto ou em pré-pedido
           setShowPreOrderModal(showPreOrderModalOnLoad);
           setShowPreOrderBanner(showPreOrderBannerOnLoad);
+
+          console.log('Calculated storeCurrentlyOpen:', storeCurrentlyOpen);
+          console.log('Calculated canPreOrder:', canPreOrder);
+          console.log('Final canPlaceOrder:', storeCurrentlyOpen || canPreOrder);
+          console.log('--- End Time and Operating Hours Debug ---');
+
         }
       } catch (error: any) { // Explicitly type error as any to access message
         console.error("fetchInitialAppData: Critical error during initial app data fetching:", error);
