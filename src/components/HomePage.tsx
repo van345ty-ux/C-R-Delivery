@@ -201,6 +201,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           onOrderCreated={onOrderCreated}
           user={user}
           isStoreOpen={isStoreOpen}
+          canPlaceOrder={canPlaceOrder}
         />
       )}
 
