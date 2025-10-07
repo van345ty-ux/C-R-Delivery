@@ -664,7 +664,7 @@ function App() {
         user={user}
         cart={cart}
         onAddToCart={addToCart}
-        onRemoveFromFromCart={removeFromCart}
+        onRemoveFromCart={removeFromCart} {/* Corrigido aqui */}
         onUpdateCartItem={updateCartItem}
         onLogin={() => setCurrentView('auth')}
         onOrderCreated={(order) => {
