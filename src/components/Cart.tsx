@@ -595,9 +595,14 @@ export const Cart: React.FC<CartProps> = ({
           </div>
         </div>
 
-        {!canPlaceOrder && ( // Usa canPlaceOrder para a mensagem de aviso
+        {!canPlaceOrder && ( // Se não pode fazer pedido (nem normal, nem pré-pedido)
           <div className="mb-4 p-3 bg-red-100 text-red-800 text-sm rounded-lg text-center">
-            O restaurante está fechado. Pedidos agendados podem ser feitos a partir das 17h.
+            O restaurante está fechado. Não é possível finalizar o pedido agora.
+          </div>
+        )}
+        {canPlaceOrder && !isStoreOpen && ( // Se pode fazer pedido (pré-pedido) mas a loja não está aberta
+          <div className="mb-4 p-3 bg-blue-100 text-blue-800 text-sm rounded-lg text-center">
+            O restaurante está fechado, mas você pode agendar seu pedido para mais tarde.
           </div>
         )}
         <button
