@@ -148,7 +148,7 @@ function App() {
       const savedView = localStorage.getItem('lastView');
       return savedView as 'location' | 'home' | 'admin' | 'auth' | 'tracking' || 'location';
     }
-    return 'location';
+    return '';
   });
 
   const [selectedCity, setSelectedCity] = useState<string>(() => {
@@ -664,7 +664,7 @@ function App() {
         user={user}
         cart={cart}
         onAddToCart={addToCart}
-        onRemoveFromCart={removeFromCart} {/* Corrigido aqui */}
+        onRemoveFromCart={removeFromCart}
         onUpdateCartItem={updateCartItem}
         onLogin={() => setCurrentView('auth')}
         onOrderCreated={(order) => {
