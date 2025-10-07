@@ -28,12 +28,12 @@ interface MenuProps {
 
 const categories = [
   'Todos',
-  'Promoções',
-  'Sushi',
-  'Temaki',
-  'Combinados',
+  'Combinados', // Ordem alterada
+  'Temaki',     // Ordem alterada
+  'Sushi',      // Ordem alterada
   'Especiais',
-  'Bebidas'
+  'Bebidas',
+  'Promoções'   // Ordem alterada
 ];
 
 export const Menu: React.FC<MenuProps> = ({ 
