@@ -136,7 +136,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   };
 
   const handleViewPromotion = () => {
-    setMenuFilter('Promções');
+    setMenuFilter('Promo');
     setShowPromotions(false);
     // Esta ação (Ver no Cardápio) não acionará a notificação de cupom, conforme solicitado.
   };
