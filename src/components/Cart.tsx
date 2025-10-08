@@ -13,6 +13,7 @@ interface CartProps {
   user: User | null;
   isStoreOpen: boolean; // Manter para o status visual, mas usar canPlaceOrder para habilitar o botão
   canPlaceOrder: boolean; // Nova prop
+  isMercadoPagoReturnFlow: boolean; // Nova prop
 }
 
 interface Coupon {
@@ -37,7 +38,8 @@ export const Cart: React.FC<CartProps> = ({
   onOrderCreated,
   user,
   isStoreOpen, // Manter para o status visual
-  canPlaceOrder // Nova prop
+  canPlaceOrder, // Nova prop
+  isMercadoPagoReturnFlow, // Nova prop
 }) => {
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>(() => {
     // Initialize from localStorage or default
@@ -173,6 +175,10 @@ export const Cart: React.FC<CartProps> = ({
   const total = subtotal + deliveryFee - discount;
 
   const handleApplyCoupon = async (codeToApply?: string) => {
+    if (isMercadoPagoReturnFlow) {
+      toast.error('Finalize seu pedido atual antes de aplicar cupons.');
+      return;
+    }
     const code = codeToApply || couponCode; // Usa o código passado ou o do estado
     
     if (!user) {
@@ -329,6 +335,7 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.removeItem('hasSeenMercadoPagoWarning'); // Limpa a flag após finalizar o pedido
     localStorage.removeItem('hasInitiatedMercadoPagoPayment'); // Limpa a flag após finalizar o pedido
     setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
+    // isMercadoPagoReturnFlow é limpo em onOrderCreated no App.tsx
     toast.success('Pedido finalizado com sucesso!');
   };
 
@@ -337,6 +344,7 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.setItem('hasSeenMercadoPagoWarning', 'true'); // Define a flag no localStorage
     setIsMercadoPagoAcknowledged(true); // Atualiza o estado local
     localStorage.setItem('hasInitiatedMercadoPagoPayment', 'true'); // Sinaliza que o pagamento via MP foi iniciado
+    // A flag isMercadoPagoReturnFlow é definida no App.tsx via localStorage listener
     window.open(mercadoPagoLink, '_blank'); // Abre o link em uma nova aba
     // O carrinho permanece aberto para o usuário retornar e finalizar o pedido
   };
@@ -389,6 +397,7 @@ export const Cart: React.FC<CartProps> = ({
               <button
                 onClick={() => onRemoveItem(item.product.id)}
                 className="text-red-500 text-sm"
+                disabled={isMercadoPagoReturnFlow} // Desabilita remover item
               >
                 Remover
               </button>
@@ -403,6 +412,7 @@ export const Cart: React.FC<CartProps> = ({
                 <button
                   onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
                   className="bg-gray-300 hover:bg-gray-400 rounded-full p-1"
+                  disabled={isMercadoPagoReturnFlow} // Desabilita botão de menos
                 >
                   <Minus className="w-3 h-3" />
                 </button>
@@ -410,6 +420,7 @@ export const Cart: React.FC<CartProps> = ({
                 <button
                   onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
                   className="bg-gray-300 hover:bg-gray-400 rounded-full p-1"
+                  disabled={isMercadoPagoReturnFlow} // Desabilita botão de mais
                 >
                   <Plus className="w-3 h-3" />
                 </button>
@@ -441,6 +452,7 @@ export const Cart: React.FC<CartProps> = ({
                       }
                     }}
                     className="ml-2 px-3 py-1 rounded-md bg-green-100 hover:bg-green-200 text-green-800 font-medium"
+                    disabled={isMercadoPagoReturnFlow} // Desabilita aplicar cupom
                   >
                     Clique para aplicar
                   </button>
@@ -453,13 +465,13 @@ export const Cart: React.FC<CartProps> = ({
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
                   className="flex-1 p-2 border rounded-lg text-sm"
-                  disabled={loadingCoupon}
+                  disabled={loadingCoupon || isMercadoPagoReturnFlow} // Desabilita input de cupom
                   ref={couponInputRef} // Associar a referência ao input
                 />
                 <button
                   onClick={() => handleApplyCoupon()} // Chama sem argumento para usar o estado `couponCode`
                   className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
-                  disabled={loadingCoupon}
+                  disabled={loadingCoupon || isMercadoPagoReturnFlow} // Desabilita botão de aplicar cupom
                 >
                   {loadingCoupon ? '...' : 'Aplicar'}
                 </button>
@@ -482,6 +494,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={deliveryType === 'delivery'}
                 onChange={() => setDeliveryType('delivery')}
                 className="mr-2"
+                disabled={isMercadoPagoReturnFlow} // Desabilita seleção
               />
               <span>Delivery (+R$ {deliveryFeeValue.toFixed(2)})</span>
             </label>
@@ -491,6 +504,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={deliveryType === 'pickup'}
                 onChange={() => setDeliveryType('pickup')}
                 className="mr-2"
+                disabled={isMercadoPagoReturnFlow} // Desabilita seleção
               />
               <span>Retirada no local (Grátis)</span>
             </label>
@@ -506,6 +520,7 @@ export const Cart: React.FC<CartProps> = ({
               placeholder="Rua, número, bairro..."
               className="w-full p-3 border rounded-lg text-sm"
               rows={3}
+              disabled={isMercadoPagoReturnFlow} // Desabilita endereço
             />
           </div>
         )}
@@ -523,6 +538,7 @@ export const Cart: React.FC<CartProps> = ({
                   setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
                 }}
                 className="mr-2"
+                disabled={isMercadoPagoReturnFlow} // Desabilita seleção
               />
               <Smartphone className="w-4 h-4 mr-2" />
               <span>PIX</span>
@@ -549,6 +565,7 @@ export const Cart: React.FC<CartProps> = ({
                   // Não limpa a flag aqui. A lógica de aviso em handleFinishOrder cuidará disso.
                 }}
                 className="mr-2"
+                disabled={isMercadoPagoReturnFlow} // Desabilita seleção
               />
               <CreditCard className="w-4 h-4 mr-2" />
               <span>Cartão - você será redirecionado para o mercado pago</span>
@@ -563,6 +580,7 @@ export const Cart: React.FC<CartProps> = ({
                   setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
                 }}
                 className="mr-2"
+                disabled={isMercadoPagoReturnFlow} // Desabilita seleção
               />
               <DollarSign className="w-4 h-4 mr-2" />
               <span>Dinheiro (na entrega)</span>

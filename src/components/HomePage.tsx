@@ -38,6 +38,7 @@ interface HomePageProps {
   showPreOrderModal: boolean; // Nova prop
   setShowPreOrderModal: (show: boolean) => void; // Nova prop
   showPreOrderBanner: boolean; // Nova prop
+  isMercadoPagoReturnFlow: boolean; // Nova prop
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -70,6 +71,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   showPreOrderModal, // Nova prop
   setShowPreOrderModal, // Nova prop
   showPreOrderBanner, // Nova prop
+  isMercadoPagoReturnFlow, // Nova prop
 }) => {
   const [showCart, setShowCart] = useState(false);
   const [showPromotions, setShowPromotions] = useState(false);
@@ -183,6 +185,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           heroSubtitleFontColor={heroSubtitleFontColor}
           heroSubtitleBorderColor={heroSubtitleBorderColor}
           showPreOrderBanner={showPreOrderBanner} // Nova prop
+          isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
         />
       </main>
 
@@ -202,6 +205,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           user={user}
           isStoreOpen={isStoreOpen}
           canPlaceOrder={canPlaceOrder}
+          isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
         />
       )}
 

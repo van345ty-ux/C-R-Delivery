@@ -10,6 +10,7 @@ interface ProductDetailModalProps {
   onAddToCart: (product: Product, quantity: number, observations?: string) => void;
   isStoreOpen: boolean;
   canPlaceOrder: boolean; // Nova prop
+  isMercadoPagoReturnFlow: boolean; // Nova prop
 }
 
 export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
@@ -18,15 +19,24 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onAddToCart,
   isStoreOpen,
   canPlaceOrder, // Nova prop
+  isMercadoPagoReturnFlow, // Nova prop
 }) => {
   const [quantity, setQuantity] = useState(1);
   const [observations, setObservations] = useState('');
 
   const handleQuantityChange = (amount: number) => {
+    if (isMercadoPagoReturnFlow) {
+      toast.error('Finalize seu pedido atual antes de alterar a quantidade.');
+      return;
+    }
     setQuantity(prev => Math.max(1, prev + amount));
   };
 
   const handleAddToCartClick = () => {
+    if (isMercadoPagoReturnFlow) {
+      toast.error('Finalize seu pedido atual antes de adicionar novos itens.');
+      return;
+    }
     if (!canPlaceOrder) { // Verifica se pode fazer pedido (incluindo pré-pedido)
       toast.error('Desculpe, não é possível adicionar itens ao carrinho no momento.');
       return;
@@ -85,6 +95,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               placeholder="Ex: Sem cebola, molho extra..."
               className="w-full p-3 border rounded-lg text-sm"
               rows={2}
+              disabled={isMercadoPagoReturnFlow} // Desabilita observações
             />
           </div>
 
@@ -93,6 +104,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               <button
                 onClick={() => handleQuantityChange(-1)}
                 className="bg-gray-200 hover:bg-gray-300 rounded-full p-2"
+                disabled={isMercadoPagoReturnFlow} // Desabilita botão de menos
               >
                 <Minus className="w-4 h-4" />
               </button>
@@ -100,13 +112,14 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               <button
                 onClick={() => handleQuantityChange(1)}
                 className="bg-gray-200 hover:bg-gray-300 rounded-full p-2"
+                disabled={isMercadoPagoReturnFlow} // Desabilita botão de mais
               >
                 <Plus className="w-4 h-4" />
               </button>
             </div>
             <Button
               onClick={handleAddToCartClick}
-              disabled={!canPlaceOrder} // Usa o novo estado para habilitar/desabilitar
+              disabled={!canPlaceOrder || isMercadoPagoReturnFlow} // Desabilita se não pode fazer pedido ou se estiver no fluxo de retorno do Mercado Pago
               className="bg-red-600 hover:bg-red-700 text-white px-2 py-3 rounded-lg shadow-md flex items-center text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus className="h-5 w-5 mr-2" />

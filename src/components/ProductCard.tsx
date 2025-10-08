@@ -8,9 +8,10 @@ interface ProductCardProps {
   product: Product;
   onProductClick: (product: Product) => void; // Alterado para onProductClick
   isPromotion?: boolean;
+  isMercadoPagoReturnFlow: boolean; // Nova prop
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick, isPromotion = false }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick, isPromotion = false, isMercadoPagoReturnFlow }) => {
   return (
     <div className={cn(
       "group flex flex-col rounded-lg shadow-sm border h-full relative",
@@ -73,6 +74,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
           onClick={() => onProductClick(product)}
           className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-md flex-shrink-0 h-8 w-8 flex items-center justify-center"
           size="icon"
+          disabled={isMercadoPagoReturnFlow} // Desabilita o botão se estiver no fluxo de retorno do Mercado Pago
         >
           <Plus className="h-5 w-5" />
         </Button>
