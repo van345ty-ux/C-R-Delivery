@@ -580,7 +580,7 @@ export const Cart: React.FC<CartProps> = ({
                   setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
                 }}
                 className="mr-2"
-                disabled={isMercadoPagoReturnPago} // Desabilita seleção
+                disabled={isMercadoPagoReturnFlow} // <--- CORRIGIDO AQUI
               />
               <DollarSign className="w-4 h-4 mr-2" />
               <span>Dinheiro (na entrega)</span>
