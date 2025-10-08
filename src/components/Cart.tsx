@@ -333,7 +333,7 @@ export const Cart: React.FC<CartProps> = ({
     onClose();
     setIsSubmitting(false);
     localStorage.removeItem('hasSeenMercadoPagoWarning'); // Limpa a flag após finalizar o pedido
-    localStorage.removeItem('hasInitiatedMercadoPagoPayment'); // Limpa a flag após finalizar o pedido
+    localStorage.removeItem('isMercadoPagoReturnFlow'); // Limpa a flag principal do Mercado Pago
     setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
     // isMercadoPagoReturnFlow é limpo em onOrderCreated no App.tsx
     toast.success('Pedido finalizado com sucesso!');
@@ -343,7 +343,7 @@ export const Cart: React.FC<CartProps> = ({
     setShowMercadoPagoWarning(false);
     localStorage.setItem('hasSeenMercadoPagoWarning', 'true'); // Define a flag no localStorage
     setIsMercadoPagoAcknowledged(true); // Atualiza o estado local
-    localStorage.setItem('hasInitiatedMercadoPagoPayment', 'true'); // Sinaliza que o pagamento via MP foi iniciado
+    localStorage.setItem('isMercadoPagoReturnFlow', 'true'); // *** CORRIGIDO AQUI: Usar a chave correta ***
     // A flag isMercadoPagoReturnFlow é definida no App.tsx via localStorage listener
     window.open(mercadoPagoLink, '_blank'); // Abre o link em uma nova aba
     // O carrinho permanece aberto para o usuário retornar e finalizar o pedido
@@ -580,7 +580,7 @@ export const Cart: React.FC<CartProps> = ({
                   setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
                 }}
                 className="mr-2"
-                disabled={isMercadoPagoReturnFlow} // Desabilita seleção
+                disabled={isMercadoPagoReturnPago} // Desabilita seleção
               />
               <DollarSign className="w-4 h-4 mr-2" />
               <span>Dinheiro (na entrega)</span>

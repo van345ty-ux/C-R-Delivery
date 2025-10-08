@@ -82,18 +82,16 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   useEffect(() => {
     const fetchPromotionsAndSettings = async () => {
-      const hasInitiatedMercadoPagoPayment = localStorage.getItem('hasInitiatedMercadoPagoPayment');
-      const hasSeenPromotionModal = localStorage.getItem('hasSeenPromotionModal');
-
-      if (hasInitiatedMercadoPagoPayment === 'true') {
-        console.log('HomePage: Returning from Mercado Pago, suppressing promotion modal and opening cart.');
+      // Se estiver no fluxo de retorno do Mercado Pago, abre o carrinho e suprime o modal de promoção
+      if (isMercadoPagoReturnFlow) {
+        console.log('HomePage: isMercadoPagoReturnFlow is true, opening cart and suppressing promotion modal.');
         setShowPromotions(false); // Suprime o modal de promoção
         setShowCart(true); // Abre o carrinho automaticamente
-        localStorage.removeItem('hasInitiatedMercadoPagoPayment'); // Limpa a flag
         return; // Não busca promoções se estiver retornando do MP
       }
 
       // Só mostra o pop-up de promoção se ainda não foi visto E o modal de pré-pedido não estiver ativo
+      const hasSeenPromotionModal = localStorage.getItem('hasSeenPromotionModal');
       if (hasSeenPromotionModal !== 'true' && !showPreOrderModal) {
         const { data: promotionsData, error: promotionsError } = await supabase
           .from('products')
@@ -129,7 +127,7 @@ export const HomePage: React.FC<HomePageProps> = ({
     if (!showPreOrderModal) {
       fetchPromotionsAndSettings();
     }
-  }, [showPreOrderModal]); // Adicionado showPreOrderModal como dependência
+  }, [showPreOrderModal, isMercadoPagoReturnFlow]); // Adicionado isMercadoPagoReturnFlow como dependência
 
   const handleAddToCart = (product: Product, quantity = 1, observations?: string) => {
     onAddToCart(product, quantity, observations || undefined);
