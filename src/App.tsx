@@ -325,8 +325,8 @@ function App() {
           if (todayHours && todayHours.is_open) {
             storeCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
             
-            // Logic for pre-order: store is open today, but not currently open, and it's between 16:00 and opening time
-            canPreOrder = !storeCurrentlyOpen && currentTime >= '16:00' && currentTime < todayHours.open_time; // MODIFIED HERE
+            // Logic for pre-order: store is open today, but not currently open, and it's between 07:00 and 17:00
+            canPreOrder = !storeCurrentlyOpen && currentTime >= '07:00' && currentTime <= '17:00'; // MODIFIED HERE
 
             // Show pre-order modal if conditions met and not yet seen today
             const todayDateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
@@ -535,8 +535,8 @@ function App() {
         // Show pre-order modal if:
         // 1. Store is open today
         // 2. Store is NOT currently open
-        // 3. Current time is between 16:00 and the store's opening time
-        if (todayHours.is_open && !isCurrentlyOpen && currentTime >= '16:00' && currentTime < todayHours.open_time) {
+        // 3. Current time is between 07:00 and 17:00
+        if (todayHours.is_open && !isCurrentlyOpen && currentTime >= '07:00' && currentTime <= '17:00') {
           shouldShowPreOrderModal = true;
         }
       }
