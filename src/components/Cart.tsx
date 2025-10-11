@@ -45,9 +45,10 @@ export const Cart: React.FC<CartProps> = ({
     // Initialize from localStorage or default
     return localStorage.getItem('cartDeliveryType') as 'delivery' | 'pickup' || 'delivery';
   });
-  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'cash'>(() => {
-    // Initialize from localStorage or default
-    return localStorage.getItem('cartPaymentMethod') as 'pix' | 'card' | 'cash' || 'pix';
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'cash' | null>(() => {
+    // Initialize from localStorage or default, or null if not set
+    const savedMethod = localStorage.getItem('cartPaymentMethod');
+    return savedMethod ? (savedMethod as 'pix' | 'card' | 'cash') : null;
   });
   const [address, setAddress] = useState(() => {
     // Initialize from localStorage or default
@@ -85,7 +86,12 @@ export const Cart: React.FC<CartProps> = ({
   // Effect to save form data to localStorage
   useEffect(() => {
     localStorage.setItem('cartDeliveryType', deliveryType);
-    localStorage.setItem('cartPaymentMethod', paymentMethod);
+    // Only save paymentMethod if it's not null
+    if (paymentMethod) {
+      localStorage.setItem('cartPaymentMethod', paymentMethod);
+    } else {
+      localStorage.removeItem('cartPaymentMethod');
+    }
     localStorage.setItem('cartAddress', address);
     localStorage.setItem('cartCouponCode', couponCode);
     localStorage.setItem('cartAppliedCoupon', JSON.stringify(appliedCoupon));
@@ -255,6 +261,10 @@ export const Cart: React.FC<CartProps> = ({
     if (items.length === 0) return;
     if (deliveryType === 'delivery' && !address.trim()) {
       toast.error('Por favor, informe o endereço para entrega');
+      return;
+    }
+    if (paymentMethod === null) { // Adicionado: verifica se uma forma de pagamento foi selecionada
+      toast.error('Por favor, selecione uma forma de pagamento.');
       return;
     }
     if (paymentMethod === 'pix' && !pixKeyValue) {
@@ -650,7 +660,7 @@ export const Cart: React.FC<CartProps> = ({
         )}
         <button
           onClick={handleFinishOrder}
-          disabled={isSubmitting || !canPlaceOrder || !user || (paymentMethod === 'pix' && !pixKeyValue) || showPixInstructionsModal}
+          disabled={isSubmitting || !canPlaceOrder || !user || paymentMethod === null || (paymentMethod === 'pix' && !pixKeyValue) || showPixInstructionsModal}
           className={`w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
             ${paymentMethod === 'card' && isMercadoPagoAcknowledged ? 'animate-pulse ring-4 ring-red-300' : ''}
           `}
