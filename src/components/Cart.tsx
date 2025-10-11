@@ -705,7 +705,7 @@ export const Cart: React.FC<CartProps> = ({
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
           <div className="bg-white rounded-lg shadow-2xl max-w-sm w-full p-6 text-center animate-scale-in">
             <Smartphone className="w-12 h-12 mx-auto text-green-600 mb-4" />
-            <h3 className="text-lg font-bold text-gray-800 mb-2">Copie a chave Pix e pague seu pedido!</h3>
+            <h3 className="text-lg font-bold text-gray-800 mb-2">Copie a chave Pix abaixo e pague seu pedido!</h3>
             <p className="text-gray-600 mb-4">
               Pague exatamente o valor do seu pedido e volte para finalizar no carrinho.
             </p>
