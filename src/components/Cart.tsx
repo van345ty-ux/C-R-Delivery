@@ -100,13 +100,19 @@ export const Cart: React.FC<CartProps> = ({
   useEffect(() => {
     const handleStorageChange = () => {
       setIsMercadoPagoAcknowledged(JSON.parse(localStorage.getItem('hasSeenMercadoPagoWarning') || 'false'));
-      setHasSeenPixInstructions(JSON.parse(localStorage.getItem('hasSeenPixInstructions') || 'false')); // Sincroniza o estado das instruções Pix
+      // A flag hasSeenPixInstructions não será mais sincronizada aqui, pois será resetada na montagem do Cart
     };
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
+  // Efeito para carregar configurações e resetar a flag hasSeenPixInstructions ao montar o Cart
   useEffect(() => {
+    // Reset Pix instructions seen flag when cart mounts to ensure it shows on first Pix click
+    localStorage.removeItem('hasSeenPixInstructions');
+    setHasSeenPixInstructions(false); // Also reset local state
+    setShowPixInstructionsModal(false); // Ensure modal is closed initially
+
     const fetchSettings = async () => {
       const { data, error } = await supabase
         .from('settings')
@@ -131,7 +137,7 @@ export const Cart: React.FC<CartProps> = ({
     };
 
     fetchSettings();
-  }, []);
+  }, []); // Empty dependency array, runs once on mount
 
   // Efeito para verificar se o usuário tem cupons disponíveis
   useEffect(() => {
@@ -391,6 +397,10 @@ export const Cart: React.FC<CartProps> = ({
       localStorage.removeItem('hasSeenMercadoPagoWarning');
       setIsMercadoPagoAcknowledged(false);
     }
+    // Se estiver mudando para outra forma de pagamento, fecha o modal Pix
+    if (method !== 'pix') {
+      setShowPixInstructionsModal(false);
+    }
 
     // Lógica específica para Pix
     if (method === 'pix') {
@@ -403,8 +413,6 @@ export const Cart: React.FC<CartProps> = ({
       if (!hasSeenPixInstructions) {
         setShowPixInstructionsModal(true);
       }
-    } else { // Se estiver mudando para outra forma de pagamento
-      setShowPixInstructionsModal(false); // Garante que o modal Pix seja fechado
     }
   };
 
