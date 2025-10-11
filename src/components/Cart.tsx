@@ -45,11 +45,8 @@ export const Cart: React.FC<CartProps> = ({
     // Initialize from localStorage or default
     return localStorage.getItem('cartDeliveryType') as 'delivery' | 'pickup' || 'delivery';
   });
-  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'cash' | null>(() => {
-    // Initialize from localStorage or default, or null if not set
-    const savedMethod = localStorage.getItem('cartPaymentMethod');
-    return savedMethod ? (savedMethod as 'pix' | 'card' | 'cash') : null;
-  });
+  // CORREÇÃO: paymentMethod sempre inicia como null, ignorando localStorage para o valor inicial
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'cash' | null>(null);
   const [address, setAddress] = useState(() => {
     // Initialize from localStorage or default
     return localStorage.getItem('cartAddress') || '';
