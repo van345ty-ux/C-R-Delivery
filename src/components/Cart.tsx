@@ -70,10 +70,16 @@ export const Cart: React.FC<CartProps> = ({
   const [firstAvailableCoupon, setFirstAvailableCoupon] = useState<Coupon | null>(null); // Armazena o primeiro cupom disponível
   const couponInputRef = useRef<HTMLInputElement>(null); // Referência para o input do cupom
   const [showMercadoPagoWarning, setShowMercadoPagoWarning] = useState(false); // Estado para o pop-up de aviso
+  const [showPixInstructionsModal, setShowPixInstructionsModal] = useState(false); // Novo estado para o pop-up de instruções Pix
   
   // Novo estado para controlar se o redirecionamento do Mercado Pago foi reconhecido
   const [isMercadoPagoAcknowledged, setIsMercadoPagoAcknowledged] = useState(() => {
     return JSON.parse(localStorage.getItem('hasSeenMercadoPagoWarning') || 'false');
+  });
+
+  // Novo estado para controlar se as instruções Pix já foram vistas
+  const [hasSeenPixInstructions, setHasSeenPixInstructions] = useState(() => {
+    return JSON.parse(localStorage.getItem('hasSeenPixInstructions') || 'false');
   });
 
   // Effect to save form data to localStorage
@@ -83,13 +89,15 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.setItem('cartAddress', address);
     localStorage.setItem('cartCouponCode', couponCode);
     localStorage.setItem('cartAppliedCoupon', JSON.stringify(appliedCoupon));
+    localStorage.setItem('hasSeenPixInstructions', JSON.stringify(hasSeenPixInstructions)); // Salva o estado das instruções Pix
     // hasSeenMercadoPagoWarning é gerenciado diretamente em handleMercadoPagoConfirm e handleFinishOrder
-  }, [deliveryType, paymentMethod, address, couponCode, appliedCoupon]);
+  }, [deliveryType, paymentMethod, address, couponCode, appliedCoupon, hasSeenPixInstructions]);
 
   // Listener para mudanças no localStorage (útil para sincronizar entre abas ou após reload)
   useEffect(() => {
     const handleStorageChange = () => {
       setIsMercadoPagoAcknowledged(JSON.parse(localStorage.getItem('hasSeenMercadoPagoWarning') || 'false'));
+      setHasSeenPixInstructions(JSON.parse(localStorage.getItem('hasSeenPixInstructions') || 'false')); // Sincroniza o estado das instruções Pix
     };
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
@@ -253,6 +261,10 @@ export const Cart: React.FC<CartProps> = ({
       toast.error('A chave Pix não foi configurada. Por favor, escolha outra forma de pagamento.');
       return;
     }
+    if (paymentMethod === 'pix' && showPixInstructionsModal) {
+      toast.error('Por favor, confirme que você entendeu as instruções do Pix.');
+      return;
+    }
 
     if (paymentMethod === 'card') {
       // Verifica a flag diretamente do localStorage para garantir o estado mais recente
@@ -334,7 +346,9 @@ export const Cart: React.FC<CartProps> = ({
     setIsSubmitting(false);
     localStorage.removeItem('hasSeenMercadoPagoWarning'); // Limpa a flag após finalizar o pedido
     localStorage.removeItem('isMercadoPagoReturnFlow'); // Limpa a flag principal do Mercado Pago
+    localStorage.removeItem('hasSeenPixInstructions'); // Limpa a flag Pix
     setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
+    setHasSeenPixInstructions(false); // Atualiza o estado local
     // isMercadoPagoReturnFlow é limpo em onOrderCreated no App.tsx
     toast.success('Pedido finalizado com sucesso!');
   };
@@ -349,10 +363,35 @@ export const Cart: React.FC<CartProps> = ({
     // O carrinho permanece aberto para o usuário retornar e finalizar o pedido
   };
 
+  const handlePixInstructionsConfirm = () => {
+    setShowPixInstructionsModal(false);
+    localStorage.setItem('hasSeenPixInstructions', 'true');
+    setHasSeenPixInstructions(true);
+  };
+
   const copyPixKey = () => {
     if (pixKeyValue) {
       navigator.clipboard.writeText(pixKeyValue);
       toast.success('Chave Pix copiada!');
+    }
+  };
+
+  const handlePaymentMethodChange = (method: 'pix' | 'card' | 'cash') => {
+    setPaymentMethod(method);
+    // Limpa flags de outros métodos ao mudar
+    if (method !== 'card') {
+      localStorage.removeItem('hasSeenMercadoPagoWarning');
+      setIsMercadoPagoAcknowledged(false);
+    }
+    if (method !== 'pix') {
+      localStorage.removeItem('hasSeenPixInstructions');
+      setHasSeenPixInstructions(false);
+      setShowPixInstructionsModal(false); // Garante que o modal Pix feche
+    } else {
+      // Se for Pix e ainda não viu as instruções, mostra o modal
+      if (!hasSeenPixInstructions) {
+        setShowPixInstructionsModal(true);
+      }
     }
   };
 
@@ -397,7 +436,7 @@ export const Cart: React.FC<CartProps> = ({
               <button
                 onClick={() => onRemoveItem(item.product.id)}
                 className="text-red-500 text-sm"
-                disabled={isMercadoPagoReturnFlow} // Desabilita remover item
+                disabled={isMercadoPagoReturnFlow || showPixInstructionsModal} // Desabilita remover item
               >
                 Remover
               </button>
@@ -412,7 +451,7 @@ export const Cart: React.FC<CartProps> = ({
                 <button
                   onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
                   className="bg-gray-300 hover:bg-gray-400 rounded-full p-1"
-                  disabled={isMercadoPagoReturnFlow} // Desabilita botão de menos
+                  disabled={isMercadoPagoReturnFlow || showPixInstructionsModal} // Desabilita botão de menos
                 >
                   <Minus className="w-3 h-3" />
                 </button>
@@ -420,7 +459,7 @@ export const Cart: React.FC<CartProps> = ({
                 <button
                   onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
                   className="bg-gray-300 hover:bg-gray-400 rounded-full p-1"
-                  disabled={isMercadoPagoReturnFlow} // Desabilita botão de mais
+                  disabled={isMercadoPagoReturnFlow || showPixInstructionsModal} // Desabilita botão de mais
                 >
                   <Plus className="w-3 h-3" />
                 </button>
@@ -452,7 +491,7 @@ export const Cart: React.FC<CartProps> = ({
                       }
                     }}
                     className="ml-2 px-3 py-1 rounded-md bg-green-100 hover:bg-green-200 text-green-800 font-medium"
-                    disabled={isMercadoPagoReturnFlow} // Desabilita aplicar cupom
+                    disabled={isMercadoPagoReturnFlow || showPixInstructionsModal} // Desabilita aplicar cupom
                   >
                     Clique para aplicar
                   </button>
@@ -465,13 +504,13 @@ export const Cart: React.FC<CartProps> = ({
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
                   className="flex-1 p-2 border rounded-lg text-sm"
-                  disabled={loadingCoupon || isMercadoPagoReturnFlow} // Desabilita input de cupom
+                  disabled={loadingCoupon || isMercadoPagoReturnFlow || showPixInstructionsModal} // Desabilita input de cupom
                   ref={couponInputRef} // Associar a referência ao input
                 />
                 <button
                   onClick={() => handleApplyCoupon()} // Chama sem argumento para usar o estado `couponCode`
                   className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
-                  disabled={loadingCoupon || isMercadoPagoReturnFlow} // Desabilita botão de aplicar cupom
+                  disabled={loadingCoupon || isMercadoPagoReturnFlow || showPixInstructionsModal} // Desabilita botão de aplicar cupom
                 >
                   {loadingCoupon ? '...' : 'Aplicar'}
                 </button>
@@ -494,7 +533,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={deliveryType === 'delivery'}
                 onChange={() => setDeliveryType('delivery')}
                 className="mr-2"
-                disabled={isMercadoPagoReturnFlow} // Desabilita seleção
+                disabled={isMercadoPagoReturnFlow || showPixInstructionsModal} // Desabilita seleção
               />
               <span>Delivery (+R$ {deliveryFeeValue.toFixed(2)})</span>
             </label>
@@ -504,7 +543,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={deliveryType === 'pickup'}
                 onChange={() => setDeliveryType('pickup')}
                 className="mr-2"
-                disabled={isMercadoPagoReturnFlow} // Desabilita seleção
+                disabled={isMercadoPagoReturnFlow || showPixInstructionsModal} // Desabilita seleção
               />
               <span>Retirada no local (Grátis)</span>
             </label>
@@ -520,7 +559,7 @@ export const Cart: React.FC<CartProps> = ({
               placeholder="Rua, número, bairro..."
               className="w-full p-3 border rounded-lg text-sm"
               rows={3}
-              disabled={isMercadoPagoReturnFlow} // Desabilita endereço
+              disabled={isMercadoPagoReturnFlow || showPixInstructionsModal} // Desabilita endereço
             />
           </div>
         )}
@@ -532,25 +571,13 @@ export const Cart: React.FC<CartProps> = ({
               <input
                 type="radio"
                 checked={paymentMethod === 'pix'}
-                onChange={() => { 
-                  setPaymentMethod('pix'); 
-                  localStorage.removeItem('hasSeenMercadoPagoWarning'); // Limpa a flag se mudar de cartão
-                  setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
-                }}
+                onChange={() => handlePaymentMethodChange('pix')}
                 className="mr-2"
-                disabled={isMercadoPagoReturnFlow} // Desabilita seleção
+                disabled={isMercadoPagoReturnFlow || showPixInstructionsModal} // Desabilita seleção
               />
               <Smartphone className="w-4 h-4 mr-2" />
               <span>PIX</span>
             </label>
-            {paymentMethod === 'pix' && pixKeyValue && (
-              <div className="bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg text-sm flex items-center justify-between mt-2">
-                <span>Chave Pix: <span className="font-semibold">{pixKeyValue}</span></span>
-                <button onClick={copyPixKey} className="ml-2 p-1 rounded-md hover:bg-blue-100">
-                  <Copy className="w-4 h-4" />
-                </button>
-              </div>
-            )}
             {!pixKeyValue && paymentMethod === 'pix' && (
               <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm mt-2">
                 Atenção: A chave Pix não foi configurada no painel administrativo. Por favor, escolha outra forma de pagamento.
@@ -560,12 +587,9 @@ export const Cart: React.FC<CartProps> = ({
               <input
                 type="radio"
                 checked={paymentMethod === 'card'}
-                onChange={() => { 
-                  setPaymentMethod('card'); 
-                  // Não limpa a flag aqui. A lógica de aviso em handleFinishOrder cuidará disso.
-                }}
+                onChange={() => handlePaymentMethodChange('card')}
                 className="mr-2"
-                disabled={isMercadoPagoReturnFlow} // Desabilita seleção
+                disabled={isMercadoPagoReturnFlow || showPixInstructionsModal} // Desabilita seleção
               />
               <CreditCard className="w-4 h-4 mr-2" />
               <span>Cartão - você será redirecionado para o mercado pago</span>
@@ -574,13 +598,9 @@ export const Cart: React.FC<CartProps> = ({
               <input
                 type="radio"
                 checked={paymentMethod === 'cash'}
-                onChange={() => { 
-                  setPaymentMethod('cash'); 
-                  localStorage.removeItem('hasSeenMercadoPagoWarning'); // Limpa a flag se mudar de cartão
-                  setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
-                }}
+                onChange={() => handlePaymentMethodChange('cash')}
                 className="mr-2"
-                disabled={isMercadoPagoReturnFlow} // <--- CORRIGIDO AQUI
+                disabled={isMercadoPagoReturnFlow || showPixInstructionsModal} // <--- CORRIGIDO AQUI
               />
               <DollarSign className="w-4 h-4 mr-2" />
               <span>Dinheiro (na entrega)</span>
@@ -630,7 +650,7 @@ export const Cart: React.FC<CartProps> = ({
         )}
         <button
           onClick={handleFinishOrder}
-          disabled={isSubmitting || !canPlaceOrder || !user || (paymentMethod === 'pix' && !pixKeyValue)}
+          disabled={isSubmitting || !canPlaceOrder || !user || (paymentMethod === 'pix' && !pixKeyValue) || showPixInstructionsModal}
           className={`w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
             ${paymentMethod === 'card' && isMercadoPagoAcknowledged ? 'animate-pulse ring-4 ring-red-300' : ''}
           `}
@@ -652,6 +672,41 @@ export const Cart: React.FC<CartProps> = ({
             <button
               onClick={handleMercadoPagoConfirm}
               className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            >
+              Entendi
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Pix Instructions Pop-up */}
+      {showPixInstructionsModal && paymentMethod === 'pix' && pixKeyValue && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-lg shadow-2xl max-w-sm w-full p-6 text-center animate-scale-in">
+            <Smartphone className="w-12 h-12 mx-auto text-green-600 mb-4" />
+            <h3 className="text-lg font-bold text-gray-800 mb-2">Copie a chave Pix e pague seu pedido!</h3>
+            <p className="text-gray-600 mb-4">
+              Pague exatamente o valor do seu pedido e volte para finalizar no carrinho.
+            </p>
+
+            <div className="text-left mb-4">
+              <p className="font-semibold text-gray-800 mb-2">Siga estes passos:</p>
+              <ol className="list-decimal list-inside text-gray-700 space-y-1">
+                <li>Copie a chave Pix e vá até o seu banco pagar o pedido.</li>
+                <li>Volte e clique em "Entendi" para aparecer "Finalizar Pedido" e você finalizar o pedido já pago para a C&R Sushi poder preparar 😋.</li>
+              </ol>
+            </div>
+
+            <div className="bg-gray-100 border border-gray-200 rounded-lg p-3 flex items-center justify-between mb-4">
+              <span className="font-mono font-semibold text-gray-800 break-all mr-2">{pixKeyValue}</span>
+              <button onClick={copyPixKey} className="ml-2 p-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-700 transition-colors" title="Copiar chave Pix">
+                <Copy className="w-4 h-4" />
+              </button>
+            </div>
+
+            <button
+              onClick={handlePixInstructionsConfirm}
+              className="w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors"
             >
               Entendi
             </button>
