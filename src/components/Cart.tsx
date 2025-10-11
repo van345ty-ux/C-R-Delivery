@@ -92,9 +92,9 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.setItem('cartAddress', address);
     localStorage.setItem('cartCouponCode', couponCode);
     localStorage.setItem('cartAppliedCoupon', JSON.stringify(appliedCoupon));
-    localStorage.setItem('hasSeenPixInstructions', JSON.stringify(hasSeenPixInstructions)); // Salva o estado das instruções Pix
+    // hasSeenPixInstructions é gerenciado apenas por handlePixInstructionsConfirm
     // hasSeenMercadoPagoWarning é gerenciado diretamente em handleMercadoPagoConfirm e handleFinishOrder
-  }, [deliveryType, paymentMethod, address, couponCode, appliedCoupon, hasSeenPixInstructions]);
+  }, [deliveryType, paymentMethod, address, couponCode, appliedCoupon]);
 
   // Listener para mudanças no localStorage (útil para sincronizar entre abas ou após reload)
   useEffect(() => {
@@ -385,20 +385,26 @@ export const Cart: React.FC<CartProps> = ({
 
   const handlePaymentMethodChange = (method: 'pix' | 'card' | 'cash') => {
     setPaymentMethod(method);
+
     // Limpa flags de outros métodos ao mudar
     if (method !== 'card') {
       localStorage.removeItem('hasSeenMercadoPagoWarning');
       setIsMercadoPagoAcknowledged(false);
     }
-    if (method !== 'pix') {
-      localStorage.removeItem('hasSeenPixInstructions');
-      setHasSeenPixInstructions(false);
-      setShowPixInstructionsModal(false); // Garante que o modal Pix feche
-    } else {
-      // Se for Pix e ainda não viu as instruções, mostra o modal
+
+    // Lógica específica para Pix
+    if (method === 'pix') {
+      if (!pixKeyValue) {
+        toast.error('A chave Pix não foi configurada. Por favor, escolha outra forma de pagamento.');
+        setPaymentMethod(null); // Reverte a seleção se a chave Pix não estiver configurada
+        return;
+      }
+      // Se Pix é selecionado e as instruções ainda não foram vistas, mostra o modal
       if (!hasSeenPixInstructions) {
         setShowPixInstructionsModal(true);
       }
+    } else { // Se estiver mudando para outra forma de pagamento
+      setShowPixInstructionsModal(false); // Garante que o modal Pix seja fechado
     }
   };
 
@@ -607,7 +613,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={paymentMethod === 'cash'}
                 onChange={() => handlePaymentMethodChange('cash')}
                 className="mr-2"
-                disabled={isMercadoPagoReturnFlow || showPixInstructionsModal} // <--- CORRIGIDO AQUI
+                disabled={isMercadoPagoReturnFlow || showPixInstructionsModal} // Desabilita seleção
               />
               <DollarSign className="w-4 h-4 mr-2" />
               <span>Dinheiro (na entrega)</span>
@@ -692,7 +698,7 @@ export const Cart: React.FC<CartProps> = ({
           <div className="bg-white rounded-lg shadow-2xl max-w-sm w-full p-6 text-center animate-scale-in">
             <Smartphone className="w-12 h-12 mx-auto text-green-600 mb-4" />
             <h3 className="text-lg font-bold text-gray-800 mb-2">Copie a chave Pix e pague seu pedido!</h3>
-            <p className="text-gray-600 mb-2">
+            <p className="text-gray-600 mb-4">
               Pague exatamente o valor do seu pedido e volte para finalizar no carrinho.
             </p>
             <p className="text-xl font-bold text-red-600 mb-4">
