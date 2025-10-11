@@ -692,8 +692,11 @@ export const Cart: React.FC<CartProps> = ({
           <div className="bg-white rounded-lg shadow-2xl max-w-sm w-full p-6 text-center animate-scale-in">
             <Smartphone className="w-12 h-12 mx-auto text-green-600 mb-4" />
             <h3 className="text-lg font-bold text-gray-800 mb-2">Copie a chave Pix e pague seu pedido!</h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 mb-2">
               Pague exatamente o valor do seu pedido e volte para finalizar no carrinho.
+            </p>
+            <p className="text-xl font-bold text-red-600 mb-4">
+              Valor a pagar: R$ {total.toFixed(2)}
             </p>
 
             <div className="text-left mb-4">
