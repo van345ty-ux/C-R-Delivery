@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react'; // Added useRef
 import { supabase } from '../integrations/supabase/client';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import toast from 'react-hot-toast';
@@ -60,6 +60,12 @@ export const useAuth = (onLogoutCallback?: () => void) => {
   const [pendingCouponNotificationUserId, setPendingCouponNotificationUserId] = useState<string | null>(null);
   const [showUserCouponNotification, setShowUserCouponNotification] = useState(false);
 
+  // Use useRef to keep a stable reference to the latest onLogoutCallback
+  const onLogoutCallbackRef = useRef(onLogoutCallback);
+  useEffect(() => {
+    onLogoutCallbackRef.current = onLogoutCallback;
+  }, [onLogoutCallback]);
+
   const checkAndShowCouponNotification = useCallback(async (userId: string) => {
     console.log('useAuth: checkAndShowCouponNotification called for userId:', userId);
     
@@ -99,25 +105,26 @@ export const useAuth = (onLogoutCallback?: () => void) => {
       setPendingCouponNotificationUserId(null);
       console.log('useAuth: No available coupons, clearing pendingCouponNotificationUserId');
     }
-  }, []);
+  }, []); // This should be stable
 
-  const handleAuthChange = useCallback(async (event: string, sessionFromEvent: Session | null) => {
-    console.log(`useAuth: handleAuthChange: Event received: ${event}, sessionFromEvent: ${sessionFromEvent ? 'active' : 'null'}`);
+  // This is the core handler for auth state changes
+  const authStateChangeHandler = useCallback(async (event: string, sessionFromEvent: Session | null) => {
+    console.log(`useAuth: authStateChangeHandler: Event received: ${event}, sessionFromEvent: ${sessionFromEvent ? 'active' : 'null'}`);
     setAuthLoading(true);
-    console.log('useAuth: authLoading set to true (start of handleAuthChange)');
+    console.log('useAuth: authLoading set to true (start of authStateChangeHandler)');
     
     try {
       if (event === 'SIGNED_OUT') {
-        console.log('useAuth: handleAuthChange: SIGNED_OUT event detected. Clearing all user-related states.');
+        console.log('useAuth: authStateChangeHandler: SIGNED_OUT event detected. Clearing all user-related states.');
         setSession(null);
         setUser(null);
         setPendingCouponNotificationUserId(null);
         setShowUserCouponNotification(false);
-        if (onLogoutCallback) {
+        if (onLogoutCallbackRef.current) { // Use the ref here
           try {
-            onLogoutCallback(); // Isolate callback to prevent it from breaking the finally block
+            onLogoutCallbackRef.current();
           } catch (cbError) {
-            console.error('useAuth: handleAuthChange: Error in onLogoutCallback:', cbError);
+            console.error('useAuth: authStateChangeHandler: Error in onLogoutCallbackRef.current:', cbError);
           }
         }
         toast.success('Você foi desconectado.');
@@ -125,19 +132,19 @@ export const useAuth = (onLogoutCallback?: () => void) => {
       }
 
       const { data: { session: latestSession }, error: sessionError } = await supabase.auth.getSession();
-      console.log(`useAuth: handleAuthChange: Latest session from getSession() after event: ${latestSession ? 'active' : 'null'}`);
+      console.log(`useAuth: authStateChangeHandler: Latest session from getSession() after event: ${latestSession ? 'active' : 'null'}`);
 
       if (sessionError) {
-        console.error('useAuth: handleAuthChange: Erro ao buscar a sessão mais recente em onAuthStateChange:', sessionError);
+        console.error('useAuth: authStateChangeHandler: Erro ao buscar a sessão mais recente em onAuthStateChange:', sessionError);
         setSession(null);
         setUser(null);
         setPendingCouponNotificationUserId(null);
         setShowUserCouponNotification(false);
-        if (onLogoutCallback) {
+        if (onLogoutCallbackRef.current) {
           try {
-            onLogoutCallback();
+            onLogoutCallbackRef.current();
           } catch (cbError) {
-            console.error('useAuth: handleAuthChange: Error in onLogoutCallback (sessionError path):', cbError);
+            console.error('useAuth: authStateChangeHandler: Error in onLogoutCallbackRef.current (sessionError path):', cbError);
           }
         }
         toast.error('Erro na sessão. Por favor, faça login novamente.');
@@ -147,12 +154,12 @@ export const useAuth = (onLogoutCallback?: () => void) => {
       setSession(latestSession);
 
       if (latestSession?.user) {
-        console.log('useAuth: handleAuthChange: User is active. Fetching profile.');
+        console.log('useAuth: authStateChangeHandler: User is active. Fetching profile.');
         const profile = await fetchUserProfile(latestSession.user);
         setUser(profile);
 
         if (profile) {
-          console.log('useAuth: handleAuthChange: Profile fetched/created successfully.');
+          console.log('useAuth: authStateChangeHandler: Profile fetched/created successfully.');
           if (event === 'SIGNED_IN' && profile.role === 'customer') {
             const userName = latestSession.user.user_metadata.full_name || latestSession.user.email;
             if (userName) {
@@ -161,54 +168,54 @@ export const useAuth = (onLogoutCallback?: () => void) => {
                 user_name: userName,
               });
               if (error) {
-                console.error('useAuth: handleAuthChange: Error creating login notification:', error);
+                console.error('useAuth: authStateChangeHandler: Error creating login notification:', error);
               } else {
-                console.log('useAuth: handleAuthChange: Login notification created.');
+                console.log('useAuth: authStateChangeHandler: Login notification created.');
               }
             }
             checkAndShowCouponNotification(latestSession.user.id);
           }
         } else {
-          console.log('useAuth: handleAuthChange: Profile could not be fetched/created, treating as no valid user.');
-          setSession(null);
+          console.log('useAuth: authStateChangeHandler: No profile data found or created, returning null.');
+          setSession(null); // Clear session if profile fails
           setUser(null);
           setPendingCouponNotificationUserId(null);
           setShowUserCouponNotification(false);
-          if (onLogoutCallback) {
+          if (onLogoutCallbackRef.current) {
             try {
-              onLogoutCallback();
+              onLogoutCallbackRef.current();
             } catch (cbError) {
-              console.error('useAuth: handleAuthChange: Error in onLogoutCallback (profile failure path):', cbError);
+              console.error('useAuth: authStateChangeHandler: Error in onLogoutCallbackRef.current (profile failure path):', cbError);
             }
           }
           toast.error('Não foi possível carregar seu perfil. Por favor, tente fazer login novamente.');
         }
       } else {
-        console.log('useAuth: handleAuthChange: No active user session found (after getSession). Clearing user-related states.');
+        console.log('useAuth: authStateChangeHandler: No active user session found (after getSession). Clearing user-related states.');
         setUser(null);
         setPendingCouponNotificationUserId(null);
         setShowUserCouponNotification(false);
       }
     } catch (error) {
-      console.error('useAuth: handleAuthChange: Erro inesperado durante o processamento de autenticação:', error);
+      console.error('useAuth: authStateChangeHandler: Erro inesperado durante o processamento de autenticação:', error);
       toast.error('Ocorreu um erro durante a autenticação: ' + (error as Error).message);
     } finally {
       setAuthLoading(false);
-      console.log('useAuth: authLoading set to false (end of handleAuthChange)');
+      console.log('useAuth: authLoading set to false (end of authStateChangeHandler)');
     }
-  }, [checkAndShowCouponNotification, onLogoutCallback]);
+  }, [checkAndShowCouponNotification]); // onLogoutCallback is now accessed via ref, so it's not a dependency here
 
   useEffect(() => {
     setAuthLoading(true);
     console.log('useAuth: authLoading set to true (start of useEffect)');
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(authStateChangeHandler); // Use the stable handler
     console.log('useAuth: Auth state change listener set up.');
 
     return () => {
       console.log('useAuth: Auth subscription unsubscribed.');
       subscription.unsubscribe();
     };
-  }, [handleAuthChange]);
+  }, [authStateChangeHandler]); // This dependency should now be stable
 
   const refetchUser = useCallback(async () => {
     console.log('useAuth: refetchUser: Called.');
@@ -227,19 +234,19 @@ export const useAuth = (onLogoutCallback?: () => void) => {
       setUser(null);
       setPendingCouponNotificationUserId(null);
       setShowUserCouponNotification(false);
-      if (onLogoutCallback) {
+      if (onLogoutCallbackRef.current) { // Use the ref here
         try {
-          onLogoutCallback();
+          onLogoutCallbackRef.current();
         } catch (cbError) {
-          console.error('useAuth: logout: Error in onLogoutCallback (signOut error path):', cbError);
+          console.error('useAuth: logout: Error in onLogoutCallbackRef.current (signOut error path):', cbError);
         }
       }
       toast.success('Você foi desconectado.');
     } else {
       console.log('useAuth: logout: signOut initiated successfully. State cleanup will be handled by onAuthStateChange.');
     }
-  }, [onLogoutCallback]);
-
+  }, []); // No dependencies needed here, as onLogoutCallback is accessed via ref
+  
   return {
     session,
     user,
