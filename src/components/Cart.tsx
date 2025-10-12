@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Minus, CreditCard, Smartphone, DollarSign, Gift, ExternalLink } from 'lucide-react';
+import { X, Plus, Minus, CreditCard, Smartphone, DollarSign, Gift, ExternalLink, Copy } from 'lucide-react';
 import { CartItem, Order, User } from '../App';
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
@@ -444,6 +444,24 @@ export const Cart: React.FC<CartProps> = ({
               <input type="radio" checked={paymentMethod === 'pix'} onChange={() => { setPaymentMethod('pix'); if (!hasSeenPixInstructions) setShowPixInstructions(true); localStorage.removeItem('hasSeenMercadoPagoWarning'); setIsMercadoPagoAcknowledged(false); }} className="mr-2" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment} />
               <Smartphone className="w-4 h-4 mr-2" /><span>PIX</span>
             </label>
+            {paymentMethod === 'pix' && hasSeenPixInstructions && pixKeyValue && (
+              <div className="ml-6 mt-2 p-3 bg-gray-100 rounded-lg flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-600">Chave PIX:</p>
+                  <p className="font-mono text-sm break-all">{pixKeyValue}</p>
+                </div>
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(pixKeyValue);
+                    toast.success('Chave PIX copiada!');
+                  }}
+                  className="ml-4 p-2 bg-gray-200 hover:bg-gray-300 rounded-lg"
+                  aria-label="Copiar chave PIX"
+                >
+                  <Copy className="w-4 h-4 text-gray-700" />
+                </button>
+              </div>
+            )}
             {!pixKeyValue && paymentMethod === 'pix' && (
               <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm mt-2">Atenção: A chave Pix não foi configurada no painel administrativo. Por favor, escolha outra forma de pagamento.</div>
             )}
