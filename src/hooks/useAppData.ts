@@ -9,10 +9,12 @@ export const useAppData = () => {
   const [operatingHours, setOperatingHours] = useState<OperatingHour[]>([]);
   const [initialAppDataLoading, setInitialAppDataLoading] = useState(true);
 
-  const fetchInitialAppData = useCallback(async () => {
-    console.log('useAppData: fetchInitialAppData: Starting initial app data fetch.');
-    setInitialAppDataLoading(true);
-    console.log('useAppData: initialAppDataLoading set to true (start of fetchInitialAppData)');
+  const fetchInitialAppData = useCallback(async (isBackgroundRefresh = false) => {
+    console.log(`useAppData: fetchInitialAppData called. isBackgroundRefresh: ${isBackgroundRefresh}`);
+    if (!isBackgroundRefresh) {
+      setInitialAppDataLoading(true);
+      console.log('useAppData: initialAppDataLoading set to true (foreground fetch)');
+    }
     try {
       const settingsPromise = supabase.from('settings').select('key, value');
       const citiesPromise = supabase.from('cities').select('*').order('name', { ascending: true });
@@ -48,16 +50,18 @@ export const useAppData = () => {
         console.log('useAppData: fetchInitialAppData: Operating hours loaded.');
       }
     } catch (error: any) {
-      console.error("useAppData: fetchInitialAppData: Critical error during initial app data fetching:", error);
-      toast.error("Falha crítica ao carregar dados iniciais do aplicativo: " + (error.message || "Erro desconhecido"));
+      console.error("useAppData: fetchInitialAppData: Critical error during app data fetching:", error);
+      toast.error("Falha crítica ao carregar dados do aplicativo: " + (error.message || "Erro desconhecido"));
     } finally {
-      setInitialAppDataLoading(false);
-      console.log('useAppData: initialAppDataLoading set to false (end of fetchInitialAppData)');
+      if (!isBackgroundRefresh) {
+        setInitialAppDataLoading(false);
+        console.log('useAppData: initialAppDataLoading set to false (foreground fetch)');
+      }
     }
   }, []);
 
   useEffect(() => {
-    fetchInitialAppData();
+    fetchInitialAppData(false); // A primeira carga sempre mostra o loading
   }, [fetchInitialAppData]);
 
   return {

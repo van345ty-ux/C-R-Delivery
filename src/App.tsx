@@ -58,24 +58,17 @@ function App() {
 
   // Listener para refrescar a sessão e a página quando a aba se torna visível
   const handleVisibilityChange = useCallback(async () => {
-    // Se a aba não estiver visível, não faz nada
     if (document.visibilityState !== 'visible') return;
 
-    // **CORREÇÃO:** Se o app já estiver carregando, não inicia um novo carregamento
-    if (initialAppDataLoading || authLoading) {
-      console.log('App: Tab became visible, but app is already loading. Skipping refresh.');
-      return;
-    }
-
-    console.log('App: Tab became visible. Refreshing app data and auth session.');
-    await fetchInitialAppData();
+    console.log('App: Tab became visible. Refreshing app data and auth session in background.');
+    await fetchInitialAppData(true); // Chama a atualização em segundo plano
     await supabase.auth.getSession();
     
     const mpReturnFlow = JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
     if (mpReturnFlow !== mercadoPagoFlow.isMercadoPagoReturnFlow) {
       mercadoPagoFlow.setIsMercadoPagoReturnFlow(mpReturnFlow);
     }
-  }, [fetchInitialAppData, mercadoPagoFlow, initialAppDataLoading, authLoading]);
+  }, [fetchInitialAppData, mercadoPagoFlow]);
 
   useEffect(() => {
     document.addEventListener('visibilitychange', handleVisibilityChange);
