@@ -511,35 +511,24 @@ function App() {
     }
   }, [checkAndShowCouponNotification, setIsMercadoPagoReturnFlow, setCurrentView, setCart, setSelectedCity, setPendingCouponNotificationUserId, setShowUserCouponNotification, setSession, setUser]);
 
-  const initializeAuth = useCallback(async () => {
-    console.log('initializeAuth: Starting initial auth check.');
-    setAuthLoading(true);
-    try {
-      const { data: { session: initialSession } = {} } = await supabase.auth.getSession();
-      await handleAuthChange('INITIAL_LOAD', initialSession || null);
-    } catch (error) {
-      console.error('initializeAuth: Erro ao buscar a sessão inicial:', error);
-      setAuthLoading(false);
-    }
-  }, [handleAuthChange]);
-
   // Effect for Supabase Auth Session and User Profile
   useEffect(() => {
+    setAuthLoading(true); // Set loading true when the effect starts
     let authSubscription: ReturnType<typeof supabase.auth.onAuthStateChange>['data']['subscription'];
 
-    // Rely solely on onAuthStateChange for initial session and subsequent changes
+    // This listener will fire immediately with the current session,
+    // and then for any subsequent auth state changes.
     authSubscription = supabase.auth.onAuthStateChange(handleAuthChange).data.subscription;
     console.log('App: Auth state change listener set up.');
 
     // Listener para refrescar a sessão e a página quando a aba se torna visível
     const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible') {
-        console.log('App: Tab became visible. Re-initializing app data and auth.');
-        // Re-executa o carregamento de dados iniciais e auth para garantir que tudo esteja atualizado
-        await fetchInitialAppData(); // This will set initialAppDataLoading
-        await initializeAuth(); // This will set authLoading
+        console.log('App: Tab became visible. Refreshing app data and auth session.');
+        await fetchInitialAppData(); // Refresh app data
+        // Force a session refresh. This will trigger handleAuthChange if session changes.
+        await supabase.auth.getSession(); 
         
-        // NOVO: Verifica o estado de retorno do Mercado Pago no localStorage
         const mpReturnFlow = JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
         if (mpReturnFlow !== isMercadoPagoReturnFlow) {
           console.log('App: isMercadoPagoReturnFlow changed in localStorage, updating state.');
@@ -557,7 +546,7 @@ function App() {
       }
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [handleAuthChange, fetchInitialAppData, initializeAuth, isMercadoPagoReturnFlow]); // Adicionado fetchInitialAppData e isMercadoPagoReturnFlow como dependências
+  }, [handleAuthChange, fetchInitialAppData, isMercadoPagoReturnFlow]); // Removed initializeAuth from dependencies
 
   const refetchUser = useCallback(async () => {
     console.log('refetchUser: Called.');
