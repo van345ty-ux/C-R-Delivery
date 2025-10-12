@@ -82,11 +82,10 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   useEffect(() => {
     const fetchPromotionsAndSettings = async () => {
-      // Se estiver no fluxo de retorno do Mercado Pago, abre o carrinho e suprime o modal de promoção
+      // Se estiver no fluxo de retorno do Mercado Pago, suprime o modal de promoção
       if (isMercadoPagoReturnFlow) {
-        console.log('HomePage: isMercadoPagoReturnFlow is true, opening cart and suppressing promotion modal.');
+        console.log('HomePage: isMercadoPagoReturnFlow is true, suppressing promotion modal.');
         setShowPromotions(false); // Suprime o modal de promoção
-        setShowCart(true); // Abre o carrinho automaticamente
         return; // Não busca promoções se estiver retornando do MP
       }
 
@@ -128,6 +127,15 @@ export const HomePage: React.FC<HomePageProps> = ({
       fetchPromotionsAndSettings();
     }
   }, [showPreOrderModal, isMercadoPagoReturnFlow]); // Adicionado isMercadoPagoReturnFlow como dependência
+
+  // NOVO useEffect para abrir o carrinho automaticamente se estiver no fluxo de retorno de pagamento
+  useEffect(() => {
+    if (isMercadoPagoReturnFlow) {
+      console.log('HomePage: Detected isMercadoPagoReturnFlow is true, automatically showing cart.');
+      setShowCart(true);
+    }
+  }, [isMercadoPagoReturnFlow]); // Este efeito será executado sempre que a prop mudar ou na montagem se for true
+
 
   const handleAddToCart = (product: Product, quantity = 1, observations?: string) => {
     onAddToCart(product, quantity, observations || undefined);
