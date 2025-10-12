@@ -24,7 +24,7 @@ interface MenuProps {
   heroSubtitleFontColor: string;
   heroSubtitleBorderColor: string;
   showPreOrderBanner: boolean; // Nova prop
-  isMercadoPagoReturnFlow: boolean; // Re-adicionando a prop
+  isMercadoPagoReturnFlow: boolean; // Nova prop
 }
 
 const categories = [
@@ -54,7 +54,7 @@ export const Menu: React.FC<MenuProps> = ({
   heroSubtitleFontColor,
   heroSubtitleBorderColor,
   showPreOrderBanner, // Nova prop
-  isMercadoPagoReturnFlow, // Re-adicionando a prop
+  isMercadoPagoReturnFlow, // Nova prop
 }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
@@ -208,7 +208,7 @@ export const Menu: React.FC<MenuProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              disabled={isMercadoPagoReturnFlow} // Usando a prop
+              disabled={isMercadoPagoReturnFlow} // Desabilita busca
             />
           </div>
         </div>
@@ -224,7 +224,7 @@ export const Menu: React.FC<MenuProps> = ({
                   ? 'bg-red-600 text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
-              disabled={isMercadoPagoReturnFlow} // Usando a prop
+              disabled={isMercadoPagoReturnFlow} // Desabilita filtros
             >
               {category}
             </button>
@@ -262,7 +262,7 @@ export const Menu: React.FC<MenuProps> = ({
                 product={product}
                 onProductClick={handleProductClick} // Passa o novo handler
                 isPromotion={true}
-                isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a prop novamente
+                isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
               />
             ))}
           </div>
@@ -280,7 +280,7 @@ export const Menu: React.FC<MenuProps> = ({
                 product={product}
                 onProductClick={handleProductClick} // Passa o novo handler
                 isPromotion={false}
-                isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a prop novamente
+                isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
               />
             ))}
           </div>
@@ -309,7 +309,7 @@ export const Menu: React.FC<MenuProps> = ({
           onAddToCart={onAddToCart}
           isStoreOpen={isStoreOpen}
           canPlaceOrder={canPlaceOrder} // Passando o novo estado
-          isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a prop novamente
+          isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
         />
       )}
     </div>

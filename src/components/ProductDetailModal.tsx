@@ -10,7 +10,7 @@ interface ProductDetailModalProps {
   onAddToCart: (product: Product, quantity: number, observations?: string) => void;
   isStoreOpen: boolean;
   canPlaceOrder: boolean; // Nova prop
-  isMercadoPagoReturnFlow: boolean; // Re-adicionando a prop
+  isMercadoPagoReturnFlow: boolean; // Nova prop
 }
 
 export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
@@ -19,7 +19,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onAddToCart,
   isStoreOpen,
   canPlaceOrder, // Nova prop
-  isMercadoPagoReturnFlow, // Re-adicionando a prop
+  isMercadoPagoReturnFlow, // Nova prop
 }) => {
   const [quantity, setQuantity] = useState(1);
   const [observations, setObservations] = useState('');
@@ -95,7 +95,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               placeholder="Ex: Sem cebola, molho extra..."
               className="w-full p-3 border rounded-lg text-sm"
               rows={2}
-              disabled={isMercadoPagoReturnFlow} // Usando a prop
+              disabled={isMercadoPagoReturnFlow} // Desabilita observações
             />
           </div>
 
@@ -104,7 +104,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               <button
                 onClick={() => handleQuantityChange(-1)}
                 className="bg-gray-200 hover:bg-gray-300 rounded-full p-2"
-                disabled={isMercadoPagoReturnFlow} // Usando a prop
+                disabled={isMercadoPagoReturnFlow} // Desabilita botão de menos
               >
                 <Minus className="w-4 h-4" />
               </button>
@@ -112,7 +112,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               <button
                 onClick={() => handleQuantityChange(1)}
                 className="bg-gray-200 hover:bg-gray-300 rounded-full p-2"
-                disabled={isMercadoPagoReturnFlow} // Usando a prop
+                disabled={isMercadoPagoReturnFlow} // Desabilita botão de mais
               >
                 <Plus className="w-4 h-4" />
               </button>

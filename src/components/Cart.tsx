@@ -3,7 +3,6 @@ import { X, Plus, Minus, CreditCard, Smartphone, DollarSign, Copy, Gift, Externa
 import { CartItem, Order, User } from '../App';
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
-import { PixReturnConfirmationModal } from './PixReturnConfirmationModal'; // Importando o novo modal
 
 interface CartProps {
   items: CartItem[];
@@ -14,7 +13,7 @@ interface CartProps {
   user: User | null;
   isStoreOpen: boolean; // Manter para o status visual, mas usar canPlaceOrder para habilitar o botão
   canPlaceOrder: boolean; // Nova prop
-  isMercadoPagoReturnFlow: boolean; // Re-adicionando a prop
+  isMercadoPagoReturnFlow: boolean; // Nova prop
 }
 
 interface Coupon {
@@ -40,18 +39,15 @@ export const Cart: React.FC<CartProps> = ({
   user,
   isStoreOpen, // Manter para o status visual
   canPlaceOrder, // Nova prop
-  isMercadoPagoReturnFlow, // Re-adicionando a prop
+  isMercadoPagoReturnFlow, // Nova prop
 }) => {
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>(() => {
     // Initialize from localStorage or default
     return localStorage.getItem('cartDeliveryType') as 'delivery' | 'pickup' || 'delivery';
   });
-  // Initialize paymentMethod based on external return flow or default to null
-  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'cash' | null>(() => {
-    if (typeof window !== 'undefined' && JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false')) {
-      return localStorage.getItem('externalPaymentMethod') as 'pix' | 'card' | null;
-    }
-    return null;
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'cash'>(() => {
+    // Initialize from localStorage or default
+    return localStorage.getItem('cartPaymentMethod') as 'pix' | 'card' | 'cash' || 'pix';
   });
   const [address, setAddress] = useState(() => {
     // Initialize from localStorage or default
@@ -74,79 +70,32 @@ export const Cart: React.FC<CartProps> = ({
   const [firstAvailableCoupon, setFirstAvailableCoupon] = useState<Coupon | null>(null); // Armazena o primeiro cupom disponível
   const couponInputRef = useRef<HTMLInputElement>(null); // Referência para o input do cupom
   const [showMercadoPagoWarning, setShowMercadoPagoWarning] = useState(false); // Estado para o pop-up de aviso
-  const [showPixInstructionsModal, setShowPixInstructionsModal] = useState(false); // Novo estado para o pop-up de instruções Pix
   
   // Novo estado para controlar se o redirecionamento do Mercado Pago foi reconhecido
   const [isMercadoPagoAcknowledged, setIsMercadoPagoAcknowledged] = useState(() => {
     return JSON.parse(localStorage.getItem('hasSeenMercadoPagoWarning') || 'false');
   });
 
-  // Novo estado para controlar se as instruções Pix já foram vistas
-  const [hasSeenPixInstructions, setHasSeenPixInstructions] = useState(() => {
-    return JSON.parse(localStorage.getItem('hasSeenPixInstructions') || 'false');
-  });
-
-  // NOVO ESTADO: Para o modal de confirmação de retorno Pix
-  const [showPixReturnConfirmationModal, setShowPixReturnConfirmationModal] = useState(false);
-  const [hasAcknowledgedPixReturnConfirmation, setHasAcknowledgedPixReturnConfirmation] = useState(() => {
-    return JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false');
-  });
-
-  // NOVO ESTADO: Para controlar se o pagamento Pix foi iniciado
-  const [pixPaymentInitiated, setPixPaymentInitiated] = useState(() => {
-    return JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false');
-  });
-
-
   // Effect to save form data to localStorage
   useEffect(() => {
     localStorage.setItem('cartDeliveryType', deliveryType);
-    // Only save paymentMethod if it's not null
-    if (paymentMethod) {
-      localStorage.setItem('cartPaymentMethod', paymentMethod);
-    } else {
-      localStorage.removeItem('cartPaymentMethod');
-    }
+    localStorage.setItem('cartPaymentMethod', paymentMethod);
     localStorage.setItem('cartAddress', address);
     localStorage.setItem('cartCouponCode', couponCode);
     localStorage.setItem('cartAppliedCoupon', JSON.stringify(appliedCoupon));
-    // isMercadoPagoReturnFlow é gerenciado via prop, não salvo aqui
-    localStorage.setItem('pixPaymentInitiated', JSON.stringify(pixPaymentInitiated)); // Salva o estado de pixPaymentInitiated
-  }, [deliveryType, paymentMethod, address, couponCode, appliedCoupon, pixPaymentInitiated]);
+    // hasSeenMercadoPagoWarning é gerenciado diretamente em handleMercadoPagoConfirm e handleFinishOrder
+  }, [deliveryType, paymentMethod, address, couponCode, appliedCoupon]);
 
   // Listener para mudanças no localStorage (útil para sincronizar entre abas ou após reload)
   useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      // isMercadoPagoReturnFlow é uma prop, não é atualizado aqui
-      if (event.key === 'hasSeenMercadoPagoWarning') {
-        setIsMercadoPagoAcknowledged(JSON.parse(event.newValue || 'false'));
-      }
-      if (event.key === 'hasAcknowledgedPixReturnConfirmation') {
-        setHasAcknowledgedPixReturnConfirmation(JSON.parse(event.newValue || 'false'));
-      }
-      if (event.key === 'pixPaymentInitiated') {
-        setPixPaymentInitiated(JSON.parse(event.newValue || 'false')); // Sincroniza pixPaymentInitiated
-      }
-      if (event.key === 'hasSeenPixInstructions') {
-        setHasSeenPixInstructions(JSON.parse(event.newValue || 'false'));
-      }
+    const handleStorageChange = () => {
+      setIsMercadoPagoAcknowledged(JSON.parse(localStorage.getItem('hasSeenMercadoPagoWarning') || 'false'));
     };
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Efeito para carregar configurações e resetar a flag hasSeenPixInstructions ao montar o Cart
   useEffect(() => {
-    // Reset Pix instructions seen flag when cart mounts to ensure it shows on first Pix click
-    // We only reset if we are NOT in a return flow, to allow the key to be shown if needed
-    if (!isMercadoPagoReturnFlow) { // Usando a prop
-      localStorage.removeItem('hasSeenPixInstructions');
-      setHasSeenPixInstructions(false); // Also reset local state
-    }
-    
-    setShowPixInstructionsModal(false); // Ensure modal is closed initially
-    setShowPixReturnConfirmationModal(false); // Ensure this is also closed initially
-
     const fetchSettings = async () => {
       const { data, error } = await supabase
         .from('settings')
@@ -168,35 +117,10 @@ export const Cart: React.FC<CartProps> = ({
       } else {
         console.warn('Could not fetch settings, using default values.');
       }
-
-      // NEW LOGIC: Set paymentMethod if returning from external payment
-      // isMercadoPagoReturnFlow é uma prop, não lida do localStorage aqui
-      const savedExternalMethod = localStorage.getItem('externalPaymentMethod') as 'pix' | 'card' | null;
-      const pixPaymentInitiatedFromStorage = JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false');
-      const acknowledgedPixReturn = JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false');
-
-      let shouldShowPixReturnConfirmation = false;
-      if (isMercadoPagoReturnFlow && savedExternalMethod === 'pix' && pixPaymentInitiatedFromStorage && !acknowledgedPixReturn) {
-        shouldShowPixReturnConfirmation = true;
-        setShowPixReturnConfirmationModal(true);
-      }
-
-      if (isMercadoPagoReturnFlow) { // Usando a prop
-        if (savedExternalMethod) {
-          setPaymentMethod(savedExternalMethod);
-          if (savedExternalMethod === 'pix') {
-            // Only show initial Pix instructions if the return confirmation modal is NOT showing
-            // AND initial Pix instructions haven't been seen
-            if (!shouldShowPixReturnConfirmation && !JSON.parse(localStorage.getItem('hasSeenPixInstructions') || 'false')) {
-              setShowPixInstructionsModal(true);
-            }
-          }
-        }
-      }
     };
 
     fetchSettings();
-  }, [isMercadoPagoReturnFlow]); // Depende da prop isMercadoPagoReturnFlow
+  }, []);
 
   // Efeito para verificar se o usuário tem cupons disponíveis
   useEffect(() => {
@@ -251,7 +175,7 @@ export const Cart: React.FC<CartProps> = ({
   const total = subtotal + deliveryFee - discount;
 
   const handleApplyCoupon = async (codeToApply?: string) => {
-    if (isMercadoPagoReturnFlow) { // Usando a prop
+    if (isMercadoPagoReturnFlow) {
       toast.error('Finalize seu pedido atual antes de aplicar cupons.');
       return;
     }
@@ -312,53 +236,21 @@ export const Cart: React.FC<CartProps> = ({
   };
 
   const handleFinishOrder = async () => {
-    console.log('handleFinishOrder: Iniciando processo de finalização do pedido.');
-    // Variável para controlar o estado de desabilitação de elementos interativos
-    const isAnyModalOpen = showMercadoPagoWarning || showPixInstructionsModal || showPixReturnConfirmationModal;
-    // Condição para Pix: pagamento iniciado mas não confirmado o retorno
-    const isPixPendingConfirmation = paymentMethod === 'pix' && 
-                                     isMercadoPagoReturnFlow && // Usando a prop
-                                     pixPaymentInitiated && // Usando o estado local
-                                     !hasAcknowledgedPixReturnConfirmation;
-
-    if (isPixPendingConfirmation) {
-      toast.error('Vá até o seu app do banco pagar o pedido e retorne e clique aqui novamente');
-      console.log('handleFinishOrder: Pix pendente de confirmação. Abortando.');
-      return;
-    }
-
     if (!canPlaceOrder) { // Usa canPlaceOrder para verificar se pode finalizar o pedido
       toast.error('Desculpe, não é possível finalizar o pedido no momento.');
-      console.log('handleFinishOrder: Não pode fazer pedido. Abortando.');
       return;
     }
     if (!user) {
       toast.error('Você precisa fazer login para finalizar o pedido.');
-      console.log('handleFinishOrder: Usuário não logado. Abortando.');
       return;
     }
-    if (items.length === 0) {
-      console.log('handleFinishOrder: Carrinho vazio. Abortando.');
-      return;
-    }
+    if (items.length === 0) return;
     if (deliveryType === 'delivery' && !address.trim()) {
       toast.error('Por favor, informe o endereço para entrega');
-      console.log('handleFinishOrder: Endereço de entrega ausente. Abortando.');
-      return;
-    }
-    if (paymentMethod === null) { // Adicionado: verifica se uma forma de pagamento foi selecionada
-      toast.error('Por favor, selecione uma forma de pagamento.');
-      console.log('handleFinishOrder: Forma de pagamento não selecionada. Abortando.');
       return;
     }
     if (paymentMethod === 'pix' && !pixKeyValue) {
       toast.error('A chave Pix não foi configurada. Por favor, escolha outra forma de pagamento.');
-      console.log('handleFinishOrder: Chave Pix não configurada. Abortando.');
-      return;
-    }
-    if (paymentMethod === 'pix' && showPixInstructionsModal) {
-      toast.error('Por favor, confirme que você entendeu as instruções do Pix.');
-      console.log('handleFinishOrder: Instruções Pix não confirmadas. Abortando.');
       return;
     }
 
@@ -367,13 +259,11 @@ export const Cart: React.FC<CartProps> = ({
       const acknowledged = JSON.parse(localStorage.getItem('hasSeenMercadoPagoWarning') || 'false');
       if (!acknowledged) {
         setShowMercadoPagoWarning(true);
-        console.log('handleFinishOrder: Aviso Mercado Pago não reconhecido. Mostrando modal.');
         return; // Interrompe o fluxo para mostrar o aviso
       }
     }
 
     setIsSubmitting(true);
-    console.log('handleFinishOrder: isSubmitting definido como true.');
 
     const orderPayload = {
       user_id: user.id,
@@ -395,111 +285,68 @@ export const Cart: React.FC<CartProps> = ({
       coupon_used: appliedCoupon?.code
     };
 
-    console.log('handleFinishOrder: Payload do pedido:', orderPayload);
+    const { data: newOrder, error } = await supabase
+      .from('orders')
+      .insert(orderPayload)
+      .select('*, order_number') // Seleciona o novo order_number
+      .single();
 
-    try {
-      const { data: newOrder, error } = await supabase
-        .from('orders')
-        .insert(orderPayload)
-        .select('*, order_number') // Seleciona o novo order_number
+    if (error) {
+      console.error('Error creating order:', error);
+      toast.error('Ocorreu um erro ao finalizar seu pedido. Tente novamente.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (appliedCoupon) {
+      const { data: currentCoupon, error: fetchError } = await supabase
+        .from('coupons')
+        .select('usage_count')
+        .eq('id', appliedCoupon.id)
         .single();
 
-      if (error) {
-        console.error('handleFinishOrder: Erro ao criar pedido no Supabase:', error);
-        toast.error('Ocorreu um erro ao finalizar seu pedido: ' + error.message);
-        return; // Aborta em caso de erro no Supabase
-      }
-
-      console.log('handleFinishOrder: Pedido criado com sucesso no Supabase:', newOrder);
-
-      if (appliedCoupon) {
-        console.log('handleFinishOrder: Cupom aplicado detectado. Atualizando contagem de uso.');
-        const { data: currentCoupon, error: fetchError } = await supabase
+      if (!fetchError && currentCoupon) {
+        await supabase
           .from('coupons')
-          .select('usage_count')
-          .eq('id', appliedCoupon.id)
-          .single();
-
-        if (fetchError) {
-          console.error('handleFinishOrder: Erro ao buscar contagem de uso do cupom:', fetchError);
-        } else if (currentCoupon) {
-          await supabase
-            .from('coupons')
-            .update({ usage_count: currentCoupon.usage_count + 1 })
-            .eq('id', appliedCoupon.id);
-          console.log('handleFinishOrder: Contagem de uso do cupom atualizada.');
-        }
+          .update({ usage_count: currentCoupon.usage_count + 1 })
+          .eq('id', appliedCoupon.id);
       }
-
-      const formattedOrder: Order = {
-        id: newOrder.id,
-        orderNumber: newOrder.order_number, // Mapeia o order_number
-        items: items,
-        total: newOrder.total,
-        deliveryFee: newOrder.delivery_fee,
-        deliveryType: newOrder.delivery_type,
-        paymentMethod: newOrder.payment_method,
-        address: newOrder.address,
-        status: newOrder.status,
-        customerName: newOrder.customer_name,
-        customerPhone: newOrder.customer_phone,
-        createdAt: newOrder.created_at,
-        couponUsed: newOrder.coupon_used
-      };
-
-      console.log('handleFinishOrder: Chamando onOrderCreated com o pedido formatado.');
-      onOrderCreated(formattedOrder);
-      onClose();
-      toast.success('Pedido finalizado com sucesso!');
-
-      // Limpa todas as flags de pagamento externo e estados relacionados após a finalização bem-sucedida
-      console.log('handleFinishOrder: Limpando flags de localStorage e estados locais.');
-      localStorage.removeItem('hasSeenMercadoPagoWarning');
-      localStorage.removeItem('isMercadoPagoReturnFlow');
-      localStorage.removeItem('externalPaymentMethod');
-      localStorage.removeItem('pixPaymentInitiated');
-      localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
-      localStorage.removeItem('hasSeenPixInstructions');
-      setIsMercadoPagoAcknowledged(false);
-      setHasSeenPixInstructions(false);
-      setPixPaymentInitiated(false);
-      setHasAcknowledgedPixReturnConfirmation(false);
-
-    } catch (err: any) {
-      console.error('handleFinishOrder: Erro inesperado durante a finalização do pedido:', err);
-      toast.error('Ocorreu um erro inesperado ao finalizar seu pedido: ' + (err.message || 'Tente novamente.'));
-    } finally {
-      setIsSubmitting(false);
-      console.log('handleFinishOrder: isSubmitting definido como false (finally block).');
     }
+
+    const formattedOrder: Order = {
+      id: newOrder.id,
+      orderNumber: newOrder.order_number, // Mapeia o order_number
+      items: items,
+      total: newOrder.total,
+      deliveryFee: newOrder.delivery_fee,
+      deliveryType: newOrder.delivery_type,
+      paymentMethod: newOrder.payment_method,
+      address: newOrder.address,
+      status: newOrder.status,
+      customerName: newOrder.customer_name,
+      customerPhone: newOrder.customer_phone,
+      createdAt: newOrder.created_at,
+      couponUsed: newOrder.coupon_used
+    };
+
+    onOrderCreated(formattedOrder);
+    onClose();
+    setIsSubmitting(false);
+    localStorage.removeItem('hasSeenMercadoPagoWarning'); // Limpa a flag após finalizar o pedido
+    localStorage.removeItem('isMercadoPagoReturnFlow'); // Limpa a flag principal do Mercado Pago
+    setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
+    // isMercadoPagoReturnFlow é limpo em onOrderCreated no App.tsx
+    toast.success('Pedido finalizado com sucesso!');
   };
 
   const handleMercadoPagoConfirm = () => {
     setShowMercadoPagoWarning(false);
     localStorage.setItem('hasSeenMercadoPagoWarning', 'true'); // Define a flag no localStorage
     setIsMercadoPagoAcknowledged(true); // Atualiza o estado local
-    localStorage.setItem('isMercadoPagoReturnFlow', 'true'); // Define a flag principal do Mercado Pago
-    localStorage.setItem('externalPaymentMethod', 'card'); // Armazena o método de pagamento externo
-    // isMercadoPagoReturnFlow é uma prop, então não atualizamos o localStorage diretamente aqui, mas o App.tsx fará isso.
+    localStorage.setItem('isMercadoPagoReturnFlow', 'true'); // *** CORRIGIDO AQUI: Usar a chave correta ***
+    // A flag isMercadoPagoReturnFlow é definida no App.tsx via localStorage listener
     window.open(mercadoPagoLink, '_blank'); // Abre o link em uma nova aba
     // O carrinho permanece aberto para o usuário retornar e finalizar o pedido
-  };
-
-  const handlePixInstructionsConfirm = () => {
-    setShowPixInstructionsModal(false);
-    localStorage.setItem('hasSeenPixInstructions', 'true');
-    setHasSeenPixInstructions(true);
-    localStorage.setItem('isMercadoPagoReturnFlow', 'true'); // Ativa a flag de retorno de pagamento externo para Pix
-    localStorage.setItem('externalPaymentMethod', 'pix'); // Armazena o método de pagamento externo
-    localStorage.setItem('pixPaymentInitiated', 'true'); // Marca que o pagamento Pix foi iniciado
-    setPixPaymentInitiated(true); // Atualiza o estado local
-  };
-
-  // NOVO: Handler para o modal de confirmação de retorno Pix
-  const handlePixReturnConfirmation = () => {
-    setShowPixReturnConfirmationModal(false);
-    localStorage.setItem('hasAcknowledgedPixReturnConfirmation', 'true');
-    setHasAcknowledgedPixReturnConfirmation(true);
   };
 
   const copyPixKey = () => {
@@ -508,61 +355,6 @@ export const Cart: React.FC<CartProps> = ({
       toast.success('Chave Pix copiada!');
     }
   };
-
-  const handlePaymentMethodChange = (method: 'pix' | 'card' | 'cash') => {
-    setPaymentMethod(method);
-
-    // Limpa flags de outros métodos ao mudar
-    if (method !== 'card') {
-      localStorage.removeItem('hasSeenMercadoPagoWarning');
-      setIsMercadoPagoAcknowledged(false);
-    }
-    // Se estiver mudando para um método não externo, limpa as flags de retorno
-    if (method !== 'pix' && method !== 'card') {
-      localStorage.removeItem('isMercadoPagoReturnFlow');
-      localStorage.removeItem('externalPaymentMethod');
-      localStorage.removeItem('pixPaymentInitiated'); // Limpa a flag de Pix iniciado
-      setPixPaymentInitiated(false); // Atualiza o estado local
-      localStorage.removeItem('hasAcknowledgedPixReturnConfirmation'); // Limpa a flag de confirmação de retorno Pix
-      setHasAcknowledgedPixReturnConfirmation(false); // Atualiza o estado local
-    }
-    // Se estiver mudando para outra forma de pagamento, fecha o modal Pix
-    if (method !== 'pix') {
-      setShowPixInstructionsModal(false);
-      setShowPixReturnConfirmationModal(false); // Fecha o modal de retorno Pix
-    }
-
-    // Lógica específica para Pix
-    if (method === 'pix') {
-      if (!pixKeyValue) {
-        toast.error('A chave Pix não foi configurada. Por favor, escolha outra forma de pagamento.');
-        setPaymentMethod(null); // Reverte a seleção se a chave Pix não estiver configurada
-        return;
-      }
-      // Se Pix é selecionado e as instruções ainda não foram vistas, mostra o modal
-      // Mas SÓ se o modal de confirmação de retorno NÃO estiver ativo
-      if (!hasSeenPixInstructions && !showPixReturnConfirmationModal) { 
-        setShowPixInstructionsModal(true);
-      }
-    }
-  };
-
-  // Variável para controlar o estado de desabilitação de elementos interativos
-  const isAnyModalOpen = showMercadoPagoWarning || showPixInstructionsModal || showPixReturnConfirmationModal;
-  // Condição para Pix: pagamento iniciado mas não confirmado o retorno
-  const isPixPendingConfirmation = paymentMethod === 'pix' && 
-                                   isMercadoPagoReturnFlow && // Usando a prop
-                                   pixPaymentInitiated && // Usando o estado local
-                                   !hasAcknowledgedPixReturnConfirmation;
-
-  // Debugging logs
-  console.log('Cart Render - isMercadoPagoReturnFlow (prop):', isMercadoPagoReturnFlow);
-  console.log('Cart Render - pixPaymentInitiated (local state):', pixPaymentInitiated);
-  console.log('Cart Render - hasAcknowledgedPixReturnConfirmation (local state):', hasAcknowledgedPixReturnConfirmation);
-  console.log('Cart Render - isPixPendingConfirmation (derived):', isPixPendingConfirmation);
-  console.log('Cart Render - isAnyModalOpen (derived):', isAnyModalOpen);
-  console.log('Cart Render - Final disabled state for button:', isSubmitting || !canPlaceOrder || !user || paymentMethod === null || (paymentMethod === 'pix' && !pixKeyValue) || isAnyModalOpen || isPixPendingConfirmation);
-
 
   if (items.length === 0) {
     return (
@@ -605,7 +397,7 @@ export const Cart: React.FC<CartProps> = ({
               <button
                 onClick={() => onRemoveItem(item.product.id)}
                 className="text-red-500 text-sm"
-                disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita remover item
+                disabled={isMercadoPagoReturnFlow} // Desabilita remover item
               >
                 Remover
               </button>
@@ -620,7 +412,7 @@ export const Cart: React.FC<CartProps> = ({
                 <button
                   onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
                   className="bg-gray-300 hover:bg-gray-400 rounded-full p-1"
-                  disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita botão de menos
+                  disabled={isMercadoPagoReturnFlow} // Desabilita botão de menos
                 >
                   <Minus className="w-3 h-3" />
                 </button>
@@ -628,7 +420,7 @@ export const Cart: React.FC<CartProps> = ({
                 <button
                   onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
                   className="bg-gray-300 hover:bg-gray-400 rounded-full p-1"
-                  disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita botão de mais
+                  disabled={isMercadoPagoReturnFlow} // Desabilita botão de mais
                 >
                   <Plus className="w-3 h-3" />
                 </button>
@@ -660,7 +452,7 @@ export const Cart: React.FC<CartProps> = ({
                       }
                     }}
                     className="ml-2 px-3 py-1 rounded-md bg-green-100 hover:bg-green-200 text-green-800 font-medium"
-                    disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita aplicar cupom
+                    disabled={isMercadoPagoReturnFlow} // Desabilita aplicar cupom
                   >
                     Clique para aplicar
                   </button>
@@ -673,13 +465,13 @@ export const Cart: React.FC<CartProps> = ({
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
                   className="flex-1 p-2 border rounded-lg text-sm"
-                  disabled={loadingCoupon || isAnyModalOpen || isPixPendingConfirmation} // Desabilita input de cupom
+                  disabled={loadingCoupon || isMercadoPagoReturnFlow} // Desabilita input de cupom
                   ref={couponInputRef} // Associar a referência ao input
                 />
                 <button
                   onClick={() => handleApplyCoupon()} // Chama sem argumento para usar o estado `couponCode`
                   className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
-                  disabled={loadingCoupon || isAnyModalOpen || isPixPendingConfirmation} // Desabilita botão de aplicar cupom
+                  disabled={loadingCoupon || isMercadoPagoReturnFlow} // Desabilita botão de aplicar cupom
                 >
                   {loadingCoupon ? '...' : 'Aplicar'}
                 </button>
@@ -702,7 +494,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={deliveryType === 'delivery'}
                 onChange={() => setDeliveryType('delivery')}
                 className="mr-2"
-                disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita seleção
+                disabled={isMercadoPagoReturnFlow} // Desabilita seleção
               />
               <span>Delivery (+R$ {deliveryFeeValue.toFixed(2)})</span>
             </label>
@@ -712,7 +504,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={deliveryType === 'pickup'}
                 onChange={() => setDeliveryType('pickup')}
                 className="mr-2"
-                disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita seleção
+                disabled={isMercadoPagoReturnFlow} // Desabilita seleção
               />
               <span>Retirada no local (Grátis)</span>
             </label>
@@ -728,7 +520,7 @@ export const Cart: React.FC<CartProps> = ({
               placeholder="Rua, número, bairro..."
               className="w-full p-3 border rounded-lg text-sm"
               rows={3}
-              disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita endereço
+              disabled={isMercadoPagoReturnFlow} // Desabilita endereço
             />
           </div>
         )}
@@ -740,27 +532,25 @@ export const Cart: React.FC<CartProps> = ({
               <input
                 type="radio"
                 checked={paymentMethod === 'pix'}
-                onChange={() => handlePaymentMethodChange('pix')}
+                onChange={() => { 
+                  setPaymentMethod('pix'); 
+                  localStorage.removeItem('hasSeenMercadoPagoWarning'); // Limpa a flag se mudar de cartão
+                  setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
+                }}
                 className="mr-2"
-                disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita seleção
+                disabled={isMercadoPagoReturnFlow} // Desabilita seleção
               />
               <Smartphone className="w-4 h-4 mr-2" />
               <span>PIX</span>
-              {/* NOVO: Exibição condicional da chave Pix e botão de cópia */}
-              {paymentMethod === 'pix' && hasSeenPixInstructions && pixKeyValue && (
-                <div className="flex items-center ml-2 bg-gray-100 border border-gray-200 rounded-md p-1">
-                  <span className="font-mono text-xs text-gray-800 break-all mr-1">{pixKeyValue}</span>
-                  <button 
-                    onClick={copyPixKey} 
-                    className="p-1 rounded-sm bg-gray-200 hover:bg-gray-300 text-gray-700 transition-colors" 
-                    title="Copiar chave Pix"
-                    disabled={isAnyModalOpen || isPixPendingConfirmation}
-                  >
-                    <Copy className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
             </label>
+            {paymentMethod === 'pix' && pixKeyValue && (
+              <div className="bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg text-sm flex items-center justify-between mt-2">
+                <span>Chave Pix: <span className="font-semibold">{pixKeyValue}</span></span>
+                <button onClick={copyPixKey} className="ml-2 p-1 rounded-md hover:bg-blue-100">
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
+            )}
             {!pixKeyValue && paymentMethod === 'pix' && (
               <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm mt-2">
                 Atenção: A chave Pix não foi configurada no painel administrativo. Por favor, escolha outra forma de pagamento.
@@ -770,9 +560,12 @@ export const Cart: React.FC<CartProps> = ({
               <input
                 type="radio"
                 checked={paymentMethod === 'card'}
-                onChange={() => handlePaymentMethodChange('card')}
+                onChange={() => { 
+                  setPaymentMethod('card'); 
+                  // Não limpa a flag aqui. A lógica de aviso em handleFinishOrder cuidará disso.
+                }}
                 className="mr-2"
-                disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita seleção
+                disabled={isMercadoPagoReturnFlow} // Desabilita seleção
               />
               <CreditCard className="w-4 h-4 mr-2" />
               <span>Cartão - você será redirecionado para o mercado pago</span>
@@ -781,9 +574,13 @@ export const Cart: React.FC<CartProps> = ({
               <input
                 type="radio"
                 checked={paymentMethod === 'cash'}
-                onChange={() => handlePaymentMethodChange('cash')}
+                onChange={() => { 
+                  setPaymentMethod('cash'); 
+                  localStorage.removeItem('hasSeenMercadoPagoWarning'); // Limpa a flag se mudar de cartão
+                  setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
+                }}
                 className="mr-2"
-                disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita seleção
+                disabled={isMercadoPagoReturnFlow} // <--- CORRIGIDO AQUI
               />
               <DollarSign className="w-4 h-4 mr-2" />
               <span>Dinheiro (na entrega)</span>
@@ -833,9 +630,9 @@ export const Cart: React.FC<CartProps> = ({
         )}
         <button
           onClick={handleFinishOrder}
-          disabled={isSubmitting || !canPlaceOrder || !user || paymentMethod === null || (paymentMethod === 'pix' && !pixKeyValue) || isAnyModalOpen || isPixPendingConfirmation}
+          disabled={isSubmitting || !canPlaceOrder || !user || (paymentMethod === 'pix' && !pixKeyValue)}
           className={`w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
-            ${isMercadoPagoReturnFlow && paymentMethod !== null && !isPixPendingConfirmation ? 'animate-pulse ring-4 ring-red-300' : ''}
+            ${paymentMethod === 'card' && isMercadoPagoAcknowledged ? 'animate-pulse ring-4 ring-red-300' : ''}
           `}
         >
           {isSubmitting ? 'Finalizando...' : 'Finalizar Pedido'}
@@ -860,49 +657,6 @@ export const Cart: React.FC<CartProps> = ({
             </button>
           </div>
         </div>
-      )}
-
-      {/* Pix Instructions Pop-up */}
-      {showPixInstructionsModal && paymentMethod === 'pix' && pixKeyValue && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white rounded-lg shadow-2xl max-w-sm w-full p-6 text-center animate-scale-in">
-            <Smartphone className="w-12 h-12 mx-auto text-green-600 mb-4" />
-            <h3 className="text-lg font-bold text-gray-800 mb-2">Copie a chave Pix e pague seu pedido!</h3>
-            <p className="text-gray-600 mb-4">
-              Pague exatamente o valor do seu pedido e volte para finalizar no carrinho.
-            </p>
-            <p className="text-xl font-bold text-red-600 mb-4">
-              Valor a pagar: R$ {total.toFixed(2)}
-            </p>
-
-            <div className="text-left mb-4">
-              <p className="font-semibold text-gray-800 mb-2">Siga estes passos:</p>
-              <ol className="list-decimal list-inside text-gray-700 space-y-1">
-                <li>Copie a chave Pix e vá até o seu banco pagar o pedido.</li>
-                <li>Volte e clique em "Entendi" para aparecer "Finalizar Pedido" e você finalizar o pedido já pago para a C&R Sushi poder preparar 😋.</li>
-              </ol>
-            </div>
-
-            <div className="bg-gray-100 border border-gray-200 rounded-lg p-3 flex items-center justify-between mb-4">
-              <span className="font-mono font-semibold text-gray-800 break-all mr-2">{pixKeyValue}</span>
-              <button onClick={copyPixKey} className="ml-2 p-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-700 transition-colors" title="Copiar chave Pix">
-                <Copy className="w-4 h-4" />
-              </button>
-            </div>
-
-            <button
-              onClick={handlePixInstructionsConfirm}
-              className="w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors"
-            >
-              Entendi
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* NOVO: Pix Return Confirmation Pop-up */}
-      {showPixReturnConfirmationModal && (
-        <PixReturnConfirmationModal onClose={handlePixReturnConfirmation} />
       )}
     </div>
   );
