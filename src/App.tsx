@@ -776,7 +776,7 @@ function App() {
         onAddToCart={addToCart}
         onRemoveFromCart={removeFromCart}
         onUpdateCartItem={updateCartItem}
-        onLogin={handleLogin} {/* Usando a nova função handleLogin */}
+        onLogin={handleLogin} // Usando a nova função handleLogin
         onOrderCreated={(order) => {
           setCart([]);
           setCurrentOrder(order);
