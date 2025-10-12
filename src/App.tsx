@@ -4,7 +4,7 @@ import { HomePage } from './components/HomePage';
 import { AdminPanel } from './components/AdminPanel';
 import { UserAuth } from './components/UserAuth';
 import { OrderTracking } from './components/OrderTracking';
-import { UserProfile } => './components/UserProfile';
+import { UserProfile } from './components/UserProfile';
 import { UserCouponNotification } from './components/UserCouponNotification';
 import { supabase } from './integrations/supabase/client';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
