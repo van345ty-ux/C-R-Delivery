@@ -45,8 +45,13 @@ export const Cart: React.FC<CartProps> = ({
     // Initialize from localStorage or default
     return localStorage.getItem('cartDeliveryType') as 'delivery' | 'pickup' || 'delivery';
   });
-  // CORREÇÃO: paymentMethod sempre inicia como null, ignorando localStorage para o valor inicial
-  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'cash' | null>(null);
+  // Initialize paymentMethod based on external return flow or default to null
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'cash' | null>(() => {
+    if (typeof window !== 'undefined' && JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false')) {
+      return localStorage.getItem('externalPaymentMethod') as 'pix' | 'card' | null;
+    }
+    return null;
+  });
   const [address, setAddress] = useState(() => {
     // Initialize from localStorage or default
     return localStorage.getItem('cartAddress') || '';
@@ -133,6 +138,20 @@ export const Cart: React.FC<CartProps> = ({
         setMercadoPagoLink(settingsMap.mercado_pago_link || 'https://link.mercadopago.com.br/sushicr');
       } else {
         console.warn('Could not fetch settings, using default values.');
+      }
+
+      // NEW LOGIC: Set paymentMethod if returning from external payment
+      const isReturningFromExternal = JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
+      if (isReturningFromExternal) {
+        const savedExternalMethod = localStorage.getItem('externalPaymentMethod') as 'pix' | 'card' | null;
+        if (savedExternalMethod) {
+          setPaymentMethod(savedExternalMethod);
+          // If it was Pix, and instructions haven't been seen, show the modal again
+          // This ensures the Pix modal reappears if the user closes it without confirming "Entendi"
+          if (savedExternalMethod === 'pix' && !JSON.parse(localStorage.getItem('hasSeenPixInstructions') || 'false')) {
+            setShowPixInstructionsModal(true);
+          }
+        }
       }
     };
 
@@ -360,6 +379,7 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.removeItem('hasSeenMercadoPagoWarning'); // Limpa a flag após finalizar o pedido
     localStorage.removeItem('isMercadoPagoReturnFlow'); // Limpa a flag principal do Mercado Pago
     localStorage.removeItem('hasSeenPixInstructions'); // Limpa a flag Pix
+    localStorage.removeItem('externalPaymentMethod'); // Limpa o método de pagamento externo
     setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
     setHasSeenPixInstructions(false); // Atualiza o estado local
     // isMercadoPagoReturnFlow é limpo em onOrderCreated no App.tsx
@@ -371,6 +391,7 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.setItem('hasSeenMercadoPagoWarning', 'true'); // Define a flag no localStorage
     setIsMercadoPagoAcknowledged(true); // Atualiza o estado local
     localStorage.setItem('isMercadoPagoReturnFlow', 'true'); // Define a flag principal do Mercado Pago
+    localStorage.setItem('externalPaymentMethod', 'card'); // Armazena o método de pagamento externo
     // A flag isMercadoPagoReturnFlow é definida no App.tsx via localStorage listener
     window.open(mercadoPagoLink, '_blank'); // Abre o link em uma nova aba
     // O carrinho permanece aberto para o usuário retornar e finalizar o pedido
@@ -381,6 +402,7 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.setItem('hasSeenPixInstructions', 'true');
     setHasSeenPixInstructions(true);
     localStorage.setItem('isMercadoPagoReturnFlow', 'true'); // Ativa a flag de retorno de pagamento externo para Pix
+    localStorage.setItem('externalPaymentMethod', 'pix'); // Armazena o método de pagamento externo
   };
 
   const copyPixKey = () => {
@@ -397,6 +419,11 @@ export const Cart: React.FC<CartProps> = ({
     if (method !== 'card') {
       localStorage.removeItem('hasSeenMercadoPagoWarning');
       setIsMercadoPagoAcknowledged(false);
+    }
+    // Se estiver mudando para um método não externo, limpa as flags de retorno
+    if (method !== 'pix' && method !== 'card') {
+      localStorage.removeItem('isMercadoPagoReturnFlow');
+      localStorage.removeItem('externalPaymentMethod');
     }
     // Se estiver mudando para outra forma de pagamento, fecha o modal Pix
     if (method !== 'pix') {
@@ -555,7 +582,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={deliveryType === 'delivery'}
                 onChange={() => setDeliveryType('delivery')}
                 className="mr-2"
-                disabled={isMercadoPagoReturnFlow || showPixInstructionsModal} // Desabilita seleção
+                disabled={showPixInstructionsModal} // Desabilita seleção apenas se o modal Pix estiver aberto
               />
               <span>Delivery (+R$ {deliveryFeeValue.toFixed(2)})</span>
             </label>
@@ -565,7 +592,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={deliveryType === 'pickup'}
                 onChange={() => setDeliveryType('pickup')}
                 className="mr-2"
-                disabled={isMercadoPagoReturnFlow || showPixInstructionsModal} // Desabilita seleção
+                disabled={showPixInstructionsModal} // Desabilita seleção apenas se o modal Pix estiver aberto
               />
               <span>Retirada no local (Grátis)</span>
             </label>
@@ -595,7 +622,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={paymentMethod === 'pix'}
                 onChange={() => handlePaymentMethodChange('pix')}
                 className="mr-2"
-                disabled={isMercadoPagoReturnFlow || showPixInstructionsModal} // Desabilita seleção
+                disabled={showPixInstructionsModal} // Desabilita seleção apenas se o modal Pix estiver aberto
               />
               <Smartphone className="w-4 h-4 mr-2" />
               <span>PIX</span>
@@ -611,7 +638,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={paymentMethod === 'card'}
                 onChange={() => handlePaymentMethodChange('card')}
                 className="mr-2"
-                disabled={isMercadoPagoReturnFlow || showPixInstructionsModal} // Desabilita seleção
+                disabled={showPixInstructionsModal} // Desabilita seleção apenas se o modal Pix estiver aberto
               />
               <CreditCard className="w-4 h-4 mr-2" />
               <span>Cartão - você será redirecionado para o mercado pago</span>
@@ -622,7 +649,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={paymentMethod === 'cash'}
                 onChange={() => handlePaymentMethodChange('cash')}
                 className="mr-2"
-                disabled={isMercadoPagoReturnFlow || showPixInstructionsModal} // Desabilita seleção
+                disabled={showPixInstructionsModal} // Desabilita seleção apenas se o modal Pix estiver aberto
               />
               <DollarSign className="w-4 h-4 mr-2" />
               <span>Dinheiro (na entrega)</span>
@@ -674,7 +701,7 @@ export const Cart: React.FC<CartProps> = ({
           onClick={handleFinishOrder}
           disabled={isSubmitting || !canPlaceOrder || !user || paymentMethod === null || (paymentMethod === 'pix' && !pixKeyValue) || showPixInstructionsModal}
           className={`w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
-            ${((paymentMethod === 'card' && isMercadoPagoAcknowledged) || (paymentMethod === 'pix' && isMercadoPagoReturnFlow)) ? 'animate-pulse ring-4 ring-red-300' : ''}
+            ${isMercadoPagoReturnFlow && paymentMethod !== null ? 'animate-pulse ring-4 ring-red-300' : ''}
           `}
         >
           {isSubmitting ? 'Finalizando...' : 'Finalizar Pedido'}
