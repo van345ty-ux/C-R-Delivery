@@ -2,12 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { LocationSelect } from './components/LocationSelect';
 import { HomePage } from './components/HomePage';
 import { AdminPanel } from './components/AdminPanel';
-import { UserAuth } from './components/UserAuth'; // Linha corrigida
+import { UserAuth } from './components/UserAuth';
 import { OrderTracking } from './components/OrderTracking';
 import { UserProfile } from './components/UserProfile';
 import { UserCouponNotification } from './components/UserCouponNotification';
 import { Toaster } from 'react-hot-toast';
-import { supabase } from './integrations/supabase/client'; // Importar supabase para getSession
+import { supabase } from './integrations/supabase/client';
 
 // Importar tipos do arquivo centralizado
 import { Order, City } from './types';
@@ -29,15 +29,14 @@ function App() {
 
   // Hooks
   const { clearMercadoPagoFlags, ...mercadoPagoFlow } = useMercadoPagoReturnFlow();
-  const { cart, addToCart, removeFromCart, updateCartItem, clearCart } = useCart(); // MOVIDO PARA CIMA
+  const { cart, addToCart, removeFromCart, updateCartItem, clearCart } = useCart();
   
-  // Callback para limpar estados relacionados ao logout, agora envolvido em useCallback
   const onLogoutAppCallback = useCallback(() => {
     clearCart(); 
     setSelectedCity('');
     setCurrentView('location');
     clearMercadoPagoFlags();
-  }, [clearCart, clearMercadoPagoFlags]); // Adicione clearCart e clearMercadoPagoFlags como dependências
+  }, [clearCart, clearMercadoPagoFlags]);
 
   const { user, authLoading, refetchUser, logout, pendingCouponNotificationUserId, setPendingCouponNotificationUserId, showUserCouponNotification, setShowUserCouponNotification } = useAuth(onLogoutAppCallback);
   const { cities, appSettings, operatingHours, initialAppDataLoading, fetchInitialAppData } = useAppData();
@@ -59,48 +58,43 @@ function App() {
 
   // Listener para refrescar a sessão e a página quando a aba se torna visível
   const handleVisibilityChange = useCallback(async () => {
-    if (document.visibilityState === 'visible') {
-      console.log('App: Tab became visible. Refreshing app data and auth session.');
-      await fetchInitialAppData(); // Refresh app data
-      console.log('App: fetchInitialAppData completed on visibility change.');
-      await supabase.auth.getSession(); // Force a session refresh, useAuth will react to this.
-      console.log('App: supabase.auth.getSession completed on visibility change.');
-      
-      const mpReturnFlow = JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
-      if (mpReturnFlow !== mercadoPagoFlow.isMercadoPagoReturnFlow) {
-        console.log('App: isMercadoPagoReturnFlow changed in localStorage, updating state.');
-        mercadoPagoFlow.setIsMercadoPagoReturnFlow(mpReturnFlow);
-      }
+    // Se a aba não estiver visível, não faz nada
+    if (document.visibilityState !== 'visible') return;
+
+    // **CORREÇÃO:** Se o app já estiver carregando, não inicia um novo carregamento
+    if (initialAppDataLoading || authLoading) {
+      console.log('App: Tab became visible, but app is already loading. Skipping refresh.');
+      return;
     }
-  }, [fetchInitialAppData, mercadoPagoFlow]);
+
+    console.log('App: Tab became visible. Refreshing app data and auth session.');
+    await fetchInitialAppData();
+    await supabase.auth.getSession();
+    
+    const mpReturnFlow = JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
+    if (mpReturnFlow !== mercadoPagoFlow.isMercadoPagoReturnFlow) {
+      mercadoPagoFlow.setIsMercadoPagoReturnFlow(mpReturnFlow);
+    }
+  }, [fetchInitialAppData, mercadoPagoFlow, initialAppDataLoading, authLoading]);
 
   useEffect(() => {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [handleVisibilityChange]); // Depende apenas do callback estável
+  }, [handleVisibilityChange]);
 
   // Redireciona para a home se o usuário estiver logado e a view atual for auth
   useEffect(() => {
-    console.log('App: useEffect [user, currentView]: User:', user ? user.name : 'null', 'CurrentView:', currentView);
     if (user && currentView === 'auth') {
-      console.log('App: Redirecting from auth to home due to logged-in user.');
       setCurrentView('home');
     }
   }, [user, currentView]);
 
-  // NOVO: Efeito para lidar com o retorno do Mercado Pago/Pix
+  // Efeito para lidar com o retorno do Mercado Pago/Pix
   useEffect(() => {
-    // Se o app não está mais carregando e o fluxo de retorno está ativo
     if (!initialAppDataLoading && !authLoading && mercadoPagoFlow.isMercadoPagoReturnFlow) {
-      console.log('App: Detected Mercado Pago/Pix return flow, ensuring view is home.');
-      
-      // Only set to home if it's not already home, to prevent unnecessary re-renders
       if (currentView !== 'home') {
-        console.log('App: Forcing view to home due to Mercado Pago/Pix return flow.');
         setCurrentView('home');
       }
-
-      // If no city is selected, try to select the first active city
       if (!selectedCity && cities.length > 0) {
         const firstActiveCity = cities.find(city => city.active);
         if (firstActiveCity) {
@@ -113,40 +107,33 @@ function App() {
 
 
   const handleCitySelect = useCallback((cityName: string) => {
-    console.log('App: handleCitySelect: Selected city:', cityName);
     const city = cities.find(c => c.name === cityName);
     if (city?.active) {
       setSelectedCity(cityName);
-      updateStoreStatus(); // Atualiza o status da loja com base na cidade selecionada
+      updateStoreStatus();
       setCurrentView('home');
     }
   }, [cities, updateStoreStatus]);
 
   const handleAdminAccess = useCallback(() => {
-    console.log('App: handleAdminAccess: Called. User:', user ? user.name : 'null');
     if (!user) {
       setCurrentView('auth');
-      // toast('Faça login para acessar o painel administrativo.'); // Toast handled by UserAuth
     } else if (user.role === 'admin') {
       setShowProfile(false);
       setCurrentView('admin');
-    } else {
-      // toast.error('Você não tem permissão para acessar o painel administrativo.'); // Toast handled by UserAuth
     }
   }, [user]);
 
   const handleLogout = useCallback(async () => {
-    console.log('App: handleLogout: Called.');
     setShowProfile(false);
-    logout(); // Usa a função de logout do hook useAuth
-    // A limpeza de flags do Mercado Pago já é feita dentro de onLogoutAppCallback
+    logout();
   }, [logout]);
 
   const handleViewOrder = useCallback((order: Order) => {
     setCurrentOrder(order);
     setShowProfile(false);
     setCurrentView('tracking');
-    clearMercadoPagoFlags(); // Limpa flags de retorno de pagamento ao visualizar o rastreamento do pedido
+    clearMercadoPagoFlags();
   }, [clearMercadoPagoFlags]);
 
   const handleLogin = useCallback(() => {
@@ -154,7 +141,6 @@ function App() {
   }, []);
 
   const isLoading = initialAppDataLoading || authLoading;
-  console.log('App: isLoading:', isLoading, 'initialAppDataLoading:', initialAppDataLoading, 'authLoading:', authLoading);
 
   if (isLoading) {
     return (
