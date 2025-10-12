@@ -104,6 +104,7 @@ export const useAuth = (onLogoutCallback?: () => void) => {
   const handleAuthChange = useCallback(async (event: string, sessionFromEvent: Session | null) => {
     console.log(`useAuth: handleAuthChange: Event received: ${event}, sessionFromEvent: ${sessionFromEvent ? 'active' : 'null'}`);
     setAuthLoading(true);
+    console.log('useAuth: authLoading set to true (start of handleAuthChange)');
     
     try {
       if (event === 'SIGNED_OUT') {
@@ -112,7 +113,13 @@ export const useAuth = (onLogoutCallback?: () => void) => {
         setUser(null);
         setPendingCouponNotificationUserId(null);
         setShowUserCouponNotification(false);
-        if (onLogoutCallback) onLogoutCallback();
+        if (onLogoutCallback) {
+          try {
+            onLogoutCallback(); // Isolate callback to prevent it from breaking the finally block
+          } catch (cbError) {
+            console.error('useAuth: handleAuthChange: Error in onLogoutCallback:', cbError);
+          }
+        }
         toast.success('Você foi desconectado.');
         return;
       }
@@ -126,7 +133,13 @@ export const useAuth = (onLogoutCallback?: () => void) => {
         setUser(null);
         setPendingCouponNotificationUserId(null);
         setShowUserCouponNotification(false);
-        if (onLogoutCallback) onLogoutCallback();
+        if (onLogoutCallback) {
+          try {
+            onLogoutCallback();
+          } catch (cbError) {
+            console.error('useAuth: handleAuthChange: Error in onLogoutCallback (sessionError path):', cbError);
+          }
+        }
         toast.error('Erro na sessão. Por favor, faça login novamente.');
         return;
       }
@@ -161,7 +174,13 @@ export const useAuth = (onLogoutCallback?: () => void) => {
           setUser(null);
           setPendingCouponNotificationUserId(null);
           setShowUserCouponNotification(false);
-          if (onLogoutCallback) onLogoutCallback();
+          if (onLogoutCallback) {
+            try {
+              onLogoutCallback();
+            } catch (cbError) {
+              console.error('useAuth: handleAuthChange: Error in onLogoutCallback (profile failure path):', cbError);
+            }
+          }
           toast.error('Não foi possível carregar seu perfil. Por favor, tente fazer login novamente.');
         }
       } else {
@@ -175,12 +194,13 @@ export const useAuth = (onLogoutCallback?: () => void) => {
       toast.error('Ocorreu um erro durante a autenticação: ' + (error as Error).message);
     } finally {
       setAuthLoading(false);
-      console.log('useAuth: handleAuthChange: Auth change processing finished. setAuthLoading(false)');
+      console.log('useAuth: authLoading set to false (end of handleAuthChange)');
     }
   }, [checkAndShowCouponNotification, onLogoutCallback]);
 
   useEffect(() => {
     setAuthLoading(true);
+    console.log('useAuth: authLoading set to true (start of useEffect)');
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
     console.log('useAuth: Auth state change listener set up.');
 
@@ -207,7 +227,13 @@ export const useAuth = (onLogoutCallback?: () => void) => {
       setUser(null);
       setPendingCouponNotificationUserId(null);
       setShowUserCouponNotification(false);
-      if (onLogoutCallback) onLogoutCallback();
+      if (onLogoutCallback) {
+        try {
+          onLogoutCallback();
+        } catch (cbError) {
+          console.error('useAuth: logout: Error in onLogoutCallback (signOut error path):', cbError);
+        }
+      }
       toast.success('Você foi desconectado.');
     } else {
       console.log('useAuth: logout: signOut initiated successfully. State cleanup will be handled by onAuthStateChange.');

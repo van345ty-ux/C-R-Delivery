@@ -12,6 +12,7 @@ export const useAppData = () => {
   const fetchInitialAppData = useCallback(async () => {
     console.log('useAppData: fetchInitialAppData: Starting initial app data fetch.');
     setInitialAppDataLoading(true);
+    console.log('useAppData: initialAppDataLoading set to true (start of fetchInitialAppData)');
     try {
       const settingsPromise = supabase.from('settings').select('key, value');
       const citiesPromise = supabase.from('cities').select('*').order('name', { ascending: true });
@@ -51,7 +52,7 @@ export const useAppData = () => {
       toast.error("Falha crítica ao carregar dados iniciais do aplicativo: " + (error.message || "Erro desconhecido"));
     } finally {
       setInitialAppDataLoading(false);
-      console.log('useAppData: fetchInitialAppData: Initial app data fetch finished. setInitialAppDataLoading(false)');
+      console.log('useAppData: initialAppDataLoading set to false (end of fetchInitialAppData)');
     }
   }, []);
 
