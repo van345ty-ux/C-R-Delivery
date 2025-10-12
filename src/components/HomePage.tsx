@@ -178,7 +178,7 @@ export const HomePage: React.FC<HomePageProps> = ({
     if (cart.length > 0) {
       setShowCart(true);
     } else {
-      toast.info('Seu carrinho está vazio. Adicione itens para continuar!');
+      toast('Seu carrinho está vazio. Adicione itens para continuar!');
     }
   };
 
