@@ -7,6 +7,7 @@ import { Footer } from './Footer'; // Importando o novo componente Footer
 import { User, CartItem, Product, Order } from '../App';
 import { supabase } from '../integrations/supabase/client';
 import { PreOrderModal } from './PreOrderModal'; // Importando o novo modal
+import toast from 'react-hot-toast'; // Importar toast para notificações
 
 interface HomePageProps {
   selectedCity: string;
@@ -131,10 +132,20 @@ export const HomePage: React.FC<HomePageProps> = ({
   // NOVO useEffect para abrir o carrinho automaticamente se estiver no fluxo de retorno de pagamento
   useEffect(() => {
     if (isMercadoPagoReturnFlow) {
-      console.log('HomePage: Detected isMercadoPagoReturnFlow is true, automatically showing cart.');
-      setShowCart(true);
+      if (cart.length > 0) { // Só mostra o carrinho se ele não estiver vazio
+        console.log('HomePage: Detected isMercadoPagoReturnFlow is true and cart is not empty, automatically showing cart.');
+        setShowCart(true);
+      } else {
+        console.log('HomePage: Detected isMercadoPagoReturnFlow is true but cart is empty, not showing cart.');
+        setShowCart(false); // Garante que o carrinho esteja fechado se estiver vazio
+        // Limpa as flags de retorno de pagamento se o carrinho estiver vazio, pois não há pedido para finalizar.
+        localStorage.removeItem('isMercadoPagoReturnFlow');
+        localStorage.removeItem('externalPaymentMethod');
+        localStorage.removeItem('pixPaymentInitiated');
+        localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
+      }
     }
-  }, [isMercadoPagoReturnFlow]); // Este efeito será executado sempre que a prop mudar ou na montagem se for true
+  }, [isMercadoPagoReturnFlow, cart.length]); // Adicionado cart.length às dependências
 
 
   const handleAddToCart = (product: Product, quantity = 1, observations?: string) => {
@@ -160,6 +171,15 @@ export const HomePage: React.FC<HomePageProps> = ({
     }
   };
 
+  // Nova função para lidar com o clique no ícone do carrinho
+  const handleCartIconClick = () => {
+    if (cart.length > 0) {
+      setShowCart(true);
+    } else {
+      toast.info('Seu carrinho está vazio. Adicione itens para continuar!');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col"> {/* Adicionado flex flex-col */}
       <Header 
@@ -167,7 +187,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         user={user}
         cartItemCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
         onLogin={onLogin}
-        onCartClick={() => setShowCart(true)}
+        onCartClick={handleCartIconClick} {/* Usando a nova função */}
         onBackToLocationSelect={onBackToLocationSelect}
         onProfileClick={onProfileClick}
         logoUrl={logoUrl}
