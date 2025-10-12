@@ -38,13 +38,16 @@ function App() {
 
   // Hooks
   const { clearMercadoPagoFlags, ...mercadoPagoFlow } = useMercadoPagoReturnFlow();
-  const { user, authLoading, refetchUser, logout, pendingCouponNotificationUserId, setPendingCouponNotificationUserId, showUserCouponNotification, setShowUserCouponNotification } = useAuth(() => {
-    // Callback para limpar estados relacionados ao logout
+  
+  // Callback para limpar estados relacionados ao logout, agora envolvido em useCallback
+  const onLogoutAppCallback = useCallback(() => {
     clearCart();
     setSelectedCity('');
     setCurrentView('location');
     clearMercadoPagoFlags();
-  });
+  }, [clearCart, clearMercadoPagoFlags]); // Adicione clearCart e clearMercadoPagoFlags como dependências
+
+  const { user, authLoading, refetchUser, logout, pendingCouponNotificationUserId, setPendingCouponNotificationUserId, showUserCouponNotification, setShowUserCouponNotification } = useAuth(onLogoutAppCallback);
   const { cart, addToCart, removeFromCart, updateCartItem, clearCart } = useCart();
   const { cities, appSettings, operatingHours, initialAppDataLoading, fetchInitialAppData } = useAppData();
   const { isStoreOpen, canPlaceOrder, showPreOrderModal, setShowPreOrderModal, showPreOrderBanner, updateStoreStatus } = useStoreStatus(operatingHours);
@@ -119,8 +122,8 @@ function App() {
     console.log('App: handleLogout: Called.');
     setShowProfile(false);
     logout(); // Usa a função de logout do hook useAuth
-    clearMercadoPagoFlags(); // Garante que as flags do MP sejam limpas no logout
-  }, [logout, clearMercadoPagoFlags]);
+    // A limpeza de flags do Mercado Pago já é feita dentro de onLogoutAppCallback
+  }, [logout]);
 
   const handleViewOrder = useCallback((order: Order) => {
     setCurrentOrder(order);
