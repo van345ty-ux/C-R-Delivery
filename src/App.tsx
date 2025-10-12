@@ -38,17 +38,17 @@ function App() {
 
   // Hooks
   const { clearMercadoPagoFlags, ...mercadoPagoFlow } = useMercadoPagoReturnFlow();
+  const { cart, addToCart, removeFromCart, updateCartItem, clearCart } = useCart(); // MOVIDO PARA CIMA
   
   // Callback para limpar estados relacionados ao logout, agora envolvido em useCallback
   const onLogoutAppCallback = useCallback(() => {
-    clearCart();
+    clearCart(); 
     setSelectedCity('');
     setCurrentView('location');
     clearMercadoPagoFlags();
   }, [clearCart, clearMercadoPagoFlags]); // Adicione clearCart e clearMercadoPagoFlags como dependências
 
   const { user, authLoading, refetchUser, logout, pendingCouponNotificationUserId, setPendingCouponNotificationUserId, showUserCouponNotification, setShowUserCouponNotification } = useAuth(onLogoutAppCallback);
-  const { cart, addToCart, removeFromCart, updateCartItem, clearCart } = useCart();
   const { cities, appSettings, operatingHours, initialAppDataLoading, fetchInitialAppData } = useAppData();
   const { isStoreOpen, canPlaceOrder, showPreOrderModal, setShowPreOrderModal, showPreOrderBanner, updateStoreStatus } = useStoreStatus(operatingHours);
 
