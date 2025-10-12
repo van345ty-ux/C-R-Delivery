@@ -125,6 +125,8 @@ export const useAuth = (onLogoutCallback?: () => void) => {
         }
       }
       toast.success('Você foi desconectado.');
+      setAuthLoading(false); // Ensure loading is false on sign out
+      console.log('useAuth: authLoading set to false (end of authStateChangeHandler - SIGNED_OUT)');
       return;
     }
 
