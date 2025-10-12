@@ -297,6 +297,19 @@ export const Cart: React.FC<CartProps> = ({
   };
 
   const handleFinishOrder = async () => {
+    // Variável para controlar o estado de desabilitação de elementos interativos
+    const isAnyModalOpen = showMercadoPagoWarning || showPixInstructionsModal || showPixReturnConfirmationModal;
+    // Condição para Pix: pagamento iniciado mas não confirmado o retorno
+    const isPixPendingConfirmation = paymentMethod === 'pix' && 
+                                     isMercadoPagoReturnFlow && 
+                                     JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false') && 
+                                     !hasAcknowledgedPixReturnConfirmation;
+
+    if (isPixPendingConfirmation) {
+      toast.error('Vá até o seu app do banco pagar o pedido e retorne e clique aqui novamente');
+      return;
+    }
+
     if (!canPlaceOrder) { // Usa canPlaceOrder para verificar se pode finalizar o pedido
       toast.error('Desculpe, não é possível finalizar o pedido no momento.');
       return;
@@ -487,6 +500,12 @@ export const Cart: React.FC<CartProps> = ({
 
   // Variável para controlar o estado de desabilitação de elementos interativos
   const isAnyModalOpen = showMercadoPagoWarning || showPixInstructionsModal || showPixReturnConfirmationModal;
+  // Condição para Pix: pagamento iniciado mas não confirmado o retorno
+  const isPixPendingConfirmation = paymentMethod === 'pix' && 
+                                   isMercadoPagoReturnFlow && 
+                                   JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false') && 
+                                   !hasAcknowledgedPixReturnConfirmation;
+
 
   if (items.length === 0) {
     return (
@@ -529,7 +548,7 @@ export const Cart: React.FC<CartProps> = ({
               <button
                 onClick={() => onRemoveItem(item.product.id)}
                 className="text-red-500 text-sm"
-                disabled={isAnyModalOpen} // Desabilita remover item
+                disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita remover item
               >
                 Remover
               </button>
@@ -544,7 +563,7 @@ export const Cart: React.FC<CartProps> = ({
                 <button
                   onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
                   className="bg-gray-300 hover:bg-gray-400 rounded-full p-1"
-                  disabled={isAnyModalOpen} // Desabilita botão de menos
+                  disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita botão de menos
                 >
                   <Minus className="w-3 h-3" />
                 </button>
@@ -552,7 +571,7 @@ export const Cart: React.FC<CartProps> = ({
                 <button
                   onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
                   className="bg-gray-300 hover:bg-gray-400 rounded-full p-1"
-                  disabled={isAnyModalOpen} // Desabilita botão de mais
+                  disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita botão de mais
                 >
                   <Plus className="w-3 h-3" />
                 </button>
@@ -584,7 +603,7 @@ export const Cart: React.FC<CartProps> = ({
                       }
                     }}
                     className="ml-2 px-3 py-1 rounded-md bg-green-100 hover:bg-green-200 text-green-800 font-medium"
-                    disabled={isAnyModalOpen} // Desabilita aplicar cupom
+                    disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita aplicar cupom
                   >
                     Clique para aplicar
                   </button>
@@ -597,13 +616,13 @@ export const Cart: React.FC<CartProps> = ({
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
                   className="flex-1 p-2 border rounded-lg text-sm"
-                  disabled={loadingCoupon || isAnyModalOpen} // Desabilita input de cupom
+                  disabled={loadingCoupon || isAnyModalOpen || isPixPendingConfirmation} // Desabilita input de cupom
                   ref={couponInputRef} // Associar a referência ao input
                 />
                 <button
                   onClick={() => handleApplyCoupon()} // Chama sem argumento para usar o estado `couponCode`
                   className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
-                  disabled={loadingCoupon || isAnyModalOpen} // Desabilita botão de aplicar cupom
+                  disabled={loadingCoupon || isAnyModalOpen || isPixPendingConfirmation} // Desabilita botão de aplicar cupom
                 >
                   {loadingCoupon ? '...' : 'Aplicar'}
                 </button>
@@ -626,7 +645,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={deliveryType === 'delivery'}
                 onChange={() => setDeliveryType('delivery')}
                 className="mr-2"
-                disabled={isAnyModalOpen} // Desabilita seleção
+                disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita seleção
               />
               <span>Delivery (+R$ {deliveryFeeValue.toFixed(2)})</span>
             </label>
@@ -636,7 +655,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={deliveryType === 'pickup'}
                 onChange={() => setDeliveryType('pickup')}
                 className="mr-2"
-                disabled={isAnyModalOpen} // Desabilita seleção
+                disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita seleção
               />
               <span>Retirada no local (Grátis)</span>
             </label>
@@ -652,7 +671,7 @@ export const Cart: React.FC<CartProps> = ({
               placeholder="Rua, número, bairro..."
               className="w-full p-3 border rounded-lg text-sm"
               rows={3}
-              disabled={isAnyModalOpen} // Desabilita endereço
+              disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita endereço
             />
           </div>
         )}
@@ -666,7 +685,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={paymentMethod === 'pix'}
                 onChange={() => handlePaymentMethodChange('pix')}
                 className="mr-2"
-                disabled={isAnyModalOpen} // Desabilita seleção
+                disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita seleção
               />
               <Smartphone className="w-4 h-4 mr-2" />
               <span>PIX</span>
@@ -678,7 +697,7 @@ export const Cart: React.FC<CartProps> = ({
                     onClick={copyPixKey} 
                     className="p-1 rounded-sm bg-gray-200 hover:bg-gray-300 text-gray-700 transition-colors" 
                     title="Copiar chave Pix"
-                    disabled={isAnyModalOpen}
+                    disabled={isAnyModalOpen || isPixPendingConfirmation}
                   >
                     <Copy className="w-3 h-3" />
                   </button>
@@ -696,7 +715,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={paymentMethod === 'card'}
                 onChange={() => handlePaymentMethodChange('card')}
                 className="mr-2"
-                disabled={isAnyModalOpen} // Desabilita seleção
+                disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita seleção
               />
               <CreditCard className="w-4 h-4 mr-2" />
               <span>Cartão - você será redirecionado para o mercado pago</span>
@@ -707,7 +726,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={paymentMethod === 'cash'}
                 onChange={() => handlePaymentMethodChange('cash')}
                 className="mr-2"
-                disabled={isAnyModalOpen} // Desabilita seleção
+                disabled={isAnyModalOpen || isPixPendingConfirmation} // Desabilita seleção
               />
               <DollarSign className="w-4 h-4 mr-2" />
               <span>Dinheiro (na entrega)</span>
@@ -757,9 +776,9 @@ export const Cart: React.FC<CartProps> = ({
         )}
         <button
           onClick={handleFinishOrder}
-          disabled={isSubmitting || !canPlaceOrder || !user || paymentMethod === null || (paymentMethod === 'pix' && !pixKeyValue) || isAnyModalOpen}
+          disabled={isSubmitting || !canPlaceOrder || !user || paymentMethod === null || (paymentMethod === 'pix' && !pixKeyValue) || isAnyModalOpen || isPixPendingConfirmation}
           className={`w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
-            ${isMercadoPagoReturnFlow && paymentMethod !== null ? 'animate-pulse ring-4 ring-red-300' : ''}
+            ${isMercadoPagoReturnFlow && paymentMethod !== null && !isPixPendingConfirmation ? 'animate-pulse ring-4 ring-red-300' : ''}
           `}
         >
           {isSubmitting ? 'Finalizando...' : 'Finalizar Pedido'}
