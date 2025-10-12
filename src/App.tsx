@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { LocationSelect } from './components/LocationSelect';
 import { HomePage } from './components/HomePage';
 import { AdminPanel } from './components/AdminPanel';
-import { UserAuth } = from './components/UserAuth';
+import { UserAuth } from './components/UserAuth'; // Linha corrigida
 import { OrderTracking } from './components/OrderTracking';
 import { UserProfile } from './components/UserProfile';
 import { UserCouponNotification } from './components/UserCouponNotification';
@@ -88,17 +88,10 @@ function App() {
 
   // NOVO: Efeito para lidar com o retorno do Mercado Pago/Pix
   useEffect(() => {
-    // Se o app não está mais carregando e o fluxo de retorno está ativo
-    if (!initialAppDataLoading && !authLoading && mercadoPagoFlow.isMercadoPagoReturnFlow) {
-      console.log('App: Detected Mercado Pago/Pix return flow, ensuring view is home.');
-      
-      // Only set to home if it's not already home, to prevent unnecessary re-renders
-      if (currentView !== 'home') {
-        console.log('App: Forcing view to home due to Mercado Pago/Pix return flow.');
-        setCurrentView('home');
-      }
-
-      // If no city is selected, try to select the first active city
+    // Se o app não está mais carregando, o fluxo de retorno está ativo, e não estamos na home
+    if (!initialAppDataLoading && !authLoading && mercadoPagoFlow.isMercadoPagoReturnFlow && currentView !== 'home') {
+      console.log('App: Detected Mercado Pago/Pix return flow, forcing view to home.');
+      // Se não houver cidade selecionada, tenta selecionar a primeira cidade ativa
       if (!selectedCity && cities.length > 0) {
         const firstActiveCity = cities.find(city => city.active);
         if (firstActiveCity) {
@@ -106,6 +99,7 @@ function App() {
           updateStoreStatus();
         }
       }
+      setCurrentView('home');
     }
   }, [initialAppDataLoading, authLoading, mercadoPagoFlow.isMercadoPagoReturnFlow, currentView, selectedCity, cities, updateStoreStatus]);
 
@@ -161,12 +155,6 @@ function App() {
       </div>
     );
   }
-
-  // Log para confirmar que o carregamento foi concluído e o conteúdo está sendo renderizado
-  console.log('App: Loading complete. Rendering content.');
-  console.log('App: Mercado Pago Return Flow status:', mercadoPagoFlow.isMercadoPagoReturnFlow);
-  console.log('App: Current View:', currentView);
-
 
   const logoUrl = appSettings.app_logo_url || 'public/assets/logo.png';
   const heroImageUrl = appSettings.hero_image_url || 'https://images.pexels.com/photos/2641886/pexels-photo-2641886.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2';
