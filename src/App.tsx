@@ -533,9 +533,16 @@ function App() {
     // Listener para refrescar a sessão e a página quando a aba se torna visível
     const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible') {
-        console.log('App: Tab became visible. Refreshing Supabase session.');
+        console.log('App: Tab became visible. Refreshing Supabase session and checking Mercado Pago return flow.');
         // Isso irá disparar onAuthStateChange se a sessão tiver mudado
         await supabase.auth.getSession(); 
+
+        // NOVO: Verifica o estado de retorno do Mercado Pago no localStorage
+        const mpReturnFlow = JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
+        if (mpReturnFlow !== isMercadoPagoReturnFlow) {
+          console.log('App: isMercadoPagoReturnFlow changed in localStorage, updating state.');
+          setIsMercadoPagoReturnFlow(mpReturnFlow);
+        }
       }
     };
 
@@ -548,7 +555,7 @@ function App() {
       }
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [checkAndShowCouponNotification]); // Dependência de checkAndShowCouponNotification
+  }, [checkAndShowCouponNotification, isMercadoPagoReturnFlow]); // Adicionado isMercadoPagoReturnFlow como dependência
 
   const refetchUser = useCallback(async () => {
     console.log('refetchUser: Called.');
