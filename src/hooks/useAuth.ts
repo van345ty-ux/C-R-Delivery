@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'; // Added useRef
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import toast from 'react-hot-toast';
@@ -56,11 +56,10 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null
 export const useAuth = (onLogoutCallback?: () => void) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true); // Initial state is loading
   const [pendingCouponNotificationUserId, setPendingCouponNotificationUserId] = useState<string | null>(null);
   const [showUserCouponNotification, setShowUserCouponNotification] = useState(false);
 
-  // Use useRef to keep a stable reference to the latest onLogoutCallback
   const onLogoutCallbackRef = useRef(onLogoutCallback);
   useEffect(() => {
     onLogoutCallbackRef.current = onLogoutCallback;
@@ -105,32 +104,35 @@ export const useAuth = (onLogoutCallback?: () => void) => {
       setPendingCouponNotificationUserId(null);
       console.log('useAuth: No available coupons, clearing pendingCouponNotificationUserId');
     }
-  }, []); // This should be stable
+  }, []);
 
-  // This is the core handler for auth state changes
+  // This handler will be passed to onAuthStateChange and should be stable
+  // It should not directly manage authLoading, as that's for initial load or explicit actions.
   const authStateChangeHandler = useCallback(async (event: string, sessionFromEvent: Session | null) => {
     console.log(`useAuth: authStateChangeHandler: Event received: ${event}, sessionFromEvent: ${sessionFromEvent ? 'active' : 'null'}`);
-    setAuthLoading(true);
-    console.log('useAuth: authLoading set to true (start of authStateChangeHandler)');
     
-    try {
-      if (event === 'SIGNED_OUT') {
-        console.log('useAuth: authStateChangeHandler: SIGNED_OUT event detected. Clearing all user-related states.');
-        setSession(null);
-        setUser(null);
-        setPendingCouponNotificationUserId(null);
-        setShowUserCouponNotification(false);
-        if (onLogoutCallbackRef.current) { // Use the ref here
-          try {
-            onLogoutCallbackRef.current();
-          } catch (cbError) {
-            console.error('useAuth: authStateChangeHandler: Error in onLogoutCallbackRef.current:', cbError);
-          }
+    if (event === 'SIGNED_OUT') {
+      console.log('useAuth: authStateChangeHandler: SIGNED_OUT event detected. Clearing all user-related states.');
+      setSession(null);
+      setUser(null);
+      setPendingCouponNotificationUserId(null);
+      setShowUserCouponNotification(false);
+      if (onLogoutCallbackRef.current) {
+        try {
+          onLogoutCallbackRef.current();
+        } catch (cbError) {
+          console.error('useAuth: authStateChangeHandler: Error in onLogoutCallbackRef.current:', cbError);
         }
-        toast.success('Você foi desconectado.');
-        return;
       }
+      toast.success('Você foi desconectado.');
+      return;
+    }
 
+    // For other events (SIGNED_IN, USER_UPDATED), fetch the latest session and profile
+    // Set loading to true only if we are not already loading from an initial fetch
+    // This is to prevent flickering if initial fetch is still ongoing
+    setAuthLoading(true); 
+    try {
       const { data: { session: latestSession }, error: sessionError } = await supabase.auth.getSession();
       console.log(`useAuth: authStateChangeHandler: Latest session from getSession() after event: ${latestSession ? 'active' : 'null'}`);
 
@@ -200,52 +202,83 @@ export const useAuth = (onLogoutCallback?: () => void) => {
       console.error('useAuth: authStateChangeHandler: Erro inesperado durante o processamento de autenticação:', error);
       toast.error('Ocorreu um erro durante a autenticação: ' + (error as Error).message);
     } finally {
-      setAuthLoading(false);
+      setAuthLoading(false); // Always set loading to false at the end of this handler
       console.log('useAuth: authLoading set to false (end of authStateChangeHandler)');
     }
-  }, [checkAndShowCouponNotification]); // onLogoutCallback is now accessed via ref, so it's not a dependency here
+  }, [checkAndShowCouponNotification]); // This dependency should now be stable
 
+  // Effect for initial session load (runs once on mount)
   useEffect(() => {
-    setAuthLoading(true);
-    console.log('useAuth: authLoading set to true (start of useEffect)');
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(authStateChangeHandler); // Use the stable handler
+    const initialLoad = async () => {
+      setAuthLoading(true);
+      console.log('useAuth: initialLoad: Starting initial auth fetch.');
+      try {
+        const { data: { session: initialSession }, error: initialSessionError } = await supabase.auth.getSession();
+        console.log(`useAuth: initialLoad: Initial session: ${initialSession ? 'active' : 'null'}`);
+
+        if (initialSessionError) {
+          console.error('useAuth: initialLoad: Error fetching initial session:', initialSessionError);
+          setSession(null);
+          setUser(null);
+        } else {
+          setSession(initialSession);
+          if (initialSession?.user) {
+            const profile = await fetchUserProfile(initialSession.user);
+            setUser(profile);
+            if (profile && profile.role === 'customer') {
+              checkAndShowCouponNotification(initialSession.user.id);
+            }
+          } else {
+            setUser(null);
+          }
+        }
+      } catch (error) {
+        console.error('useAuth: initialLoad: Unexpected error during initial auth fetch:', error);
+      } finally {
+        setAuthLoading(false);
+        console.log('useAuth: initialLoad: Initial auth fetch completed, authLoading set to false.');
+      }
+    };
+
+    initialLoad();
+  }, [checkAndShowCouponNotification]); // checkAndShowCouponNotification is stable
+
+  // Effect to set up the auth state listener (runs once on mount)
+  useEffect(() => {
     console.log('useAuth: Auth state change listener set up.');
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(authStateChangeHandler);
 
     return () => {
-      console.log('useAuth: Auth subscription unsubscribed.');
-      subscription.unsubscribe();
+      if (subscription) {
+        console.log('useAuth: Auth subscription unsubscribed on cleanup.');
+        subscription.unsubscribe();
+      }
     };
-  }, [authStateChangeHandler]); // This dependency should now be stable
+  }, [authStateChangeHandler]); // authStateChangeHandler is stable
 
   const refetchUser = useCallback(async () => {
     console.log('useAuth: refetchUser: Called.');
     if (session?.user) {
+      setAuthLoading(true); // Set loading for refetch
       const profile = await fetchUserProfile(session.user);
       setUser(profile);
+      setAuthLoading(false); // End loading after refetch
     }
   }, [session]);
 
   const logout = useCallback(async () => {
     console.log('useAuth: logout: Called.');
+    setAuthLoading(true); // Set loading when logout starts
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('useAuth: logout: Error during signOut, performing manual client-side cleanup:', error);
-      setSession(null);
-      setUser(null);
-      setPendingCouponNotificationUserId(null);
-      setShowUserCouponNotification(false);
-      if (onLogoutCallbackRef.current) { // Use the ref here
-        try {
-          onLogoutCallbackRef.current();
-        } catch (cbError) {
-          console.error('useAuth: logout: Error in onLogoutCallbackRef.current (signOut error path):', cbError);
-        }
-      }
-      toast.success('Você foi desconectado.');
+      toast.error('Erro ao desconectar: ' + error.message);
+      setAuthLoading(false); // If signOut itself errors, ensure loading is false
     } else {
       console.log('useAuth: logout: signOut initiated successfully. State cleanup will be handled by onAuthStateChange.');
+      // authStateChangeHandler will eventually setAuthLoading(false) after SIGNED_OUT
     }
-  }, []); // No dependencies needed here, as onLogoutCallback is accessed via ref
+  }, []);
   
   return {
     session,
