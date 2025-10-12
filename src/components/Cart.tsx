@@ -92,6 +92,11 @@ export const Cart: React.FC<CartProps> = ({
     return JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false');
   });
 
+  // NOVO ESTADO: Para controlar se o pagamento Pix foi iniciado
+  const [pixPaymentInitiated, setPixPaymentInitiated] = useState(() => {
+    return JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false');
+  });
+
 
   // Effect to save form data to localStorage
   useEffect(() => {
@@ -107,13 +112,15 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.setItem('cartAppliedCoupon', JSON.stringify(appliedCoupon));
     // hasSeenPixInstructions é gerenciado apenas por handlePixInstructionsConfirm
     // hasSeenMercadoPagoWarning é gerenciado diretamente em handleMercadoPagoConfirm e handleFinishOrder
-  }, [deliveryType, paymentMethod, address, couponCode, appliedCoupon]);
+    localStorage.setItem('pixPaymentInitiated', JSON.stringify(pixPaymentInitiated)); // Salva o estado de pixPaymentInitiated
+  }, [deliveryType, paymentMethod, address, couponCode, appliedCoupon, pixPaymentInitiated]);
 
   // Listener para mudanças no localStorage (útil para sincronizar entre abas ou após reload)
   useEffect(() => {
     const handleStorageChange = () => {
       setIsMercadoPagoAcknowledged(JSON.parse(localStorage.getItem('hasSeenMercadoPagoWarning') || 'false'));
       setHasAcknowledgedPixReturnConfirmation(JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false'));
+      setPixPaymentInitiated(JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false')); // Sincroniza pixPaymentInitiated
       // A flag hasSeenPixInstructions não será mais sincronizada aqui, pois será resetada na montagem do Cart
     };
     window.addEventListener('storage', handleStorageChange);
@@ -157,11 +164,11 @@ export const Cart: React.FC<CartProps> = ({
       // NEW LOGIC: Set paymentMethod if returning from external payment
       const isReturningFromExternal = JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
       const savedExternalMethod = localStorage.getItem('externalPaymentMethod') as 'pix' | 'card' | null;
-      const pixPaymentInitiated = JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false');
+      const pixPaymentInitiatedFromStorage = JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false');
       const acknowledgedPixReturn = JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false');
 
       let shouldShowPixReturnConfirmation = false;
-      if (isReturningFromExternal && savedExternalMethod === 'pix' && pixPaymentInitiated && !acknowledgedPixReturn) {
+      if (isReturningFromExternal && savedExternalMethod === 'pix' && pixPaymentInitiatedFromStorage && !acknowledgedPixReturn) {
         shouldShowPixReturnConfirmation = true;
         setShowPixReturnConfirmationModal(true);
       }
@@ -302,7 +309,7 @@ export const Cart: React.FC<CartProps> = ({
     // Condição para Pix: pagamento iniciado mas não confirmado o retorno
     const isPixPendingConfirmation = paymentMethod === 'pix' && 
                                      isMercadoPagoReturnFlow && 
-                                     JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false') && 
+                                     pixPaymentInitiated && // Usando o estado local
                                      !hasAcknowledgedPixReturnConfirmation;
 
     if (isPixPendingConfirmation) {
@@ -418,11 +425,12 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.removeItem('isMercadoPagoReturnFlow'); // Limpa a flag principal do Mercado Pago
     localStorage.removeItem('hasSeenPixInstructions'); // Limpa a flag Pix
     localStorage.removeItem('externalPaymentMethod'); // Limpa o método de pagamento externo
-    localStorage.removeItem('pixPaymentInitiated'); // NOVO: Limpa a flag de Pix iniciado
-    localStorage.removeItem('hasAcknowledgedPixReturnConfirmation'); // NOVO: Limpa a flag de confirmação de retorno Pix
+    localStorage.removeItem('pixPaymentInitiated'); // Limpa a flag de Pix iniciado
+    localStorage.removeItem('hasAcknowledgedPixReturnConfirmation'); // Limpa a flag de confirmação de retorno Pix
     setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
     setHasSeenPixInstructions(false); // Atualiza o estado local
-    setHasAcknowledgedPixReturnConfirmation(false); // NOVO: Atualiza o estado local
+    setPixPaymentInitiated(false); // Limpa o estado local
+    setHasAcknowledgedPixReturnConfirmation(false); // Atualiza o estado local
     // isMercadoPagoReturnFlow é limpo em onOrderCreated no App.tsx
     toast.success('Pedido finalizado com sucesso!');
   };
@@ -444,7 +452,8 @@ export const Cart: React.FC<CartProps> = ({
     setHasSeenPixInstructions(true);
     localStorage.setItem('isMercadoPagoReturnFlow', 'true'); // Ativa a flag de retorno de pagamento externo para Pix
     localStorage.setItem('externalPaymentMethod', 'pix'); // Armazena o método de pagamento externo
-    localStorage.setItem('pixPaymentInitiated', 'true'); // NOVO: Marca que o pagamento Pix foi iniciado
+    localStorage.setItem('pixPaymentInitiated', 'true'); // Marca que o pagamento Pix foi iniciado
+    setPixPaymentInitiated(true); // Atualiza o estado local
   };
 
   // NOVO: Handler para o modal de confirmação de retorno Pix
@@ -473,14 +482,15 @@ export const Cart: React.FC<CartProps> = ({
     if (method !== 'pix' && method !== 'card') {
       localStorage.removeItem('isMercadoPagoReturnFlow');
       localStorage.removeItem('externalPaymentMethod');
-      localStorage.removeItem('pixPaymentInitiated'); // NOVO: Limpa a flag de Pix iniciado
-      localStorage.removeItem('hasAcknowledgedPixReturnConfirmation'); // NOVO: Limpa a flag de confirmação de retorno Pix
-      setHasAcknowledgedPixReturnConfirmation(false); // NOVO: Atualiza o estado local
+      localStorage.removeItem('pixPaymentInitiated'); // Limpa a flag de Pix iniciado
+      setPixPaymentInitiated(false); // Atualiza o estado local
+      localStorage.removeItem('hasAcknowledgedPixReturnConfirmation'); // Limpa a flag de confirmação de retorno Pix
+      setHasAcknowledgedPixReturnConfirmation(false); // Atualiza o estado local
     }
     // Se estiver mudando para outra forma de pagamento, fecha o modal Pix
     if (method !== 'pix') {
       setShowPixInstructionsModal(false);
-      setShowPixReturnConfirmationModal(false); // NOVO: Fecha o modal de retorno Pix
+      setShowPixReturnConfirmationModal(false); // Fecha o modal de retorno Pix
     }
 
     // Lógica específica para Pix
@@ -503,7 +513,7 @@ export const Cart: React.FC<CartProps> = ({
   // Condição para Pix: pagamento iniciado mas não confirmado o retorno
   const isPixPendingConfirmation = paymentMethod === 'pix' && 
                                    isMercadoPagoReturnFlow && 
-                                   JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false') && 
+                                   pixPaymentInitiated && // Usando o estado local
                                    !hasAcknowledgedPixReturnConfirmation;
 
 
