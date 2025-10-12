@@ -126,6 +126,7 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.removeItem('hasSeenPixInstructions');
     setHasSeenPixInstructions(false); // Also reset local state
     setShowPixInstructionsModal(false); // Ensure modal is closed initially
+    setShowPixReturnConfirmationModal(false); // Ensure this is also closed initially
 
     const fetchSettings = async () => {
       const { data, error } = await supabase
@@ -155,7 +156,9 @@ export const Cart: React.FC<CartProps> = ({
       const pixPaymentInitiated = JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false');
       const acknowledgedPixReturn = JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false');
 
+      let shouldShowPixReturnConfirmation = false;
       if (isReturningFromExternal && savedExternalMethod === 'pix' && pixPaymentInitiated && !acknowledgedPixReturn) {
+        shouldShowPixReturnConfirmation = true;
         setShowPixReturnConfirmationModal(true);
       }
 
@@ -163,8 +166,9 @@ export const Cart: React.FC<CartProps> = ({
         if (savedExternalMethod) {
           setPaymentMethod(savedExternalMethod);
           if (savedExternalMethod === 'pix') {
-            // If initial Pix instructions haven't been seen, show them (this is existing logic)
-            if (!JSON.parse(localStorage.getItem('hasSeenPixInstructions') || 'false')) {
+            // Only show initial Pix instructions if the return confirmation modal is NOT showing
+            // AND initial Pix instructions haven't been seen
+            if (!shouldShowPixReturnConfirmation && !JSON.parse(localStorage.getItem('hasSeenPixInstructions') || 'false')) {
               setShowPixInstructionsModal(true);
             }
           }
@@ -470,7 +474,8 @@ export const Cart: React.FC<CartProps> = ({
         return;
       }
       // Se Pix é selecionado e as instruções ainda não foram vistas, mostra o modal
-      if (!hasSeenPixInstructions) {
+      // Mas SÓ se o modal de confirmação de retorno NÃO estiver ativo
+      if (!hasSeenPixInstructions && !showPixReturnConfirmationModal) { 
         setShowPixInstructionsModal(true);
       }
     }
