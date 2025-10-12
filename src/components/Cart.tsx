@@ -3,7 +3,8 @@ import { X, Plus, Minus, CreditCard, Smartphone, DollarSign, Gift, ExternalLink 
 import { CartItem, Order, User } from '../App';
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
-import { PixInstructionsModal } from './PixInstructionsModal'; // Importando o novo modal
+import { PixInstructionsModal } from './PixInstructionsModal';
+import { PixReturnConfirmationModal } from './PixReturnConfirmationModal'; // Importando o novo modal
 
 interface CartProps {
   items: CartItem[];
@@ -67,6 +68,10 @@ export const Cart: React.FC<CartProps> = ({
   const [hasSeenPixInstructions, setHasSeenPixInstructions] = useState(() => {
     return JSON.parse(localStorage.getItem('hasSeenPixInstructions') || 'false');
   });
+  // Novos estados para o fluxo PIX
+  const [pixPaymentInitiated, setPixPaymentInitiated] = useState(() => JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false'));
+  const [showPixReturnConfirmation, setShowPixReturnConfirmation] = useState(false);
+  const [hasAcknowledgedPixReturnConfirmation, setHasAcknowledgedPixReturnConfirmation] = useState(() => JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false'));
 
   useEffect(() => {
     localStorage.setItem('cartDeliveryType', deliveryType);
@@ -84,9 +89,26 @@ export const Cart: React.FC<CartProps> = ({
     const handleStorageChange = () => {
       setIsMercadoPagoAcknowledged(JSON.parse(localStorage.getItem('hasSeenMercadoPagoWarning') || 'false'));
       setHasSeenPixInstructions(JSON.parse(localStorage.getItem('hasSeenPixInstructions') || 'false'));
+      setPixPaymentInitiated(JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false'));
+      setHasAcknowledgedPixReturnConfirmation(JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false'));
     };
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Efeito para detectar quando o usuário volta para a aba
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const pixInitiated = JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false');
+        const pixAcknowledged = JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false');
+        if (pixInitiated && !pixAcknowledged) {
+          setShowPixReturnConfirmation(true);
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
   useEffect(() => {
@@ -140,6 +162,13 @@ export const Cart: React.FC<CartProps> = ({
   const deliveryFee = deliveryType === 'delivery' ? deliveryFeeValue : 0;
   const discount = appliedCoupon ? (subtotal * appliedCoupon.discount / 100) : 0;
   const total = subtotal + deliveryFee - discount;
+
+  const clearPixFlags = () => {
+    setPixPaymentInitiated(false);
+    setHasAcknowledgedPixReturnConfirmation(false);
+    localStorage.removeItem('pixPaymentInitiated');
+    localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
+  };
 
   const handleApplyCoupon = async (codeToApply?: string) => {
     if (isMercadoPagoReturnFlow) {
@@ -208,6 +237,10 @@ export const Cart: React.FC<CartProps> = ({
     }
     if (!paymentMethod) {
       toast.error('Por favor, selecione uma forma de pagamento.');
+      return;
+    }
+    if (paymentMethod === 'pix' && pixPaymentInitiated && !hasAcknowledgedPixReturnConfirmation) {
+      toast.error('Vá até o seu banco, pague o valor do pedido e volte para finalizar.');
       return;
     }
     if (paymentMethod === 'pix' && (!pixKeyValue || !hasSeenPixInstructions)) {
@@ -287,6 +320,7 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.removeItem('isMercadoPagoReturnFlow');
     localStorage.removeItem('hasSeenPixInstructions');
     localStorage.removeItem('cartPaymentMethod');
+    clearPixFlags();
     setIsMercadoPagoAcknowledged(false);
     setHasSeenPixInstructions(false);
     toast.success('Pedido finalizado com sucesso!');
@@ -304,6 +338,8 @@ export const Cart: React.FC<CartProps> = ({
     setShowPixInstructions(false);
     setHasSeenPixInstructions(true);
     localStorage.setItem('hasSeenPixInstructions', 'true');
+    setPixPaymentInitiated(true);
+    localStorage.setItem('pixPaymentInitiated', 'true');
   };
 
   if (items.length === 0) {
@@ -395,11 +431,11 @@ export const Cart: React.FC<CartProps> = ({
               <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm mt-2">Atenção: A chave Pix não foi configurada no painel administrativo. Por favor, escolha outra forma de pagamento.</div>
             )}
             <label className="flex items-center">
-              <input type="radio" checked={paymentMethod === 'card'} onChange={() => { setPaymentMethod('card'); setHasSeenPixInstructions(false); localStorage.removeItem('hasSeenPixInstructions'); }} className="mr-2" disabled={isMercadoPagoReturnFlow} />
+              <input type="radio" checked={paymentMethod === 'card'} onChange={() => { setPaymentMethod('card'); setHasSeenPixInstructions(false); localStorage.removeItem('hasSeenPixInstructions'); clearPixFlags(); }} className="mr-2" disabled={isMercadoPagoReturnFlow} />
               <CreditCard className="w-4 h-4 mr-2" /><span>Cartão - você será redirecionado para o mercado pago</span>
             </label>
             <label className="flex items-center">
-              <input type="radio" checked={paymentMethod === 'cash'} onChange={() => { setPaymentMethod('cash'); setHasSeenPixInstructions(false); localStorage.removeItem('hasSeenPixInstructions'); localStorage.removeItem('hasSeenMercadoPagoWarning'); setIsMercadoPagoAcknowledged(false); }} className="mr-2" disabled={isMercadoPagoReturnFlow} />
+              <input type="radio" checked={paymentMethod === 'cash'} onChange={() => { setPaymentMethod('cash'); setHasSeenPixInstructions(false); localStorage.removeItem('hasSeenPixInstructions'); localStorage.removeItem('hasSeenMercadoPagoWarning'); setIsMercadoPagoAcknowledged(false); clearPixFlags(); }} className="mr-2" disabled={isMercadoPagoReturnFlow} />
               <DollarSign className="w-4 h-4 mr-2" /><span>Dinheiro (na entrega)</span>
             </label>
           </div>
@@ -442,6 +478,16 @@ export const Cart: React.FC<CartProps> = ({
           pixKey={pixKeyValue}
           onClose={handlePixInstructionsClose}
           total={total}
+        />
+      )}
+
+      {showPixReturnConfirmation && (
+        <PixReturnConfirmationModal
+          onClose={() => {
+            setShowPixReturnConfirmation(false);
+            setHasAcknowledgedPixReturnConfirmation(true);
+            localStorage.setItem('hasAcknowledgedPixReturnConfirmation', 'true');
+          }}
         />
       )}
     </div>

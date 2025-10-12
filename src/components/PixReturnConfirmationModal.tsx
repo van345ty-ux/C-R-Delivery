@@ -12,7 +12,7 @@ export const PixReturnConfirmationModal: React.FC<PixReturnConfirmationModalProp
         <CheckCircle className="w-12 h-12 mx-auto text-green-600 mb-4" />
         <h3 className="text-lg font-bold text-gray-800 mb-2">Pagamento Pix Realizado?</h3>
         <p className="text-gray-600 mb-4">
-          Agora clique em <span className="font-bold">"Finalizar Pedido"</span> se já <span className="font-bold">pagou</span> para a C&R Sushi preparar seu pedido!
+          Agora clique em "Finalizar Pedido" se já <span className="font-bold">pagou</span> para a C&R Sushi preparar seu pedido!
         </p>
         <button
           onClick={onClose}
