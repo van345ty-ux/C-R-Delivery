@@ -4,7 +4,7 @@ import { CartItem, Order, User } from '../App';
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
 import { PixInstructionsModal } from './PixInstructionsModal';
-import { PixReturnConfirmationModal } from './PixReturnConfirmationModal'; // Importando o novo modal
+import { PixReturnConfirmationModal } from './PixReturnConfirmationModal';
 
 interface CartProps {
   items: CartItem[];
@@ -68,10 +68,11 @@ export const Cart: React.FC<CartProps> = ({
   const [hasSeenPixInstructions, setHasSeenPixInstructions] = useState(() => {
     return JSON.parse(localStorage.getItem('hasSeenPixInstructions') || 'false');
   });
-  // Novos estados para o fluxo PIX
   const [pixPaymentInitiated, setPixPaymentInitiated] = useState(() => JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false'));
   const [showPixReturnConfirmation, setShowPixReturnConfirmation] = useState(false);
   const [hasAcknowledgedPixReturnConfirmation, setHasAcknowledgedPixReturnConfirmation] = useState(() => JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false'));
+
+  const isAwaitingPixPayment = paymentMethod === 'pix' && pixPaymentInitiated && !hasAcknowledgedPixReturnConfirmation;
 
   useEffect(() => {
     localStorage.setItem('cartDeliveryType', deliveryType);
@@ -96,7 +97,6 @@ export const Cart: React.FC<CartProps> = ({
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Efeito para detectar quando o usuário volta para a aba
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
@@ -239,7 +239,7 @@ export const Cart: React.FC<CartProps> = ({
       toast.error('Por favor, selecione uma forma de pagamento.');
       return;
     }
-    if (paymentMethod === 'pix' && pixPaymentInitiated && !hasAcknowledgedPixReturnConfirmation) {
+    if (paymentMethod === 'pix' && isAwaitingPixPayment) {
       toast.error('Vá até o seu banco, pague o valor do pedido e volte para finalizar.');
       return;
     }
@@ -371,14 +371,14 @@ export const Cart: React.FC<CartProps> = ({
           <div key={item.product.id} className="bg-gray-50 rounded-lg p-3">
             <div className="flex justify-between items-start mb-2">
               <h4 className="font-medium">{item.product.name}</h4>
-              <button onClick={() => onRemoveItem(item.product.id)} className="text-red-500 text-sm" disabled={isMercadoPagoReturnFlow}>Remover</button>
+              <button onClick={() => onRemoveItem(item.product.id)} className="text-red-500 text-sm" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}>Remover</button>
             </div>
             {item.observations && (<p className="text-sm text-gray-600 mb-2">Obs: {item.observations}</p>)}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <button onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)} className="bg-gray-300 hover:bg-gray-400 rounded-full p-1" disabled={isMercadoPagoReturnFlow}><Minus className="w-3 h-3" /></button>
+                <button onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)} className="bg-gray-300 hover:bg-gray-400 rounded-full p-1" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}><Minus className="w-3 h-3" /></button>
                 <span className="w-8 text-center">{item.quantity}</span>
-                <button onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)} className="bg-gray-300 hover:bg-gray-400 rounded-full p-1" disabled={isMercadoPagoReturnFlow}><Plus className="w-3 h-3" /></button>
+                <button onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)} className="bg-gray-300 hover:bg-gray-400 rounded-full p-1" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}><Plus className="w-3 h-3" /></button>
               </div>
               <span className="font-medium">R$ {(item.product.price * item.quantity).toFixed(2)}</span>
             </div>
@@ -393,12 +393,12 @@ export const Cart: React.FC<CartProps> = ({
               {firstAvailableCoupon && !appliedCoupon && (
                 <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded-lg text-sm flex items-center justify-between mb-3">
                   <div className="flex items-center"><Gift className="w-4 h-4 mr-2" /><span>Você tem cupom disponível!</span></div>
-                  <button onClick={() => { if (firstAvailableCoupon) handleApplyCoupon(firstAvailableCoupon.code); }} className="ml-2 px-3 py-1 rounded-md bg-green-100 hover:bg-green-200 text-green-800 font-medium" disabled={isMercadoPagoReturnFlow}>Clique para aplicar</button>
+                  <button onClick={() => { if (firstAvailableCoupon) handleApplyCoupon(firstAvailableCoupon.code); }} className="ml-2 px-3 py-1 rounded-md bg-green-100 hover:bg-green-200 text-green-800 font-medium" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}>Clique para aplicar</button>
                 </div>
               )}
               <div className="flex space-x-2 mb-2">
-                <input type="text" placeholder="Cupom de desconto" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} className="flex-1 p-2 border rounded-lg text-sm" disabled={loadingCoupon || isMercadoPagoReturnFlow} ref={couponInputRef} />
-                <button onClick={() => handleApplyCoupon()} className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-700 disabled:opacity-50" disabled={loadingCoupon || isMercadoPagoReturnFlow}>{loadingCoupon ? '...' : 'Aplicar'}</button>
+                <input type="text" placeholder="Cupom de desconto" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} className="flex-1 p-2 border rounded-lg text-sm" disabled={loadingCoupon || isMercadoPagoReturnFlow || isAwaitingPixPayment} ref={couponInputRef} />
+                <button onClick={() => handleApplyCoupon()} className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-700 disabled:opacity-50" disabled={loadingCoupon || isMercadoPagoReturnFlow || isAwaitingPixPayment}>{loadingCoupon ? '...' : 'Aplicar'}</button>
               </div>
               {appliedCoupon && (<p className="text-green-600 text-sm">Cupom {appliedCoupon.code} aplicado! {appliedCoupon.discount}% de desconto</p>)}
             </>
@@ -408,15 +408,15 @@ export const Cart: React.FC<CartProps> = ({
         <div className="border-t pt-4">
           <h3 className="font-medium mb-3">Tipo de Entrega</h3>
           <div className="space-y-2">
-            <label className="flex items-center"><input type="radio" checked={deliveryType === 'delivery'} onChange={() => setDeliveryType('delivery')} className="mr-2" disabled={isMercadoPagoReturnFlow} /><span>Delivery (+R$ {deliveryFeeValue.toFixed(2)})</span></label>
-            <label className="flex items-center"><input type="radio" checked={deliveryType === 'pickup'} onChange={() => setDeliveryType('pickup')} className="mr-2" disabled={isMercadoPagoReturnFlow} /><span>Retirada no local (Grátis)</span></label>
+            <label className="flex items-center"><input type="radio" checked={deliveryType === 'delivery'} onChange={() => setDeliveryType('delivery')} className="mr-2" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment} /><span>Delivery (+R$ {deliveryFeeValue.toFixed(2)})</span></label>
+            <label className="flex items-center"><input type="radio" checked={deliveryType === 'pickup'} onChange={() => setDeliveryType('pickup')} className="mr-2" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment} /><span>Retirada no local (Grátis)</span></label>
           </div>
         </div>
 
         {deliveryType === 'delivery' && (
           <div>
             <label className="block text-sm font-medium mb-2">Endereço para entrega</label>
-            <textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Rua, número, bairro..." className="w-full p-3 border rounded-lg text-sm" rows={3} disabled={isMercadoPagoReturnFlow} />
+            <textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Rua, número, bairro..." className="w-full p-3 border rounded-lg text-sm" rows={3} disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment} />
           </div>
         )}
 
@@ -424,18 +424,18 @@ export const Cart: React.FC<CartProps> = ({
           <h3 className="font-medium mb-3">Forma de Pagamento</h3>
           <div className="space-y-2">
             <label className="flex items-center">
-              <input type="radio" checked={paymentMethod === 'pix'} onChange={() => { setPaymentMethod('pix'); if (!hasSeenPixInstructions) setShowPixInstructions(true); localStorage.removeItem('hasSeenMercadoPagoWarning'); setIsMercadoPagoAcknowledged(false); }} className="mr-2" disabled={isMercadoPagoReturnFlow} />
+              <input type="radio" checked={paymentMethod === 'pix'} onChange={() => { setPaymentMethod('pix'); if (!hasSeenPixInstructions) setShowPixInstructions(true); localStorage.removeItem('hasSeenMercadoPagoWarning'); setIsMercadoPagoAcknowledged(false); }} className="mr-2" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment} />
               <Smartphone className="w-4 h-4 mr-2" /><span>PIX</span>
             </label>
             {!pixKeyValue && paymentMethod === 'pix' && (
               <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm mt-2">Atenção: A chave Pix não foi configurada no painel administrativo. Por favor, escolha outra forma de pagamento.</div>
             )}
             <label className="flex items-center">
-              <input type="radio" checked={paymentMethod === 'card'} onChange={() => { setPaymentMethod('card'); setHasSeenPixInstructions(false); localStorage.removeItem('hasSeenPixInstructions'); clearPixFlags(); }} className="mr-2" disabled={isMercadoPagoReturnFlow} />
+              <input type="radio" checked={paymentMethod === 'card'} onChange={() => { setPaymentMethod('card'); setHasSeenPixInstructions(false); localStorage.removeItem('hasSeenPixInstructions'); clearPixFlags(); }} className="mr-2" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment} />
               <CreditCard className="w-4 h-4 mr-2" /><span>Cartão - você será redirecionado para o mercado pago</span>
             </label>
             <label className="flex items-center">
-              <input type="radio" checked={paymentMethod === 'cash'} onChange={() => { setPaymentMethod('cash'); setHasSeenPixInstructions(false); localStorage.removeItem('hasSeenPixInstructions'); localStorage.removeItem('hasSeenMercadoPagoWarning'); setIsMercadoPagoAcknowledged(false); clearPixFlags(); }} className="mr-2" disabled={isMercadoPagoReturnFlow} />
+              <input type="radio" checked={paymentMethod === 'cash'} onChange={() => { setPaymentMethod('cash'); setHasSeenPixInstructions(false); localStorage.removeItem('hasSeenPixInstructions'); localStorage.removeItem('hasSeenMercadoPagoWarning'); setIsMercadoPagoAcknowledged(false); clearPixFlags(); }} className="mr-2" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment} />
               <DollarSign className="w-4 h-4 mr-2" /><span>Dinheiro (na entrega)</span>
             </label>
           </div>
