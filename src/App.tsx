@@ -86,6 +86,24 @@ function App() {
     }
   }, [user, currentView]);
 
+  // NOVO: Efeito para lidar com o retorno do Mercado Pago/Pix
+  useEffect(() => {
+    // Se o app não está mais carregando, o fluxo de retorno está ativo, e não estamos na home
+    if (!initialAppDataLoading && !authLoading && mercadoPagoFlow.isMercadoPagoReturnFlow && currentView !== 'home') {
+      console.log('App: Detected Mercado Pago/Pix return flow, forcing view to home.');
+      // Se não houver cidade selecionada, tenta selecionar a primeira cidade ativa
+      if (!selectedCity && cities.length > 0) {
+        const firstActiveCity = cities.find(city => city.active);
+        if (firstActiveCity) {
+          setSelectedCity(firstActiveCity.name);
+          updateStoreStatus();
+        }
+      }
+      setCurrentView('home');
+    }
+  }, [initialAppDataLoading, authLoading, mercadoPagoFlow.isMercadoPagoReturnFlow, currentView, selectedCity, cities, updateStoreStatus]);
+
+
   const handleCitySelect = useCallback((cityName: string) => {
     console.log('App: handleCitySelect: Selected city:', cityName);
     const city = cities.find(c => c.name === cityName);
