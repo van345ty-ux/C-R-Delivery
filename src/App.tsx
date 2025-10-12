@@ -383,7 +383,7 @@ function App() {
       toast.error("Falha crítica ao carregar dados iniciais do aplicativo: " + (error.message || "Erro desconhecido"));
     } finally {
       setInitialAppDataLoading(false); // Finaliza o carregamento de dados iniciais
-      console.log('fetchInitialAppData: Initial app data fetch finished.');
+      console.log('fetchInitialAppData: Initial app data fetch finished. setInitialAppDataLoading(false)'); // ADDED LOG
     }
   }, []); // Empty dependency array means this runs once on mount
 
@@ -392,159 +392,156 @@ function App() {
     fetchInitialAppData();
   }, [fetchInitialAppData]); // Depende de fetchInitialAppData
 
+  const handleAuthChange = useCallback(async (event: string, sessionFromEvent: Session | null) => {
+    console.log(`handleAuthChange: Event received: ${event}, sessionFromEvent: ${sessionFromEvent ? 'active' : 'null'}`);
+    
+    if (event === 'SIGNED_OUT') {
+      console.log('handleAuthChange: SIGNED_OUT event detected. Clearing all user-related states.');
+      setSession(null);
+      setUser(null);
+      setCart([]);
+      setSelectedCity('');
+      setCurrentView('location'); // Reset to location on logout
+      setPendingCouponNotificationUserId(null);
+      setShowUserCouponNotification(false);
+      setAuthLoading(false);
+      // Limpa todas as flags de pagamento externo no logout
+      localStorage.removeItem('isMercadoPagoReturnFlow');
+      localStorage.removeItem('externalPaymentMethod');
+      localStorage.removeItem('pixPaymentInitiated');
+      localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
+      localStorage.removeItem('hasSeenMercadoPagoWarning');
+      localStorage.removeItem('hasSeenPixInstructions');
+      setIsMercadoPagoReturnFlow(false); // Limpa o estado local
+      toast.success('Você foi desconectado.');
+      return; // IMPORTANT: Exit immediately after handling SIGNED_OUT
+    }
+
+    // For other events (SIGNED_IN, USER_UPDATED, etc.), get the latest session
+    const { data: { session: latestSession }, error: sessionError } = await supabase.auth.getSession();
+    console.log(`handleAuthChange: Latest session from getSession() after event: ${latestSession ? 'active' : 'null'}`);
+
+    if (sessionError) {
+      console.error('handleAuthChange: Erro ao buscar a sessão mais recente em onAuthStateChange:', sessionError);
+      // Trata qualquer erro de sessão como um sinal para limpar o estado do usuário
+      setSession(null);
+      setUser(null);
+      setCart([]);
+      setSelectedCity('');
+      setCurrentView('location'); // Reset to location on session error
+      setPendingCouponNotificationUserId(null);
+      setShowUserCouponNotification(false);
+      setAuthLoading(false);
+      // Limpa todas as flags de pagamento externo em caso de erro de sessão
+      localStorage.removeItem('isMercadoPagoReturnFlow');
+      localStorage.removeItem('externalPaymentMethod');
+      localStorage.removeItem('pixPaymentInitiated');
+      localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
+      localStorage.removeItem('hasSeenMercadoPagoWarning');
+      localStorage.removeItem('hasSeenPixInstructions');
+      setIsMercadoPagoReturnFlow(false); // Limpa o estado local
+      toast.error('Erro na sessão. Por favor, faça login novamente.');
+      return;
+    }
+
+    setSession(latestSession);
+
+    if (latestSession?.user) {
+      console.log('handleAuthChange: User is active. Fetching profile.');
+      const profile = await fetchUserProfile(latestSession.user);
+      setUser(profile);
+
+      if (profile) {
+        console.log('handleAuthChange: Profile fetched/created successfully.');
+        if (event === 'SIGNED_IN' && profile.role === 'customer') {
+          const userName = latestSession.user.user_metadata.full_name || latestSession.user.email;
+          if (userName) {
+            const { error } = await supabase.from('login_notifications').insert({
+              user_id: latestSession.user.id,
+              user_name: userName,
+            });
+            if (error) {
+              console.error('handleAuthChange: Error creating login notification:', error);
+            } else {
+              console.log('handleAuthChange: Login notification created.');
+            }
+          }
+          checkAndShowCouponNotification(latestSession.user.id);
+        }
+      } else {
+        console.log('handleAuthChange: Profile could not be fetched/created, treating as no valid user.');
+        setSession(null);
+        setUser(null);
+        setCart([]);
+        setSelectedCity('');
+        setCurrentView('location'); // Reset to location if profile fails
+        setPendingCouponNotificationUserId(null);
+        setShowUserCouponNotification(false);
+        // Limpa todas as flags de pagamento externo se o perfil falhar
+        localStorage.removeItem('isMercadoPagoReturnFlow');
+        localStorage.removeItem('externalPaymentMethod');
+        localStorage.removeItem('pixPaymentInitiated');
+        localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
+        localStorage.removeItem('hasSeenMercadoPagoWarning');
+        localStorage.removeItem('hasSeenPixInstructions');
+        setIsMercadoPagoReturnFlow(false); // Limpa o estado local
+        toast.error('Não foi possível carregar seu perfil. Por favor, tente fazer login novamente.');
+      }
+    } else { // No user in latestSession, and not a SIGNED_OUT event (already handled above)
+      console.log('handleAuthChange: No active user session found (after getSession). Clearing user-related states.');
+      setUser(null);
+      // Do not clear cart or city on session expiration, allow guest checkout
+      setPendingCouponNotificationUserId(null);
+      setShowUserCouponNotification(false);
+      // Limpa todas as flags de pagamento externo se não houver sessão de usuário
+      localStorage.removeItem('isMercadoPagoReturnFlow');
+      localStorage.removeItem('externalPaymentMethod');
+      localStorage.removeItem('pixPaymentInitiated');
+      localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
+      localStorage.removeItem('hasSeenMercadoPagoWarning');
+      localStorage.removeItem('hasSeenPixInstructions');
+      setIsMercadoPagoReturnFlow(false); // Limpa o estado local
+    }
+    setAuthLoading(false);
+    console.log('handleAuthChange: Auth change processing finished. setAuthLoading(false)'); // ADDED LOG
+  }, [checkAndShowCouponNotification, setIsMercadoPagoReturnFlow, setCurrentView, setCart, setSelectedCity, setPendingCouponNotificationUserId, setShowUserCouponNotification, setSession, setUser, setAuthLoading]);
+
+  const initializeAuth = useCallback(async () => {
+    console.log('initializeAuth: Starting initial auth check.');
+    setAuthLoading(true);
+    try {
+      const { data: { session: initialSession } = {} } = await supabase.auth.getSession();
+      await handleAuthChange('INITIAL_LOAD', initialSession || null);
+    } catch (error) {
+      console.error('initializeAuth: Erro ao buscar a sessão inicial:', error);
+      setAuthLoading(false);
+    }
+  }, [handleAuthChange]);
+
   // Effect for Supabase Auth Session and User Profile
   useEffect(() => {
     let authSubscription: ReturnType<typeof supabase.auth.onAuthStateChange>['data']['subscription'];
 
-    const handleAuthChange = async (event: string, sessionFromEvent: Session | null) => {
-      console.log(`handleAuthChange: Event received: ${event}, sessionFromEvent: ${sessionFromEvent ? 'active' : 'null'}`);
-      
-      if (event === 'SIGNED_OUT') {
-        console.log('handleAuthChange: SIGNED_OUT event detected. Clearing all user-related states.');
-        setSession(null);
-        setUser(null);
-        setCart([]);
-        setSelectedCity('');
-        setCurrentView('location'); // Reset to location on logout
-        setPendingCouponNotificationUserId(null);
-        setShowUserCouponNotification(false);
-        setAuthLoading(false);
-        // Limpa todas as flags de pagamento externo no logout
-        localStorage.removeItem('isMercadoPagoReturnFlow');
-        localStorage.removeItem('externalPaymentMethod');
-        localStorage.removeItem('pixPaymentInitiated');
-        localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
-        localStorage.removeItem('hasSeenMercadoPagoWarning');
-        localStorage.removeItem('hasSeenPixInstructions');
-        setIsMercadoPagoReturnFlow(false); // Limpa o estado local
-        toast.success('Você foi desconectado.');
-        return; // IMPORTANT: Exit immediately after handling SIGNED_OUT
-      }
+    initializeAuth(); // Call it here on mount
 
-      // For other events (SIGNED_IN, USER_UPDATED, etc.), get the latest session
-      const { data: { session: latestSession }, error: sessionError } = await supabase.auth.getSession();
-      console.log(`handleAuthChange: Latest session from getSession() after event: ${latestSession ? 'active' : 'null'}`);
-
-      if (sessionError) {
-        console.error('handleAuthChange: Erro ao buscar a sessão mais recente em onAuthStateChange:', sessionError);
-        // Trata qualquer erro de sessão como um sinal para limpar o estado do usuário
-        setSession(null);
-        setUser(null);
-        setCart([]);
-        setSelectedCity('');
-        setCurrentView('location'); // Reset to location on session error
-        setPendingCouponNotificationUserId(null);
-        setShowUserCouponNotification(false);
-        setAuthLoading(false);
-        // Limpa todas as flags de pagamento externo em caso de erro de sessão
-        localStorage.removeItem('isMercadoPagoReturnFlow');
-        localStorage.removeItem('externalPaymentMethod');
-        localStorage.removeItem('pixPaymentInitiated');
-        localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
-        localStorage.removeItem('hasSeenMercadoPagoWarning');
-        localStorage.removeItem('hasSeenPixInstructions');
-        setIsMercadoPagoReturnFlow(false); // Limpa o estado local
-        toast.error('Erro na sessão. Por favor, faça login novamente.');
-        return;
-      }
-
-      setSession(latestSession);
-
-      if (latestSession?.user) {
-        console.log('handleAuthChange: User is active. Fetching profile.');
-        const profile = await fetchUserProfile(latestSession.user);
-        setUser(profile);
-
-        if (profile) {
-          console.log('handleAuthChange: Profile fetched/created successfully.');
-          if (event === 'SIGNED_IN' && profile.role === 'customer') {
-            const userName = latestSession.user.user_metadata.full_name || latestSession.user.email;
-            if (userName) {
-              const { error } = await supabase.from('login_notifications').insert({
-                user_id: latestSession.user.id,
-                user_name: userName,
-              });
-              if (error) {
-                console.error('handleAuthChange: Error creating login notification:', error);
-              } else {
-                console.log('handleAuthChange: Login notification created.');
-              }
-            }
-            checkAndShowCouponNotification(latestSession.user.id);
-          }
-        } else {
-          console.log('handleAuthChange: Profile could not be fetched/created, treating as no valid user.');
-          setSession(null);
-          setUser(null);
-          setCart([]);
-          setSelectedCity('');
-          setCurrentView('location'); // Reset to location if profile fails
-          setPendingCouponNotificationUserId(null);
-          setShowUserCouponNotification(false);
-          // Limpa todas as flags de pagamento externo se o perfil falhar
-          localStorage.removeItem('isMercadoPagoReturnFlow');
-          localStorage.removeItem('externalPaymentMethod');
-          localStorage.removeItem('pixPaymentInitiated');
-          localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
-          localStorage.removeItem('hasSeenMercadoPagoWarning');
-          localStorage.removeItem('hasSeenPixInstructions');
-          setIsMercadoPagoReturnFlow(false); // Limpa o estado local
-          toast.error('Não foi possível carregar seu perfil. Por favor, tente fazer login novamente.');
-        }
-      } else { // No user in latestSession, and not a SIGNED_OUT event (already handled above)
-        console.log('handleAuthChange: No active user session found (after getSession). Clearing user-related states.');
-        setUser(null);
-        // Do not clear cart or city on session expiration, allow guest checkout
-        setPendingCouponNotificationUserId(null);
-        setShowUserCouponNotification(false);
-        // Limpa todas as flags de pagamento externo se não houver sessão de usuário
-        localStorage.removeItem('isMercadoPagoReturnFlow');
-        localStorage.removeItem('externalPaymentMethod');
-        localStorage.removeItem('pixPaymentInitiated');
-        localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
-        localStorage.removeItem('hasSeenMercadoPagoWarning');
-        localStorage.removeItem('hasSeenPixInstructions');
-        setIsMercadoPagoReturnFlow(false); // Limpa o estado local
-      }
-      setAuthLoading(false);
-      console.log('handleAuthChange: Auth change processing finished.');
-    };
-
-    // Busca a sessão inicial e então configura o listener
-    const initializeAuth = async () => {
-      console.log('initializeAuth: Starting initial auth check.');
-      setAuthLoading(true);
-      try {
-        const { data: { session: initialSession } = {} } = await supabase.auth.getSession(); // Adicionado = {} para desestruturação segura
-        await handleAuthChange('INITIAL_LOAD', initialSession || null); // Passa null se initialSession for undefined
-      } catch (error) {
-        console.error('initializeAuth: Erro ao buscar a sessão inicial:', error);
-        // Mesmo que haja um erro, precisamos parar o carregamento
-        setAuthLoading(false);
-      }
-
-      // Configura o listener em tempo real para mudanças subsequentes
-      authSubscription = supabase.auth.onAuthStateChange(handleAuthChange).data.subscription;
-      console.log('initializeAuth: Auth state change listener set up.');
-    };
-
-    initializeAuth();
+    // Configura o listener em tempo real para mudanças subsequentes
+    authSubscription = supabase.auth.onAuthStateChange(handleAuthChange).data.subscription;
+    console.log('initializeAuth: Auth state change listener set up.');
 
     // Listener para refrescar a sessão e a página quando a aba se torna visível
     const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible') {
-        console.log('App: Tab became visible. Refreshing Supabase session and checking Mercado Pago return flow.');
-        // Isso irá disparar onAuthStateChange se a sessão tiver mudado
-        await supabase.auth.getSession(); 
-
+        console.log('App: Tab became visible. Re-initializing app data and auth.');
+        // Re-executa o carregamento de dados iniciais e auth para garantir que tudo esteja atualizado
+        await fetchInitialAppData(); // This will set initialAppDataLoading
+        await initializeAuth(); // This will set authLoading
+        
         // NOVO: Verifica o estado de retorno do Mercado Pago no localStorage
         const mpReturnFlow = JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
         if (mpReturnFlow !== isMercadoPagoReturnFlow) {
           console.log('App: isMercadoPagoReturnFlow changed in localStorage, updating state.');
           setIsMercadoPagoReturnFlow(mpReturnFlow);
         }
-        // Re-executa o carregamento de dados iniciais para garantir que tudo esteja atualizado
-        fetchInitialAppData();
       }
     };
 
@@ -557,7 +554,7 @@ function App() {
       }
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [checkAndShowCouponNotification, isMercadoPagoReturnFlow, fetchInitialAppData]); // Adicionado fetchInitialAppData como dependência
+  }, [initializeAuth, handleAuthChange, fetchInitialAppData, isMercadoPagoReturnFlow]); // Adicionado fetchInitialAppData e isMercadoPagoReturnFlow como dependências
 
   const refetchUser = useCallback(async () => {
     console.log('refetchUser: Called.');
