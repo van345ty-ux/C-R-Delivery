@@ -62,7 +62,9 @@ function App() {
     if (document.visibilityState === 'visible') {
       console.log('App: Tab became visible. Refreshing app data and auth session.');
       await fetchInitialAppData(); // Refresh app data
+      console.log('App: fetchInitialAppData completed on visibility change.');
       await supabase.auth.getSession(); // Force a session refresh, useAuth will react to this.
+      console.log('App: supabase.auth.getSession completed on visibility change.');
       
       const mpReturnFlow = JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
       if (mpReturnFlow !== mercadoPagoFlow.isMercadoPagoReturnFlow) {
@@ -88,10 +90,17 @@ function App() {
 
   // NOVO: Efeito para lidar com o retorno do Mercado Pago/Pix
   useEffect(() => {
-    // Se o app não está mais carregando, o fluxo de retorno está ativo, e não estamos na home
-    if (!initialAppDataLoading && !authLoading && mercadoPagoFlow.isMercadoPagoReturnFlow && currentView !== 'home') {
-      console.log('App: Detected Mercado Pago/Pix return flow, forcing view to home.');
-      // Se não houver cidade selecionada, tenta selecionar a primeira cidade ativa
+    // Se o app não está mais carregando e o fluxo de retorno está ativo
+    if (!initialAppDataLoading && !authLoading && mercadoPagoFlow.isMercadoPagoReturnFlow) {
+      console.log('App: Detected Mercado Pago/Pix return flow, ensuring view is home.');
+      
+      // Only set to home if it's not already home, to prevent unnecessary re-renders
+      if (currentView !== 'home') {
+        console.log('App: Forcing view to home due to Mercado Pago/Pix return flow.');
+        setCurrentView('home');
+      }
+
+      // If no city is selected, try to select the first active city
       if (!selectedCity && cities.length > 0) {
         const firstActiveCity = cities.find(city => city.active);
         if (firstActiveCity) {
@@ -99,7 +108,6 @@ function App() {
           updateStoreStatus();
         }
       }
-      setCurrentView('home');
     }
   }, [initialAppDataLoading, authLoading, mercadoPagoFlow.isMercadoPagoReturnFlow, currentView, selectedCity, cities, updateStoreStatus]);
 
