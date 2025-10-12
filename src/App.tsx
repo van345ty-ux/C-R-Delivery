@@ -7,6 +7,7 @@ import { OrderTracking } from './components/OrderTracking';
 import { UserProfile } from './components/UserProfile';
 import { UserCouponNotification } from './components/UserCouponNotification';
 import { Toaster } from 'react-hot-toast';
+import { supabase } from './integrations/supabase/client'; // Importar supabase para getSession
 
 // Importar tipos do arquivo centralizado
 import { Order, City } from './types';
@@ -63,19 +64,24 @@ function App() {
   }, [selectedCity]);
 
   // Listener para refrescar a sessão e a página quando a aba se torna visível
-  useEffect(() => {
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible') {
-        console.log('App: Tab became visible. Refreshing app data and auth session.');
-        await fetchInitialAppData();
-        // Força uma atualização da sessão. O useAuth reagirá a isso.
-        await mercadoPagoFlow.setIsMercadoPagoReturnFlow(JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false'));
+  const handleVisibilityChange = useCallback(async () => {
+    if (document.visibilityState === 'visible') {
+      console.log('App: Tab became visible. Refreshing app data and auth session.');
+      await fetchInitialAppData(); // Refresh app data
+      await supabase.auth.getSession(); // Force a session refresh, useAuth will react to this.
+      
+      const mpReturnFlow = JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
+      if (mpReturnFlow !== mercadoPagoFlow.isMercadoPagoReturnFlow) {
+        console.log('App: isMercadoPagoReturnFlow changed in localStorage, updating state.');
+        mercadoPagoFlow.setIsMercadoPagoReturnFlow(mpReturnFlow);
       }
-    };
+    }
+  }, [fetchInitialAppData, mercadoPagoFlow]);
 
+  useEffect(() => {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [fetchInitialAppData, mercadoPagoFlow]);
+  }, [handleVisibilityChange]); // Depende apenas do callback estável
 
   // Redireciona para a home se o usuário estiver logado e a view atual for auth
   useEffect(() => {
