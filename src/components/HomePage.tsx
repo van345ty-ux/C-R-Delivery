@@ -187,7 +187,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         user={user}
         cartItemCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
         onLogin={onLogin}
-        onCartClick={handleCartIconClick} {/* Usando a nova função */}
+        onCartClick={handleCartIconClick}
         onBackToLocationSelect={onBackToLocationSelect}
         onProfileClick={onProfileClick}
         logoUrl={logoUrl}
