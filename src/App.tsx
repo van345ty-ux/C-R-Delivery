@@ -188,7 +188,6 @@ function App() {
   const [operatingHours, setOperatingHours] = useState<OperatingHour[]>([]); // Novo estado para operatingHours
   const [showPreOrderModal, setShowPreOrderModal] = useState(false); // Novo estado para o modal de pré-pedido
   const [showPreOrderBanner, setShowPreOrderBanner] = useState(false); // Novo estado para o banner de pré-pedido
-  // isMercadoPagoReturnFlow agora é gerenciado localmente no Cart.tsx e lido diretamente do localStorage por outros componentes.
   const [isMercadoPagoReturnFlow, setIsMercadoPagoReturnFlow] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
@@ -523,10 +522,10 @@ function App() {
     // Listener para refrescar a sessão e a página quando a aba se torna visível
     const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible') {
-        console.log('App: Tab became visible. Refreshing Supabase session and reloading page.');
+        console.log('App: Tab became visible. Refreshing Supabase session.');
         // Isso irá disparar onAuthStateChange se a sessão tiver mudado
         await supabase.auth.getSession(); 
-        window.location.reload(); // Adicionado: Recarrega a página completamente
+        // REMOVIDO: window.location.reload(); // Removido para evitar loops de carregamento
       }
     };
 
@@ -572,17 +571,42 @@ function App() {
       let shouldShowPreOrderModal = false;
       if (todayHours && todayHours.is_open) {
         const isCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
-        // Show pre-order modal if:
-        // 1. Store is open today
-        // 2. Store is NOT currently open
-        // 3. Current time is between 07:00 and 17:00
-        if (todayHours.is_open && !isCurrentlyOpen && currentTime >= '07:00' && currentTime <= '17:00') {
-          shouldShowPreOrderModal = true;
+        // Logic for pre-order: store is open today, but not currently open, and it's between 07:00 and 17:00
+        canPreOrder = !isCurrentlyOpen && currentTime >= '07:00' && currentTime <= '17:00'; // MODIFIED HERE
+
+        // Show pre-order modal if conditions met and not yet seen today
+        const todayDateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
+        const lastSeenPreOrderModalDate = localStorage.getItem('preOrderModalLastSeenDate');
+        const hasSeenPreOrderModalToday = lastSeenPreOrderModalDate === todayDateString;
+
+        if (canPreOrder && !hasSeenPreOrderModalToday) {
+          showPreOrderModalOnLoad = true;
+          localStorage.setItem('preOrderModalLastSeenDate', todayDateString); // Mark as seen for today
         }
+
+        // Show pre-order banner if conditions met
+        if (canPreOrder) {
+          showPreOrderBannerOnLoad = true;
+        }
+
+      } else {
+        // Store is closed all day
+        storeCurrentlyOpen = false;
+        canPreOrder = false;
+        showPreOrderModalOnLoad = false;
+        showPreOrderBannerOnLoad = false;
       }
-      
-      setCurrentView('home'); // Always go to home
-      setShowPreOrderModal(shouldShowPreOrderModal); // Show modal based on conditions
+
+      setIsStoreOpen(storeCurrentlyOpen);
+      setCanPlaceOrder(storeCurrentlyOpen || canPreOrder); // Pode fazer pedido se aberto ou em pré-pedido
+      setShowPreOrderModal(showPreOrderModalOnLoad);
+      setShowPreOrderBanner(showPreOrderBannerOnLoad);
+
+      console.log('Calculated storeCurrentlyOpen:', storeCurrentlyOpen);
+      console.log('Calculated canPreOrder:', canPreOrder);
+      console.log('Final canPlaceOrder:', storeCurrentlyOpen || canPreOrder);
+      console.log('--- End Time and Operating Hours Debug ---');
+
     }
   };
 
