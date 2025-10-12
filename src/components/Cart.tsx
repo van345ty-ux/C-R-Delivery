@@ -312,6 +312,7 @@ export const Cart: React.FC<CartProps> = ({
   };
 
   const handleFinishOrder = async () => {
+    console.log('handleFinishOrder: Iniciando processo de finalização do pedido.');
     // Variável para controlar o estado de desabilitação de elementos interativos
     const isAnyModalOpen = showMercadoPagoWarning || showPixInstructionsModal || showPixReturnConfirmationModal;
     // Condição para Pix: pagamento iniciado mas não confirmado o retorno
@@ -322,32 +323,42 @@ export const Cart: React.FC<CartProps> = ({
 
     if (isPixPendingConfirmation) {
       toast.error('Vá até o seu app do banco pagar o pedido e retorne e clique aqui novamente');
+      console.log('handleFinishOrder: Pix pendente de confirmação. Abortando.');
       return;
     }
 
     if (!canPlaceOrder) { // Usa canPlaceOrder para verificar se pode finalizar o pedido
       toast.error('Desculpe, não é possível finalizar o pedido no momento.');
+      console.log('handleFinishOrder: Não pode fazer pedido. Abortando.');
       return;
     }
     if (!user) {
       toast.error('Você precisa fazer login para finalizar o pedido.');
+      console.log('handleFinishOrder: Usuário não logado. Abortando.');
       return;
     }
-    if (items.length === 0) return;
+    if (items.length === 0) {
+      console.log('handleFinishOrder: Carrinho vazio. Abortando.');
+      return;
+    }
     if (deliveryType === 'delivery' && !address.trim()) {
       toast.error('Por favor, informe o endereço para entrega');
+      console.log('handleFinishOrder: Endereço de entrega ausente. Abortando.');
       return;
     }
     if (paymentMethod === null) { // Adicionado: verifica se uma forma de pagamento foi selecionada
       toast.error('Por favor, selecione uma forma de pagamento.');
+      console.log('handleFinishOrder: Forma de pagamento não selecionada. Abortando.');
       return;
     }
     if (paymentMethod === 'pix' && !pixKeyValue) {
       toast.error('A chave Pix não foi configurada. Por favor, escolha outra forma de pagamento.');
+      console.log('handleFinishOrder: Chave Pix não configurada. Abortando.');
       return;
     }
     if (paymentMethod === 'pix' && showPixInstructionsModal) {
       toast.error('Por favor, confirme que você entendeu as instruções do Pix.');
+      console.log('handleFinishOrder: Instruções Pix não confirmadas. Abortando.');
       return;
     }
 
@@ -356,11 +367,13 @@ export const Cart: React.FC<CartProps> = ({
       const acknowledged = JSON.parse(localStorage.getItem('hasSeenMercadoPagoWarning') || 'false');
       if (!acknowledged) {
         setShowMercadoPagoWarning(true);
+        console.log('handleFinishOrder: Aviso Mercado Pago não reconhecido. Mostrando modal.');
         return; // Interrompe o fluxo para mostrar o aviso
       }
     }
 
     setIsSubmitting(true);
+    console.log('handleFinishOrder: isSubmitting definido como true.');
 
     const orderPayload = {
       user_id: user.id,
@@ -382,64 +395,83 @@ export const Cart: React.FC<CartProps> = ({
       coupon_used: appliedCoupon?.code
     };
 
-    const { data: newOrder, error } = await supabase
-      .from('orders')
-      .insert(orderPayload)
-      .select('*, order_number') // Seleciona o novo order_number
-      .single();
+    console.log('handleFinishOrder: Payload do pedido:', orderPayload);
 
-    if (error) {
-      console.error('Error creating order:', error);
-      toast.error('Ocorreu um erro ao finalizar seu pedido. Tente novamente.');
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (appliedCoupon) {
-      const { data: currentCoupon, error: fetchError } = await supabase
-        .from('coupons')
-        .select('usage_count')
-        .eq('id', appliedCoupon.id)
+    try {
+      const { data: newOrder, error } = await supabase
+        .from('orders')
+        .insert(orderPayload)
+        .select('*, order_number') // Seleciona o novo order_number
         .single();
 
-      if (!fetchError && currentCoupon) {
-        await supabase
-          .from('coupons')
-          .update({ usage_count: currentCoupon.usage_count + 1 })
-          .eq('id', appliedCoupon.id);
+      if (error) {
+        console.error('handleFinishOrder: Erro ao criar pedido no Supabase:', error);
+        toast.error('Ocorreu um erro ao finalizar seu pedido: ' + error.message);
+        return; // Aborta em caso de erro no Supabase
       }
+
+      console.log('handleFinishOrder: Pedido criado com sucesso no Supabase:', newOrder);
+
+      if (appliedCoupon) {
+        console.log('handleFinishOrder: Cupom aplicado detectado. Atualizando contagem de uso.');
+        const { data: currentCoupon, error: fetchError } = await supabase
+          .from('coupons')
+          .select('usage_count')
+          .eq('id', appliedCoupon.id)
+          .single();
+
+        if (fetchError) {
+          console.error('handleFinishOrder: Erro ao buscar contagem de uso do cupom:', fetchError);
+        } else if (currentCoupon) {
+          await supabase
+            .from('coupons')
+            .update({ usage_count: currentCoupon.usage_count + 1 })
+            .eq('id', appliedCoupon.id);
+          console.log('handleFinishOrder: Contagem de uso do cupom atualizada.');
+        }
+      }
+
+      const formattedOrder: Order = {
+        id: newOrder.id,
+        orderNumber: newOrder.order_number, // Mapeia o order_number
+        items: items,
+        total: newOrder.total,
+        deliveryFee: newOrder.delivery_fee,
+        deliveryType: newOrder.delivery_type,
+        paymentMethod: newOrder.payment_method,
+        address: newOrder.address,
+        status: newOrder.status,
+        customerName: newOrder.customer_name,
+        customerPhone: newOrder.customer_phone,
+        createdAt: newOrder.created_at,
+        couponUsed: newOrder.coupon_used
+      };
+
+      console.log('handleFinishOrder: Chamando onOrderCreated com o pedido formatado.');
+      onOrderCreated(formattedOrder);
+      onClose();
+      toast.success('Pedido finalizado com sucesso!');
+
+      // Limpa todas as flags de pagamento externo e estados relacionados após a finalização bem-sucedida
+      console.log('handleFinishOrder: Limpando flags de localStorage e estados locais.');
+      localStorage.removeItem('hasSeenMercadoPagoWarning');
+      localStorage.removeItem('isMercadoPagoReturnFlow');
+      localStorage.removeItem('externalPaymentMethod');
+      localStorage.removeItem('pixPaymentInitiated');
+      localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
+      localStorage.removeItem('hasSeenPixInstructions');
+      setIsMercadoPagoAcknowledged(false);
+      setHasSeenPixInstructions(false);
+      setPixPaymentInitiated(false);
+      setHasAcknowledgedPixReturnConfirmation(false);
+
+    } catch (err: any) {
+      console.error('handleFinishOrder: Erro inesperado durante a finalização do pedido:', err);
+      toast.error('Ocorreu um erro inesperado ao finalizar seu pedido: ' + (err.message || 'Tente novamente.'));
+    } finally {
+      setIsSubmitting(false);
+      console.log('handleFinishOrder: isSubmitting definido como false (finally block).');
     }
-
-    const formattedOrder: Order = {
-      id: newOrder.id,
-      orderNumber: newOrder.order_number, // Mapeia o order_number
-      items: items,
-      total: newOrder.total,
-      deliveryFee: newOrder.delivery_fee,
-      deliveryType: newOrder.delivery_type,
-      paymentMethod: newOrder.payment_method,
-      address: newOrder.address,
-      status: newOrder.status,
-      customerName: newOrder.customer_name,
-      customerPhone: newOrder.customer_phone,
-      createdAt: newOrder.created_at,
-      couponUsed: newOrder.coupon_used
-    };
-
-    onOrderCreated(formattedOrder);
-    onClose();
-    setIsSubmitting(false);
-    localStorage.removeItem('hasSeenMercadoPagoWarning'); // Limpa a flag após finalizar o pedido
-    localStorage.removeItem('isMercadoPagoReturnFlow'); // Limpa a flag principal do Mercado Pago
-    localStorage.removeItem('externalPaymentMethod'); // Limpa o método de pagamento externo
-    localStorage.removeItem('pixPaymentInitiated'); // Limpa a flag de Pix iniciado
-    localStorage.removeItem('hasAcknowledgedPixReturnConfirmation'); // Limpa a flag de confirmação de retorno Pix
-    localStorage.removeItem('hasSeenPixInstructions'); // Limpa a flag Pix
-    setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
-    setHasSeenPixInstructions(false); // Atualiza o estado local
-    setPixPaymentInitiated(false); // Limpa o estado local
-    setHasAcknowledgedPixReturnConfirmation(false); // Atualiza o estado local
-    toast.success('Pedido finalizado com sucesso!');
   };
 
   const handleMercadoPagoConfirm = () => {
