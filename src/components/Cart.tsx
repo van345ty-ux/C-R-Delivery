@@ -431,10 +431,10 @@ export const Cart: React.FC<CartProps> = ({
     setIsSubmitting(false);
     localStorage.removeItem('hasSeenMercadoPagoWarning'); // Limpa a flag após finalizar o pedido
     localStorage.removeItem('isMercadoPagoReturnFlow'); // Limpa a flag principal do Mercado Pago
-    localStorage.removeItem('hasSeenPixInstructions'); // Limpa a flag Pix
     localStorage.removeItem('externalPaymentMethod'); // Limpa o método de pagamento externo
     localStorage.removeItem('pixPaymentInitiated'); // Limpa a flag de Pix iniciado
     localStorage.removeItem('hasAcknowledgedPixReturnConfirmation'); // Limpa a flag de confirmação de retorno Pix
+    localStorage.removeItem('hasSeenPixInstructions'); // Limpa a flag Pix
     setIsMercadoPagoAcknowledged(false); // Atualiza o estado local
     setHasSeenPixInstructions(false); // Atualiza o estado local
     setPixPaymentInitiated(false); // Limpa o estado local
@@ -503,7 +503,7 @@ export const Cart: React.FC<CartProps> = ({
     // Lógica específica para Pix
     if (method === 'pix') {
       if (!pixKeyValue) {
-        toast.error('A chave Pix não foi configurada no painel administrativo. Por favor, escolha outra forma de pagamento.');
+        toast.error('A chave Pix não foi configurada. Por favor, escolha outra forma de pagamento.');
         setPaymentMethod(null); // Reverte a seleção se a chave Pix não estiver configurada
         return;
       }
@@ -522,6 +522,14 @@ export const Cart: React.FC<CartProps> = ({
                                    isMercadoPagoReturnFlow && // Usando a prop
                                    pixPaymentInitiated && // Usando o estado local
                                    !hasAcknowledgedPixReturnConfirmation;
+
+  // Debugging logs
+  console.log('Cart Render - isMercadoPagoReturnFlow (prop):', isMercadoPagoReturnFlow);
+  console.log('Cart Render - pixPaymentInitiated (local state):', pixPaymentInitiated);
+  console.log('Cart Render - hasAcknowledgedPixReturnConfirmation (local state):', hasAcknowledgedPixReturnConfirmation);
+  console.log('Cart Render - isPixPendingConfirmation (derived):', isPixPendingConfirmation);
+  console.log('Cart Render - isAnyModalOpen (derived):', isAnyModalOpen);
+  console.log('Cart Render - Final disabled state for button:', isSubmitting || !canPlaceOrder || !user || paymentMethod === null || (paymentMethod === 'pix' && !pixKeyValue) || isAnyModalOpen || isPixPendingConfirmation);
 
 
   if (items.length === 0) {

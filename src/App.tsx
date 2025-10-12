@@ -4,7 +4,7 @@ import { HomePage } from './components/HomePage';
 import { AdminPanel } from './components/AdminPanel';
 import { UserAuth } from './components/UserAuth';
 import { OrderTracking } from './components/OrderTracking';
-import { UserProfile } from './components/UserProfile';
+import { UserProfile } => './components/UserProfile';
 import { UserCouponNotification } from './components/UserCouponNotification';
 import { supabase } from './integrations/supabase/client';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
@@ -215,6 +215,17 @@ function App() {
       localStorage.setItem('cart', JSON.stringify(cart));
     }
   }, [cart]);
+
+  // Effect to listen for changes in localStorage for isMercadoPagoReturnFlow
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'isMercadoPagoReturnFlow') {
+        setIsMercadoPagoReturnFlow(JSON.parse(event.newValue || 'false'));
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Debugging logs for App state
   useEffect(() => {
@@ -776,7 +787,7 @@ function App() {
         onAddToCart={addToCart}
         onRemoveFromCart={removeFromCart}
         onUpdateCartItem={updateCartItem}
-        onLogin={handleLogin} // Usando a nova função handleLogin
+        onLogin={handleLogin} 
         onOrderCreated={(order) => {
           setCart([]);
           setCurrentOrder(order);
