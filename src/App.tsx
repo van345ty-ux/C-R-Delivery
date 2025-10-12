@@ -504,8 +504,8 @@ function App() {
       console.log('initializeAuth: Starting initial auth check.');
       setAuthLoading(true);
       try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        await handleAuthChange('INITIAL_LOAD', initialSession); // Processa a sessão inicial
+        const { data: { session: initialSession } = {} } = await supabase.auth.getSession(); // Adicionado = {} para desestruturação segura
+        await handleAuthChange('INITIAL_LOAD', initialSession || null); // Passa null se initialSession for undefined
       } catch (error) {
         console.error('initializeAuth: Erro ao buscar a sessão inicial:', error);
         // Mesmo que haja um erro, precisamos parar o carregamento
@@ -525,7 +525,6 @@ function App() {
         console.log('App: Tab became visible. Refreshing Supabase session.');
         // Isso irá disparar onAuthStateChange se a sessão tiver mudado
         await supabase.auth.getSession(); 
-        // REMOVIDO: window.location.reload(); // Removido para evitar loops de carregamento
       }
     };
 
@@ -568,45 +567,51 @@ function App() {
       const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
       const todayHours = operatingHours.find(h => h.day_of_week === currentDay);
 
-      let shouldShowPreOrderModal = false;
+      let storeCurrentlyOpen = false;
+      let canPreOrderLocal = false; // Renomeado para evitar conflito com o estado global
+      let showPreOrderModalOnLoad = false;
+      let showPreOrderBannerOnLoad = false;
+
       if (todayHours && todayHours.is_open) {
-        const isCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
+        storeCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
+        
         // Logic for pre-order: store is open today, but not currently open, and it's between 07:00 and 17:00
-        canPreOrder = !isCurrentlyOpen && currentTime >= '07:00' && currentTime <= '17:00'; // MODIFIED HERE
+        canPreOrderLocal = !storeCurrentlyOpen && currentTime >= '07:00' && currentTime <= '17:00';
 
         // Show pre-order modal if conditions met and not yet seen today
         const todayDateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
         const lastSeenPreOrderModalDate = localStorage.getItem('preOrderModalLastSeenDate');
         const hasSeenPreOrderModalToday = lastSeenPreOrderModalDate === todayDateString;
 
-        if (canPreOrder && !hasSeenPreOrderModalToday) {
+        if (canPreOrderLocal && !hasSeenPreOrderModalToday) {
           showPreOrderModalOnLoad = true;
           localStorage.setItem('preOrderModalLastSeenDate', todayDateString); // Mark as seen for today
         }
 
         // Show pre-order banner if conditions met
-        if (canPreOrder) {
+        if (canPreOrderLocal) {
           showPreOrderBannerOnLoad = true;
         }
 
       } else {
         // Store is closed all day
         storeCurrentlyOpen = false;
-        canPreOrder = false;
+        canPreOrderLocal = false;
         showPreOrderModalOnLoad = false;
         showPreOrderBannerOnLoad = false;
       }
 
       setIsStoreOpen(storeCurrentlyOpen);
-      setCanPlaceOrder(storeCurrentlyOpen || canPreOrder); // Pode fazer pedido se aberto ou em pré-pedido
+      setCanPlaceOrder(storeCurrentlyOpen || canPreOrderLocal); // Usa canPreOrderLocal aqui
       setShowPreOrderModal(showPreOrderModalOnLoad);
       setShowPreOrderBanner(showPreOrderBannerOnLoad);
 
       console.log('Calculated storeCurrentlyOpen:', storeCurrentlyOpen);
-      console.log('Calculated canPreOrder:', canPreOrder);
-      console.log('Final canPlaceOrder:', storeCurrentlyOpen || canPreOrder);
+      console.log('Calculated canPreOrderLocal:', canPreOrderLocal);
+      console.log('Final canPlaceOrder:', storeCurrentlyOpen || canPreOrderLocal);
       console.log('--- End Time and Operating Hours Debug ---');
 
+      setCurrentView('home'); // Always go to home
     }
   };
 
