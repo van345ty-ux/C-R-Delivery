@@ -568,7 +568,7 @@ function App() {
       const todayHours = operatingHours.find(h => h.day_of_week === currentDay);
 
       let storeCurrentlyOpen = false;
-      let canPreOrderLocal = false; // Renomeado para evitar conflito com o estado global
+      let canPreOrderLocal = false; 
       let showPreOrderModalOnLoad = false;
       let showPreOrderBannerOnLoad = false;
 
@@ -715,6 +715,11 @@ function App() {
     setIsMercadoPagoReturnFlow(false); // Limpa o estado local
   };
 
+  // Nova função para lidar com o login
+  const handleLogin = () => {
+    setCurrentView('auth');
+  };
+
   // O aplicativo só para de carregar quando os dados iniciais E a autenticação estiverem prontos
   const isLoading = initialAppDataLoading || authLoading;
   console.log('App: isLoading:', isLoading, 'initialAppDataLoading:', initialAppDataLoading, 'authLoading:', authLoading);
@@ -771,7 +776,7 @@ function App() {
         onAddToCart={addToCart}
         onRemoveFromCart={removeFromCart}
         onUpdateCartItem={updateCartItem}
-        onLogin={onLogin}
+        onLogin={handleLogin} {/* Usando a nova função handleLogin */}
         onOrderCreated={(order) => {
           setCart([]);
           setCurrentOrder(order);
