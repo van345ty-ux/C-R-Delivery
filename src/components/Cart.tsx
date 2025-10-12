@@ -45,9 +45,7 @@ export const Cart: React.FC<CartProps> = ({
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>(() => {
     return localStorage.getItem('cartDeliveryType') as 'delivery' | 'pickup' || 'delivery';
   });
-  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'cash' | null>(() => {
-    return localStorage.getItem('cartPaymentMethod') as 'pix' | 'card' | 'cash' || null;
-  });
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'cash' | null>(null);
   const [address, setAddress] = useState(() => localStorage.getItem('cartAddress') || '');
   const [couponCode, setCouponCode] = useState(() => localStorage.getItem('cartCouponCode') || '');
   const [appliedCoupon, setAppliedCoupon] = useState<{id: string; code: string; discount: number} | null>(() => {
@@ -288,6 +286,7 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.removeItem('hasSeenMercadoPagoWarning');
     localStorage.removeItem('isMercadoPagoReturnFlow');
     localStorage.removeItem('hasSeenPixInstructions');
+    localStorage.removeItem('cartPaymentMethod');
     setIsMercadoPagoAcknowledged(false);
     setHasSeenPixInstructions(false);
     toast.success('Pedido finalizado com sucesso!');
