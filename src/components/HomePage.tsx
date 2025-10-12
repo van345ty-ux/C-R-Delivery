@@ -39,6 +39,8 @@ interface HomePageProps {
   setShowPreOrderModal: (show: boolean) => void; // Nova prop
   showPreOrderBanner: boolean; // Nova prop
   isMercadoPagoReturnFlow: boolean; // Nova prop
+  isPixReturnFlow: boolean; // Nova prop
+  setIsPixReturnFlow: (isReturning: boolean) => void; // Nova prop
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -72,8 +74,10 @@ export const HomePage: React.FC<HomePageProps> = ({
   setShowPreOrderModal, // Nova prop
   showPreOrderBanner, // Nova prop
   isMercadoPagoReturnFlow, // Nova prop
+  isPixReturnFlow, // Nova prop
+  setIsPixReturnFlow, // Nova prop
 }) => {
-  const [showCart, setShowCart] = useState(false);
+  const [showCart, setShowCart] = useState(isMercadoPagoReturnFlow || isPixReturnFlow);
   const [showPromotions, setShowPromotions] = useState(false);
   const [cartAnimation, setCartAnimation] = useState(false);
   const [promotions, setPromotions] = useState<Product[]>([]);
@@ -83,11 +87,11 @@ export const HomePage: React.FC<HomePageProps> = ({
   useEffect(() => {
     const fetchPromotionsAndSettings = async () => {
       // Se estiver no fluxo de retorno do Mercado Pago, abre o carrinho e suprime o modal de promoção
-      if (isMercadoPagoReturnFlow) {
-        console.log('HomePage: isMercadoPagoReturnFlow is true, opening cart and suppressing promotion modal.');
+      if (isMercadoPagoReturnFlow || isPixReturnFlow) {
+        console.log('HomePage: External payment return flow detected, suppressing promotion modal.');
         setShowPromotions(false); // Suprime o modal de promoção
         setShowCart(true); // Abre o carrinho automaticamente
-        return; // Não busca promoções se estiver retornando do MP
+        return; // Não busca promoções se estiver retornando de pagamento externo
       }
 
       // Só mostra o pop-up de promoção se ainda não foi visto E o modal de pré-pedido não estiver ativo
@@ -127,7 +131,7 @@ export const HomePage: React.FC<HomePageProps> = ({
     if (!showPreOrderModal) {
       fetchPromotionsAndSettings();
     }
-  }, [showPreOrderModal, isMercadoPagoReturnFlow]); // Adicionado isMercadoPagoReturnFlow como dependência
+  }, [showPreOrderModal, isMercadoPagoReturnFlow, isPixReturnFlow]); // Adicionado isPixReturnFlow como dependência
 
   const handleAddToCart = (product: Product, quantity = 1, observations?: string) => {
     onAddToCart(product, quantity, observations || undefined);
@@ -149,6 +153,13 @@ export const HomePage: React.FC<HomePageProps> = ({
       setShowUserCouponNotification(true);
       setPendingCouponNotificationUserId(null);
       console.log('HomePage - Setting setShowUserCouponNotification to true and clearing pendingCouponNotificationUserId');
+    }
+  };
+
+  const handleCloseCart = () => {
+    setShowCart(false);
+    if (isPixReturnFlow) {
+      setIsPixReturnFlow(false); // Isso também limpará o localStorage através do useEffect no App.tsx
     }
   };
 
@@ -196,7 +207,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       {showCart && (
         <Cart
           items={cart}
-          onClose={() => setShowCart(false)}
+          onClose={handleCloseCart}
           onUpdateQuantity={onUpdateCartItem}
           onRemoveItem={onRemoveFromCart}
           onOrderCreated={onOrderCreated}

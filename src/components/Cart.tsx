@@ -46,7 +46,13 @@ export const Cart: React.FC<CartProps> = ({
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>(() => {
     return localStorage.getItem('cartDeliveryType') as 'delivery' | 'pickup' || 'delivery';
   });
-  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'cash' | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'cash' | null>(() => {
+    if (typeof window !== 'undefined') {
+      const savedMethod = localStorage.getItem('cartPaymentMethod');
+      return savedMethod as 'pix' | 'card' | 'cash' | null;
+    }
+    return null;
+  });
   const [address, setAddress] = useState(() => localStorage.getItem('cartAddress') || '');
   const [couponCode, setCouponCode] = useState(() => localStorage.getItem('cartCouponCode') || '');
   const [appliedCoupon, setAppliedCoupon] = useState<{id: string; code: string; discount: number} | null>(() => {
@@ -177,6 +183,7 @@ export const Cart: React.FC<CartProps> = ({
     setHasAcknowledgedPixReturnConfirmation(false);
     localStorage.removeItem('pixPaymentInitiated');
     localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
+    localStorage.removeItem('isPixReturnFlow');
   };
 
   const handleApplyCoupon = async (codeToApply?: string) => {
@@ -349,6 +356,7 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.setItem('hasSeenPixInstructions', 'true');
     setPixPaymentInitiated(true);
     localStorage.setItem('pixPaymentInitiated', 'true');
+    localStorage.setItem('isPixReturnFlow', 'true');
   };
 
   if (items.length === 0) {
