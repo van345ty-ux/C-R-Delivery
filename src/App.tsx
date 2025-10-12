@@ -188,12 +188,8 @@ function App() {
   const [operatingHours, setOperatingHours] = useState<OperatingHour[]>([]); // Novo estado para operatingHours
   const [showPreOrderModal, setShowPreOrderModal] = useState(false); // Novo estado para o modal de pré-pedido
   const [showPreOrderBanner, setShowPreOrderBanner] = useState(false); // Novo estado para o banner de pré-pedido
-  const [isMercadoPagoReturnFlow, setIsMercadoPagoReturnFlow] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
-    }
-    return false;
-  });
+  // isMercadoPagoReturnFlow agora é gerenciado localmente no Cart.tsx e lido diretamente do localStorage por outros componentes.
+  // Removido: const [isMercadoPagoReturnFlow, setIsMercadoPagoReturnFlow] = useState<boolean>(...);
 
   // Effect to save currentView to localStorage whenever it changes
   useEffect(() => {
@@ -216,13 +212,6 @@ function App() {
     }
   }, [cart]);
 
-  // Effect to save isMercadoPagoReturnFlow to localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('isMercadoPagoReturnFlow', JSON.stringify(isMercadoPagoReturnFlow));
-    }
-  }, [isMercadoPagoReturnFlow]);
-
   // Debugging logs for App state
   useEffect(() => {
     console.log('App State - pendingCouponNotificationUserId:', pendingCouponNotificationUserId);
@@ -234,8 +223,8 @@ function App() {
     console.log('App State - showPreOrderBanner:', showPreOrderBanner);
     console.log('App State - isStoreOpen:', isStoreOpen);
     console.log('App State - canPlaceOrder (incl. pre-order):', canPlaceOrder); // Adicionado log
-    console.log('App State - isMercadoPagoReturnFlow:', isMercadoPagoReturnFlow); // Adicionado log
-  }, [pendingCouponNotificationUserId, showUserCouponNotification, user, session, currentView, showPreOrderModal, showPreOrderBanner, isStoreOpen, canPlaceOrder, isMercadoPagoReturnFlow]);
+    console.log('App State - isMercadoPagoReturnFlow:', JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false')); // Adicionado log
+  }, [pendingCouponNotificationUserId, showUserCouponNotification, user, session, currentView, showPreOrderModal, showPreOrderBanner, isStoreOpen, canPlaceOrder]);
 
   const checkAndShowCouponNotification = useCallback(async (userId: string) => {
     console.log('checkAndShowCouponNotification called for userId:', userId);
@@ -405,8 +394,13 @@ function App() {
         setPendingCouponNotificationUserId(null);
         setShowUserCouponNotification(false);
         setAuthLoading(false);
-        setIsMercadoPagoReturnFlow(false); // Clear Mercado Pago flag on logout
+        // Limpa todas as flags de pagamento externo no logout
         localStorage.removeItem('isMercadoPagoReturnFlow');
+        localStorage.removeItem('externalPaymentMethod');
+        localStorage.removeItem('pixPaymentInitiated');
+        localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
+        localStorage.removeItem('hasSeenMercadoPagoWarning');
+        localStorage.removeItem('hasSeenPixInstructions');
         toast.success('Você foi desconectado.');
         return; // IMPORTANT: Exit immediately after handling SIGNED_OUT
       }
@@ -426,8 +420,13 @@ function App() {
         setPendingCouponNotificationUserId(null);
         setShowUserCouponNotification(false);
         setAuthLoading(false);
-        setIsMercadoPagoReturnFlow(false); // Clear Mercado Pago flag on session error
+        // Limpa todas as flags de pagamento externo em caso de erro de sessão
         localStorage.removeItem('isMercadoPagoReturnFlow');
+        localStorage.removeItem('externalPaymentMethod');
+        localStorage.removeItem('pixPaymentInitiated');
+        localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
+        localStorage.removeItem('hasSeenMercadoPagoWarning');
+        localStorage.removeItem('hasSeenPixInstructions');
         toast.error('Erro na sessão. Por favor, faça login novamente.');
         return;
       }
@@ -465,8 +464,13 @@ function App() {
           setCurrentView('location'); // Reset to location if profile fails
           setPendingCouponNotificationUserId(null);
           setShowUserCouponNotification(false);
-          setIsMercadoPagoReturnFlow(false); // Clear Mercado Pago flag if profile fails
+          // Limpa todas as flags de pagamento externo se o perfil falhar
           localStorage.removeItem('isMercadoPagoReturnFlow');
+          localStorage.removeItem('externalPaymentMethod');
+          localStorage.removeItem('pixPaymentInitiated');
+          localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
+          localStorage.removeItem('hasSeenMercadoPagoWarning');
+          localStorage.removeItem('hasSeenPixInstructions');
           toast.error('Não foi possível carregar seu perfil. Por favor, tente fazer login novamente.');
         }
       } else { // No user in latestSession, and not a SIGNED_OUT event (already handled above)
@@ -475,8 +479,13 @@ function App() {
         // Do not clear cart or city on session expiration, allow guest checkout
         setPendingCouponNotificationUserId(null);
         setShowUserCouponNotification(false);
-        setIsMercadoPagoReturnFlow(false); // Clear Mercado Pago flag if no user session
+        // Limpa todas as flags de pagamento externo se não houver sessão de usuário
         localStorage.removeItem('isMercadoPagoReturnFlow');
+        localStorage.removeItem('externalPaymentMethod');
+        localStorage.removeItem('pixPaymentInitiated');
+        localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
+        localStorage.removeItem('hasSeenMercadoPagoWarning');
+        localStorage.removeItem('hasSeenPixInstructions');
       }
       setAuthLoading(false);
       console.log('handleAuthChange: Auth change processing finished.');
@@ -601,8 +610,13 @@ function App() {
       setCurrentView('home'); 
       setPendingCouponNotificationUserId(null);
       setShowUserCouponNotification(false);
-      setIsMercadoPagoReturnFlow(false); // Clear Mercado Pago flag on manual logout
+      // Limpa todas as flags de pagamento externo no logout manual
       localStorage.removeItem('isMercadoPagoReturnFlow');
+      localStorage.removeItem('externalPaymentMethod');
+      localStorage.removeItem('pixPaymentInitiated');
+      localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
+      localStorage.removeItem('hasSeenMercadoPagoWarning');
+      localStorage.removeItem('hasSeenPixInstructions');
       
       toast.success('Você foi desconectado.'); // Still inform the user of success
       return; // Exit after manual cleanup
@@ -652,8 +666,13 @@ function App() {
     setCurrentOrder(order);
     setShowProfile(false);
     setCurrentView('tracking');
-    setIsMercadoPagoReturnFlow(false); // Clear Mercado Pago flag when viewing order tracking
+    // Limpa flags de retorno de pagamento ao visualizar o rastreamento do pedido
     localStorage.removeItem('isMercadoPagoReturnFlow');
+    localStorage.removeItem('externalPaymentMethod');
+    localStorage.removeItem('pixPaymentInitiated');
+    localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
+    localStorage.removeItem('hasSeenMercadoPagoWarning');
+    localStorage.removeItem('hasSeenPixInstructions');
   };
 
   // O aplicativo só para de carregar quando os dados iniciais E a autenticação estiverem prontos
@@ -712,13 +731,18 @@ function App() {
         onAddToCart={addToCart}
         onRemoveFromCart={removeFromCart}
         onUpdateCartItem={updateCartItem}
-        onLogin={() => setCurrentView('auth')}
+        onLogin={onLogin}
         onOrderCreated={(order) => {
           setCart([]);
           setCurrentOrder(order);
           setCurrentView('tracking'); // <--- Adicionado esta linha para mudar a view
-          setIsMercadoPagoReturnFlow(false); // Clear Mercado Pago flag on order creation
+          // Limpa flags de retorno de pagamento na criação do pedido
           localStorage.removeItem('isMercadoPagoReturnFlow');
+          localStorage.removeItem('externalPaymentMethod');
+          localStorage.removeItem('pixPaymentInitiated');
+          localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
+          localStorage.removeItem('hasSeenMercadoPagoWarning');
+          localStorage.removeItem('hasSeenPixInstructions');
         }}
         onBackToLocationSelect={() => setCurrentView('location')}
         onProfileClick={() => setShowProfile(true)}
@@ -741,7 +765,7 @@ function App() {
         showPreOrderModal={showPreOrderModal} // Nova prop
         setShowPreOrderModal={setShowPreOrderModal} // Nova prop
         showPreOrderBanner={showPreOrderBanner} // Nova prop
-        isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
+        // isMercadoPagoReturnFlow não é mais passado como prop, será lido diretamente do localStorage
       />
     );
   };

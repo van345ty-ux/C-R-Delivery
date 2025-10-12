@@ -10,7 +10,7 @@ interface ProductDetailModalProps {
   onAddToCart: (product: Product, quantity: number, observations?: string) => void;
   isStoreOpen: boolean;
   canPlaceOrder: boolean; // Nova prop
-  isMercadoPagoReturnFlow: boolean; // Nova prop
+  // isMercadoPagoReturnFlow não é mais passado como prop
 }
 
 export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
@@ -19,13 +19,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onAddToCart,
   isStoreOpen,
   canPlaceOrder, // Nova prop
-  isMercadoPagoReturnFlow, // Nova prop
 }) => {
   const [quantity, setQuantity] = useState(1);
   const [observations, setObservations] = useState('');
 
   const handleQuantityChange = (amount: number) => {
-    if (isMercadoPagoReturnFlow) {
+    const currentIsMercadoPagoReturnFlow = JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
+    if (currentIsMercadoPagoReturnFlow) {
       toast.error('Finalize seu pedido atual antes de alterar a quantidade.');
       return;
     }
@@ -33,7 +33,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   };
 
   const handleAddToCartClick = () => {
-    if (isMercadoPagoReturnFlow) {
+    const currentIsMercadoPagoReturnFlow = JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
+    if (currentIsMercadoPagoReturnFlow) {
       toast.error('Finalize seu pedido atual antes de adicionar novos itens.');
       return;
     }
@@ -45,6 +46,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     onClose();
     toast.success(`${quantity}x ${product.name} adicionado ao carrinho!`);
   };
+
+  const currentIsMercadoPagoReturnFlow = JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
@@ -95,7 +98,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               placeholder="Ex: Sem cebola, molho extra..."
               className="w-full p-3 border rounded-lg text-sm"
               rows={2}
-              disabled={isMercadoPagoReturnFlow} // Desabilita observações
+              disabled={currentIsMercadoPagoReturnFlow} // Desabilita observações
             />
           </div>
 
@@ -104,7 +107,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               <button
                 onClick={() => handleQuantityChange(-1)}
                 className="bg-gray-200 hover:bg-gray-300 rounded-full p-2"
-                disabled={isMercadoPagoReturnFlow} // Desabilita botão de menos
+                disabled={currentIsMercadoPagoReturnFlow} // Desabilita botão de menos
               >
                 <Minus className="w-4 h-4" />
               </button>
@@ -112,14 +115,14 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               <button
                 onClick={() => handleQuantityChange(1)}
                 className="bg-gray-200 hover:bg-gray-300 rounded-full p-2"
-                disabled={isMercadoPagoReturnFlow} // Desabilita botão de mais
+                disabled={currentIsMercadoPagoReturnFlow} // Desabilita botão de mais
               >
                 <Plus className="w-4 h-4" />
               </button>
             </div>
             <Button
               onClick={handleAddToCartClick}
-              disabled={!canPlaceOrder || isMercadoPagoReturnFlow} // Desabilita se não pode fazer pedido ou se estiver no fluxo de retorno do Mercado Pago
+              disabled={!canPlaceOrder || currentIsMercadoPagoReturnFlow} // Desabilita se não pode fazer pedido ou se estiver no fluxo de retorno do Mercado Pago
               className="bg-red-600 hover:bg-red-700 text-white px-2 py-3 rounded-lg shadow-md flex items-center text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus className="h-5 w-5 mr-2" />

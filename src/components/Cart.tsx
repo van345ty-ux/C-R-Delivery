@@ -14,7 +14,7 @@ interface CartProps {
   user: User | null;
   isStoreOpen: boolean; // Manter para o status visual, mas usar canPlaceOrder para habilitar o botão
   canPlaceOrder: boolean; // Nova prop
-  isMercadoPagoReturnFlow: boolean; // Nova prop
+  // isMercadoPagoReturnFlow não é mais passado como prop
 }
 
 interface Coupon {
@@ -40,7 +40,6 @@ export const Cart: React.FC<CartProps> = ({
   user,
   isStoreOpen, // Manter para o status visual
   canPlaceOrder, // Nova prop
-  isMercadoPagoReturnFlow, // Nova prop
 }) => {
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>(() => {
     // Initialize from localStorage or default
@@ -76,6 +75,14 @@ export const Cart: React.FC<CartProps> = ({
   const [showMercadoPagoWarning, setShowMercadoPagoWarning] = useState(false); // Estado para o pop-up de aviso
   const [showPixInstructionsModal, setShowPixInstructionsModal] = useState(false); // Novo estado para o pop-up de instruções Pix
   
+  // NOVO ESTADO: isMercadoPagoReturnFlow agora é gerenciado localmente no Cart.tsx
+  const [isMercadoPagoReturnFlow, setIsMercadoPagoReturnFlow] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
+    }
+    return false;
+  });
+
   // Novo estado para controlar se o redirecionamento do Mercado Pago foi reconhecido
   const [isMercadoPagoAcknowledged, setIsMercadoPagoAcknowledged] = useState(() => {
     return JSON.parse(localStorage.getItem('hasSeenMercadoPagoWarning') || 'false');
@@ -110,18 +117,28 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.setItem('cartAddress', address);
     localStorage.setItem('cartCouponCode', couponCode);
     localStorage.setItem('cartAppliedCoupon', JSON.stringify(appliedCoupon));
-    // hasSeenPixInstructions é gerenciado apenas por handlePixInstructionsConfirm
-    // hasSeenMercadoPagoWarning é gerenciado diretamente em handleMercadoPagoConfirm e handleFinishOrder
+    localStorage.setItem('isMercadoPagoReturnFlow', JSON.stringify(isMercadoPagoReturnFlow)); // Salva o estado local
     localStorage.setItem('pixPaymentInitiated', JSON.stringify(pixPaymentInitiated)); // Salva o estado de pixPaymentInitiated
-  }, [deliveryType, paymentMethod, address, couponCode, appliedCoupon, pixPaymentInitiated]);
+  }, [deliveryType, paymentMethod, address, couponCode, appliedCoupon, isMercadoPagoReturnFlow, pixPaymentInitiated]);
 
   // Listener para mudanças no localStorage (útil para sincronizar entre abas ou após reload)
   useEffect(() => {
-    const handleStorageChange = () => {
-      setIsMercadoPagoAcknowledged(JSON.parse(localStorage.getItem('hasSeenMercadoPagoWarning') || 'false'));
-      setHasAcknowledgedPixReturnConfirmation(JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false'));
-      setPixPaymentInitiated(JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false')); // Sincroniza pixPaymentInitiated
-      // A flag hasSeenPixInstructions não será mais sincronizada aqui, pois será resetada na montagem do Cart
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'isMercadoPagoReturnFlow') {
+        setIsMercadoPagoReturnFlow(JSON.parse(event.newValue || 'false'));
+      }
+      if (event.key === 'hasSeenMercadoPagoWarning') {
+        setIsMercadoPagoAcknowledged(JSON.parse(event.newValue || 'false'));
+      }
+      if (event.key === 'hasAcknowledgedPixReturnConfirmation') {
+        setHasAcknowledgedPixReturnConfirmation(JSON.parse(event.newValue || 'false'));
+      }
+      if (event.key === 'pixPaymentInitiated') {
+        setPixPaymentInitiated(JSON.parse(event.newValue || 'false'));
+      }
+      if (event.key === 'hasSeenPixInstructions') {
+        setHasSeenPixInstructions(JSON.parse(event.newValue || 'false'));
+      }
     };
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
@@ -163,6 +180,7 @@ export const Cart: React.FC<CartProps> = ({
 
       // NEW LOGIC: Set paymentMethod if returning from external payment
       const isReturningFromExternal = JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
+      setIsMercadoPagoReturnFlow(isReturningFromExternal); // Atualiza o estado local
       const savedExternalMethod = localStorage.getItem('externalPaymentMethod') as 'pix' | 'card' | null;
       const pixPaymentInitiatedFromStorage = JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false');
       const acknowledgedPixReturn = JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false');
@@ -423,6 +441,7 @@ export const Cart: React.FC<CartProps> = ({
     setIsSubmitting(false);
     localStorage.removeItem('hasSeenMercadoPagoWarning'); // Limpa a flag após finalizar o pedido
     localStorage.removeItem('isMercadoPagoReturnFlow'); // Limpa a flag principal do Mercado Pago
+    setIsMercadoPagoReturnFlow(false); // Atualiza o estado local
     localStorage.removeItem('hasSeenPixInstructions'); // Limpa a flag Pix
     localStorage.removeItem('externalPaymentMethod'); // Limpa o método de pagamento externo
     localStorage.removeItem('pixPaymentInitiated'); // Limpa a flag de Pix iniciado
@@ -431,7 +450,6 @@ export const Cart: React.FC<CartProps> = ({
     setHasSeenPixInstructions(false); // Atualiza o estado local
     setPixPaymentInitiated(false); // Limpa o estado local
     setHasAcknowledgedPixReturnConfirmation(false); // Atualiza o estado local
-    // isMercadoPagoReturnFlow é limpo em onOrderCreated no App.tsx
     toast.success('Pedido finalizado com sucesso!');
   };
 
@@ -440,8 +458,8 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.setItem('hasSeenMercadoPagoWarning', 'true'); // Define a flag no localStorage
     setIsMercadoPagoAcknowledged(true); // Atualiza o estado local
     localStorage.setItem('isMercadoPagoReturnFlow', 'true'); // Define a flag principal do Mercado Pago
+    setIsMercadoPagoReturnFlow(true); // Atualiza o estado local
     localStorage.setItem('externalPaymentMethod', 'card'); // Armazena o método de pagamento externo
-    // A flag isMercadoPagoReturnFlow é definida no App.tsx via localStorage listener
     window.open(mercadoPagoLink, '_blank'); // Abre o link em uma nova aba
     // O carrinho permanece aberto para o usuário retornar e finalizar o pedido
   };
@@ -451,6 +469,7 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.setItem('hasSeenPixInstructions', 'true');
     setHasSeenPixInstructions(true);
     localStorage.setItem('isMercadoPagoReturnFlow', 'true'); // Ativa a flag de retorno de pagamento externo para Pix
+    setIsMercadoPagoReturnFlow(true); // Atualiza o estado local
     localStorage.setItem('externalPaymentMethod', 'pix'); // Armazena o método de pagamento externo
     localStorage.setItem('pixPaymentInitiated', 'true'); // Marca que o pagamento Pix foi iniciado
     setPixPaymentInitiated(true); // Atualiza o estado local
@@ -481,6 +500,7 @@ export const Cart: React.FC<CartProps> = ({
     // Se estiver mudando para um método não externo, limpa as flags de retorno
     if (method !== 'pix' && method !== 'card') {
       localStorage.removeItem('isMercadoPagoReturnFlow');
+      setIsMercadoPagoReturnFlow(false); // Atualiza o estado local
       localStorage.removeItem('externalPaymentMethod');
       localStorage.removeItem('pixPaymentInitiated'); // Limpa a flag de Pix iniciado
       setPixPaymentInitiated(false); // Atualiza o estado local
@@ -716,7 +736,7 @@ export const Cart: React.FC<CartProps> = ({
             </label>
             {!pixKeyValue && paymentMethod === 'pix' && (
               <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm mt-2">
-                Atenção: A chave Pix não foi configurada no painel administrativo. Por favor, escolha outra forma de pagamento.
+                Atenção: A chave Pix não foi configurada. Por favor, escolha outra forma de pagamento.
               </div>
             )}
             <label className="flex items-center">

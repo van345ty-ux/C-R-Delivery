@@ -39,7 +39,7 @@ interface HomePageProps {
   showPreOrderModal: boolean; // Nova prop
   setShowPreOrderModal: (show: boolean) => void; // Nova prop
   showPreOrderBanner: boolean; // Nova prop
-  isMercadoPagoReturnFlow: boolean; // Nova prop
+  // isMercadoPagoReturnFlow não é mais passado como prop
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -72,7 +72,6 @@ export const HomePage: React.FC<HomePageProps> = ({
   showPreOrderModal, // Nova prop
   setShowPreOrderModal, // Nova prop
   showPreOrderBanner, // Nova prop
-  isMercadoPagoReturnFlow, // Nova prop
 }) => {
   const [showCart, setShowCart] = useState(false);
   const [showPromotions, setShowPromotions] = useState(false);
@@ -83,8 +82,9 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   useEffect(() => {
     const fetchPromotionsAndSettings = async () => {
+      const currentIsMercadoPagoReturnFlow = JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
       // Se estiver no fluxo de retorno do Mercado Pago, suprime o modal de promoção
-      if (isMercadoPagoReturnFlow) {
+      if (currentIsMercadoPagoReturnFlow) {
         console.log('HomePage: isMercadoPagoReturnFlow is true, suppressing promotion modal.');
         setShowPromotions(false); // Suprime o modal de promoção
         return; // Não busca promoções se estiver retornando do MP
@@ -127,11 +127,12 @@ export const HomePage: React.FC<HomePageProps> = ({
     if (!showPreOrderModal) {
       fetchPromotionsAndSettings();
     }
-  }, [showPreOrderModal, isMercadoPagoReturnFlow]); // Adicionado isMercadoPagoReturnFlow como dependência
+  }, [showPreOrderModal]); // Removido isMercadoPagoReturnFlow das dependências
 
   // NOVO useEffect para abrir o carrinho automaticamente se estiver no fluxo de retorno de pagamento
   useEffect(() => {
-    if (isMercadoPagoReturnFlow) {
+    const currentIsMercadoPagoReturnFlow = JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
+    if (currentIsMercadoPagoReturnFlow) {
       if (cart.length > 0) { // Só mostra o carrinho se ele não estiver vazio
         console.log('HomePage: Detected isMercadoPagoReturnFlow is true and cart is not empty, automatically showing cart.');
         setShowCart(true);
@@ -143,9 +144,11 @@ export const HomePage: React.FC<HomePageProps> = ({
         localStorage.removeItem('externalPaymentMethod');
         localStorage.removeItem('pixPaymentInitiated');
         localStorage.removeItem('hasAcknowledgedPixReturnConfirmation');
+        localStorage.removeItem('hasSeenMercadoPagoWarning');
+        localStorage.removeItem('hasSeenPixInstructions');
       }
     }
-  }, [isMercadoPagoReturnFlow, cart.length]); // Adicionado cart.length às dependências
+  }, [cart.length]); // Removido isMercadoPagoReturnFlow das dependências
 
 
   const handleAddToCart = (product: Product, quantity = 1, observations?: string) => {
@@ -211,7 +214,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           heroSubtitleFontColor={heroSubtitleFontColor}
           heroSubtitleBorderColor={heroSubtitleBorderColor}
           showPreOrderBanner={showPreOrderBanner} // Nova prop
-          isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
+          // isMercadoPagoReturnFlow não é mais passado como prop
         />
       </main>
 
@@ -231,7 +234,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           user={user}
           isStoreOpen={isStoreOpen}
           canPlaceOrder={canPlaceOrder}
-          isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
+          // isMercadoPagoReturnFlow não é mais passado como prop
         />
       )}
 
