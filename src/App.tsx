@@ -283,114 +283,114 @@ function App() {
     }
   }, []);
 
-  // Effect for initial app data fetching (settings, cities, hours)
-  useEffect(() => {
-    const fetchInitialAppData = async () => {
-      console.log('fetchInitialAppData: Starting initial app data fetch.');
-      setInitialAppDataLoading(true); // Inicia o carregamento de dados iniciais
-      try {
-        const settingsPromise = supabase.from('settings').select('key, value');
-        const citiesPromise = supabase.from('cities').select('*').order('name', { ascending: true });
-        const hoursPromise = supabase.from('operating_hours').select('*');
+  const fetchInitialAppData = useCallback(async () => {
+    console.log('fetchInitialAppData: Starting initial app data fetch.');
+    setInitialAppDataLoading(true); // Inicia o carregamento de dados iniciais
+    try {
+      const settingsPromise = supabase.from('settings').select('key, value');
+      const citiesPromise = supabase.from('cities').select('*').order('name', { ascending: true });
+      const hoursPromise = supabase.from('operating_hours').select('*');
 
-        const [settingsResult, citiesResult, hoursResult] = await Promise.all([settingsPromise, citiesPromise, hoursPromise]);
+      const [settingsResult, citiesResult, hoursResult] = await Promise.all([settingsPromise, citiesPromise, hoursPromise]);
 
-        if (settingsResult.error) {
-          toast.error('Erro ao carregar configurações: ' + settingsResult.error.message);
-          console.error('fetchInitialAppData: Settings error:', settingsResult.error);
-        } else if (settingsResult.data) {
-          const settingsMap = settingsResult.data.reduce((acc, { key, value }) => {
-            acc[key] = value;
-            return acc;
-          }, {} as { [key: string]: string });
-          setAppSettings(settingsMap);
-          console.log('fetchInitialAppData: Settings loaded.');
-        }
+      if (settingsResult.error) {
+        toast.error('Erro ao carregar configurações: ' + settingsResult.error.message);
+        console.error('fetchInitialAppData: Settings error:', settingsResult.error);
+      } else if (settingsResult.data) {
+        const settingsMap = settingsResult.data.reduce((acc, { key, value }) => {
+          acc[key] = value;
+          return acc;
+        }, {} as { [key: string]: string });
+        setAppSettings(settingsMap);
+        console.log('fetchInitialAppData: Settings loaded.');
+      }
 
-        if (citiesResult.error) {
-          toast.error('Erro ao carregar cidades: ' + citiesResult.error.message);
-          console.error('fetchInitialAppData: Cities error:', citiesResult.error);
-        } else {
-          setCities(citiesResult.data || []);
-          console.log('fetchInitialAppData: Cities loaded.');
-        }
+      if (citiesResult.error) {
+        toast.error('Erro ao carregar cidades: ' + citiesResult.error.message);
+        console.error('fetchInitialAppData: Cities error:', citiesResult.error);
+      } else {
+        setCities(citiesResult.data || []);
+        console.log('fetchInitialAppData: Cities loaded.');
+      }
 
-        if (hoursResult.error) {
-          toast.error('Erro ao verificar horário de funcionamento: ' + hoursResult.error.message);
-          console.error('fetchInitialAppData: Operating hours error:', hoursResult.error);
-        } else if (hoursResult.data) {
-          const fetchedOperatingHours: OperatingHour[] = hoursResult.data;
-          setOperatingHours(fetchedOperatingHours); // Store operating hours in state
+      if (hoursResult.error) {
+        toast.error('Erro ao verificar horário de funcionamento: ' + hoursResult.error.message);
+        console.error('fetchInitialAppData: Operating hours error:', hoursResult.error);
+      } else if (hoursResult.data) {
+        const fetchedOperatingHours: OperatingHour[] = hoursResult.data;
+        setOperatingHours(fetchedOperatingHours); // Store operating hours in state
 
-          const now = new Date();
-          const currentDay = now.getDay();
-          const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
+        const now = new Date();
+        const currentDay = now.getDay();
+        const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
 
-          console.log('--- Time and Operating Hours Debug ---');
-          console.log('Current Date/Time:', now.toLocaleString());
-          console.log('Current Day of Week (0=Sunday, 6=Saturday):', currentDay);
-          console.log('Current Time (HH:MM):', currentTime);
-          console.log('Fetched Operating Hours:', fetchedOperatingHours);
+        console.log('--- Time and Operating Hours Debug ---');
+        console.log('Current Date/Time:', now.toLocaleString());
+        console.log('Current Day of Week (0=Sunday, 6=Saturday):', currentDay);
+        console.log('Current Time (HH:MM):', currentTime);
+        console.log('Fetched Operating Hours:', fetchedOperatingHours);
 
-          const todayHours = fetchedOperatingHours.find(h => h.day_of_week === currentDay);
-          console.log('Today\'s Operating Hours:', todayHours);
+        const todayHours = fetchedOperatingHours.find(h => h.day_of_week === currentDay);
+        console.log('Today\'s Operating Hours:', todayHours);
 
-          let storeCurrentlyOpen = false;
-          let canPreOrder = false;
-          let showPreOrderModalOnLoad = false;
-          let showPreOrderBannerOnLoad = false;
+        let storeCurrentlyOpen = false;
+        let canPreOrder = false;
+        let showPreOrderModalOnLoad = false;
+        let showPreOrderBannerOnLoad = false;
 
-          if (todayHours && todayHours.is_open) {
-            storeCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
-            
-            // Logic for pre-order: store is open today, but not currently open, and it's between 07:00 and 17:00
-            canPreOrder = !storeCurrentlyOpen && currentTime >= '07:00' && currentTime <= '17:00'; // MODIFIED HERE
+        if (todayHours && todayHours.is_open) {
+          storeCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
+          
+          // Logic for pre-order: store is open today, but not currently open, and it's between 07:00 and 17:00
+          canPreOrder = !storeCurrentlyOpen && currentTime >= '07:00' && currentTime <= '17:00'; // MODIFIED HERE
 
-            // Show pre-order modal if conditions met and not yet seen today
-            const todayDateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
-            const lastSeenPreOrderModalDate = localStorage.getItem('preOrderModalLastSeenDate');
-            const hasSeenPreOrderModalToday = lastSeenPreOrderModalDate === todayDateString;
+          // Show pre-order modal if conditions met and not yet seen today
+          const todayDateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
+          const lastSeenPreOrderModalDate = localStorage.getItem('preOrderModalLastSeenDate');
+          const hasSeenPreOrderModalToday = lastSeenPreOrderModalDate === todayDateString;
 
-            if (canPreOrder && !hasSeenPreOrderModalToday) {
-              showPreOrderModalOnLoad = true;
-              localStorage.setItem('preOrderModalLastSeenDate', todayDateString); // Mark as seen for today
-            }
-
-            // Show pre-order banner if conditions met
-            if (canPreOrder) {
-              showPreOrderBannerOnLoad = true;
-            }
-
-          } else {
-            // Store is closed all day
-            storeCurrentlyOpen = false;
-            canPreOrder = false;
-            showPreOrderModalOnLoad = false;
-            showPreOrderBannerOnLoad = false;
+          if (canPreOrder && !hasSeenPreOrderModalToday) {
+            showPreOrderModalOnLoad = true;
+            localStorage.setItem('preOrderModalLastSeenDate', todayDateString); // Mark as seen for today
           }
 
-          setIsStoreOpen(storeCurrentlyOpen);
-          setCanPlaceOrder(storeCurrentlyOpen || canPreOrder); // Pode fazer pedido se aberto ou em pré-pedido
-          setShowPreOrderModal(showPreOrderModalOnLoad);
-          setShowPreOrderBanner(showPreOrderBannerOnLoad);
+          // Show pre-order banner if conditions met
+          if (canPreOrder) {
+            showPreOrderBannerOnLoad = true;
+          }
 
-          console.log('Calculated storeCurrentlyOpen:', storeCurrentlyOpen);
-          console.log('Calculated canPreOrder:', canPreOrder);
-          console.log('Final canPlaceOrder:', storeCurrentlyOpen || canPreOrder);
-          console.log('--- End Time and Operating Hours Debug ---');
-
+        } else {
+          // Store is closed all day
+          storeCurrentlyOpen = false;
+          canPreOrder = false;
+          showPreOrderModalOnLoad = false;
+          showPreOrderBannerOnLoad = false;
         }
-      } catch (error: any) { // Explicitly type error as any to access message
-        console.error("fetchInitialAppData: Critical error during initial app data fetching:", error);
-        toast.error("Falha crítica ao carregar dados iniciais do aplicativo: " + (error.message || "Erro desconhecido"));
-      } finally {
-        setInitialAppDataLoading(false); // Finaliza o carregamento de dados iniciais
-        console.log('fetchInitialAppData: Initial app data fetch finished.');
-      }
-    };
 
-    fetchInitialAppData();
+        setIsStoreOpen(storeCurrentlyOpen);
+        setCanPlaceOrder(storeCurrentlyOpen || canPreOrder); // Pode fazer pedido se aberto ou em pré-pedido
+        setShowPreOrderModal(showPreOrderModalOnLoad);
+        setShowPreOrderBanner(showPreOrderBannerOnLoad);
+
+        console.log('Calculated storeCurrentlyOpen:', storeCurrentlyOpen);
+        console.log('Calculated canPreOrder:', canPreOrder);
+        console.log('Final canPlaceOrder:', storeCurrentlyOpen || canPreOrder);
+        console.log('--- End Time and Operating Hours Debug ---');
+
+      }
+    } catch (error: any) { // Explicitly type error as any to access message
+      console.error("fetchInitialAppData: Critical error during initial app data fetching:", error);
+      toast.error("Falha crítica ao carregar dados iniciais do aplicativo: " + (error.message || "Erro desconhecido"));
+    } finally {
+      setInitialAppDataLoading(false); // Finaliza o carregamento de dados iniciais
+      console.log('fetchInitialAppData: Initial app data fetch finished.');
+    }
   }, []); // Empty dependency array means this runs once on mount
+
+  // Effect for initial app data fetching (settings, cities, hours)
+  useEffect(() => {
+    fetchInitialAppData();
+  }, [fetchInitialAppData]); // Depende de fetchInitialAppData
 
   // Effect for Supabase Auth Session and User Profile
   useEffect(() => {
@@ -543,6 +543,8 @@ function App() {
           console.log('App: isMercadoPagoReturnFlow changed in localStorage, updating state.');
           setIsMercadoPagoReturnFlow(mpReturnFlow);
         }
+        // Re-executa o carregamento de dados iniciais para garantir que tudo esteja atualizado
+        fetchInitialAppData();
       }
     };
 
@@ -555,7 +557,7 @@ function App() {
       }
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [checkAndShowCouponNotification, isMercadoPagoReturnFlow]); // Adicionado isMercadoPagoReturnFlow como dependência
+  }, [checkAndShowCouponNotification, isMercadoPagoReturnFlow, fetchInitialAppData]); // Adicionado fetchInitialAppData como dependência
 
   const refetchUser = useCallback(async () => {
     console.log('refetchUser: Called.');
