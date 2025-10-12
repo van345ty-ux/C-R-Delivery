@@ -97,6 +97,15 @@ export const Cart: React.FC<CartProps> = ({
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
+  // Efeito para verificar o estado do PIX no carregamento inicial (após refresh)
+  useEffect(() => {
+    const pixInitiated = JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false');
+    const pixAcknowledged = JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false');
+    if (pixInitiated && !pixAcknowledged) {
+      setShowPixReturnConfirmation(true);
+    }
+  }, []);
+
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
