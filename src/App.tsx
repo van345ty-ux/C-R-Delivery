@@ -20,19 +20,10 @@ import { useStoreStatus } from './hooks/useStoreStatus';
 import { useMercadoPagoReturnFlow } from './hooks/useMercadoPagoReturnFlow';
 
 function App() {
-  const [currentView, setCurrentView] = useState<'location' | 'home' | 'admin' | 'auth' | 'tracking'>(() => {
-    if (typeof window !== 'undefined') {
-      const savedView = localStorage.getItem('lastView');
-      return savedView as 'location' | 'home' | 'admin' | 'auth' | 'tracking' || 'location';
-    }
-    return 'location';
-  });
-  const [selectedCity, setSelectedCity] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('selectedCity') || '';
-    }
-    return '';
-  });
+  // Sempre iniciar na tela de seleção de cidade
+  const [currentView, setCurrentView] = useState<'location' | 'home' | 'admin' | 'auth' | 'tracking'>('location');
+  // Sempre iniciar sem uma cidade selecionada
+  const [selectedCity, setSelectedCity] = useState<string>('');
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
   const [showProfile, setShowProfile] = useState(false);
 
