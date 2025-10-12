@@ -5,9 +5,10 @@ import toast from 'react-hot-toast';
 interface PixInstructionsModalProps {
   onClose: () => void;
   pixKey: string;
+  total: number;
 }
 
-export const PixInstructionsModal: React.FC<PixInstructionsModalProps> = ({ onClose, pixKey }) => {
+export const PixInstructionsModal: React.FC<PixInstructionsModalProps> = ({ onClose, pixKey, total }) => {
   const copyPixKey = () => {
     if (pixKey) {
       navigator.clipboard.writeText(pixKey);
@@ -23,6 +24,11 @@ export const PixInstructionsModal: React.FC<PixInstructionsModalProps> = ({ onCl
         <p className="text-gray-600 mb-4">
           Copie a chave pix logo abaixo, pague exatamente o valor do seu pedido e volte para finalizar o pedido no carrinho.
         </p>
+
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+          <p className="text-sm text-gray-700">Valor a ser pago:</p>
+          <p className="text-2xl font-bold text-green-700">R$ {total.toFixed(2)}</p>
+        </div>
 
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
           <p className="font-semibold text-left mb-2">Siga estes passos:</p>

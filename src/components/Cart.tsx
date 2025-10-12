@@ -441,6 +441,7 @@ export const Cart: React.FC<CartProps> = ({
         <PixInstructionsModal
           pixKey={pixKeyValue}
           onClose={handlePixInstructionsClose}
+          total={total}
         />
       )}
     </div>
