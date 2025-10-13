@@ -6,25 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Função para enviar a mensagem real para a API do WhatsApp
-async function sendWhatsappMessage(apiUrl: string, apiToken: string, payload: any) {
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiToken}`, // Usando o token da API do WhatsApp
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`WhatsApp API failed: ${response.status} - ${errorText}`);
-  }
-
-  return response.json();
-}
-
 serve(async (req) => {
   // 1. Lidar com OPTIONS (CORS)
   if (req.method === 'OPTIONS') {
@@ -32,74 +13,49 @@ serve(async (req) => {
   }
 
   try {
-    // 2. Obter segredos da API do WhatsApp
-    const WHATSAPP_API_URL = Deno.env.get('WHATSAPP_API_URL');
-    const WHATSAPP_API_TOKEN = Deno.env.get('WHATSAPP_API_TOKEN');
+    // 2. Obter o segredo do Webhook do n8n
+    const N8N_WEBHOOK_URL = Deno.env.get('N8N_WEBHOOK_URL');
 
-    if (!WHATSAPP_API_URL || !WHATSAPP_API_TOKEN) {
-      return new Response(JSON.stringify({ error: 'WhatsApp API secrets not configured.' }), {
+    if (!N8N_WEBHOOK_URL) {
+      return new Response(JSON.stringify({ error: 'N8N_WEBHOOK_URL secret not configured.' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // 3. Obter dados da requisição
-    const { workflow_type, phone_number, message_data } = await req.json();
+    // 3. Obter o payload completo da requisição (incluindo workflow_type e message_data)
+    const requestPayload = await req.json();
 
-    if (!workflow_type || !phone_number || !message_data) {
+    if (!requestPayload.workflow_type || !requestPayload.phone_number || !requestPayload.message_data) {
       return new Response(JSON.stringify({ error: 'Missing required fields: workflow_type, phone_number, message_data' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    let whatsappPayload: any;
-    let logMessage: string;
+    console.log(`Routing request for workflow_type: ${requestPayload.workflow_type} to n8n.`);
 
-    // 4. Roteamento e Construção da Mensagem
-    switch (workflow_type) {
-      case 'delivery_order':
-        logMessage = `Processing Delivery Order for ${phone_number}`;
-        // Exemplo de construção de payload para Delivery
-        whatsappPayload = {
-          to: phone_number,
-          text: `Novo Pedido C&R Sushi! Total: R$ ${message_data.total}. Itens: ${message_data.items.join(', ')}`,
-          // Adicione outros campos específicos da sua API de WhatsApp aqui
-        };
-        break;
+    // 4. Encaminhar o payload completo para o Webhook do n8n
+    const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestPayload),
+    });
 
-      case 'nail_appointment':
-        logMessage = `Processing Nail Appointment for ${phone_number}`;
-        // Exemplo de construção de payload para Agendamento Nail
-        whatsappPayload = {
-          to: phone_number,
-          text: `Agendamento Confirmado! Serviço: ${message_data.service}. Data: ${message_data.date}`,
-        };
-        break;
-
-      case 'finance_agent':
-        logMessage = `Processing Finance Agent lead for ${phone_number}`;
-        // Exemplo de construção de payload para Agente de Finanças
-        whatsappPayload = {
-          to: phone_number,
-          text: `Novo Lead de Finanças! Nome: ${message_data.name}. Interesse: ${message_data.interest}`,
-        };
-        break;
-
-      default:
-        return new Response(JSON.stringify({ error: `Unknown workflow type: ${workflow_type}` }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+    // 5. Retornar o status do n8n (ou um sucesso genérico)
+    if (!n8nResponse.ok) {
+      const errorText = await n8nResponse.text();
+      console.error('n8n Webhook failed:', n8nResponse.status, errorText);
+      return new Response(JSON.stringify({ error: `n8n Webhook failed with status ${n8nResponse.status}` }), {
+        status: 502, // Bad Gateway
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    console.log(logMessage);
-
-    // 5. Enviar mensagem via API do WhatsApp
-    const result = await sendWhatsappMessage(WHATSAPP_API_URL, WHATSAPP_API_TOKEN, whatsappPayload);
-
-    // 6. Retornar sucesso
-    return new Response(JSON.stringify({ success: true, result }), {
+    // O n8n geralmente retorna um 200/204. Retornamos sucesso para o cliente.
+    return new Response(JSON.stringify({ success: true, message: 'Request forwarded to n8n successfully.' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
