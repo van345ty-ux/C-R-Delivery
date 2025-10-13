@@ -557,6 +557,14 @@ function App() {
     console.log('handleLogout: signOut initiated successfully. State cleanup will be handled by onAuthStateChange.');
   };
 
+  const handleProfileClick = () => {
+    if (user) {
+      setShowProfile(true);
+    } else {
+      setCurrentView('auth');
+    }
+  };
+
   const addToCart = (product: Product, quantity: number = 1, observations?: string) => {
     setCart(prevCart => {
       const existingItemIndex = prevCart.findIndex(item => item.product.id === product.id);
@@ -670,7 +678,7 @@ function App() {
           localStorage.removeItem('isPixReturnFlow');
         }}
         onBackToLocationSelect={() => setCurrentView('location')}
-        onProfileClick={onProfileClick}
+        onProfileClick={handleProfileClick} // Passando a função definida
         logoUrl={logoUrl}
         heroImageUrl={heroImageUrl} 
         isStoreOpen={isStoreOpen}
