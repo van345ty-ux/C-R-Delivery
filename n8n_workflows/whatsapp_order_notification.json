@@ -1,0 +1,77 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-order-notification",
+        "options": {}
+      },
+      "name": "Webhook (Recebe Pedido)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "whatsapp-order-notification"
+    },
+    {
+      "parameters": {
+        "functionCode": "const order = $json.message_data;\nconst itemsList = order.items.map(item => {\n  const obs = item.observations ? ` (Obs: ${item.observations})` : '';\n  return `* ${item.quantity}x ${item.name} - R$ ${(item.price * item.quantity).toFixed(2)}${obs}`;\n}).join('\\n');\n\nconst deliveryInfo = order.delivery_type === 'delivery' \n  ? `\\nEndereço: ${order.address}\\nTaxa de Entrega: R$ ${order.delivery_fee}`\n  : 'Retirada no Local (Sem taxa)';\n\nconst message = `*🎉 Pedido Recebido - C&R Sushi 🎉*\\n\\n*Número do Pedido:* ${order.order_number}\\n*Cliente:* ${order.customer_name}\\n*Telefone:* ${order.phone_number}\\n\\n*Itens do Pedido:*\\n${itemsList}\\n\\n*Detalhes da Entrega:*\\n${deliveryInfo}\\n\\n*Pagamento:* ${order.payment_method.toUpperCase()}\\n*Total:* R$ ${order.total}\\n\\nSeu pedido está sendo processado. Acompanhe o status pelo link do app!`;\n\nreturn [\n  {\n    json: {\n      phoneNumber: $json.phone_number, // Número do cliente\n      message: message,\n      orderNumber: order.order_number\n    }\n  }\n];"
+      },
+      "name": "Formatar Mensagem WhatsApp",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "message": "={{$json.message}}",
+        "phoneNumber": "={{$json.phoneNumber}}",
+        "options": {}
+      },
+      "name": "WhatsApp API (Placeholder)",
+      "type": "n8n-nodes-base.whatsapp",
+      "typeVersion": 1,
+      "position": [
+        720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "responseMode": "response",
+        "responseData": "{\"success\": true, \"orderNumber\": \"={{$json.orderNumber}}\"}"
+      },
+      "name": "Responder Sucesso",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        960,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook (Recebe Pedido)": [
+      [
+        "Formatar Mensagem WhatsApp"
+      ]
+    ],
+    "Formatar Mensagem WhatsApp": [
+      [
+        "WhatsApp API (Placeholder)"
+      ]
+    ],
+    "WhatsApp API (Placeholder)": [
+      [
+        "Responder Sucesso"
+      ]
+    ]
+  }
+}
