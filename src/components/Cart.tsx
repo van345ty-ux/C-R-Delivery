@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Plus, Minus, CreditCard, Smartphone, DollarSign, Gift, ExternalLink, Copy } from 'lucide-react';
-import { CartItem, Order, User } from '../App';
+import { CartItem, Order, User } from '../types'; // Importando de types.ts
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
 import { PixInstructionsModal } from './PixInstructionsModal';
 import { PixReturnConfirmationModal } from './PixReturnConfirmationModal';
+import { sendWhatsappNotification } from '../utils/whatsapp'; // Importando a nova função
 
 interface CartProps {
   items: CartItem[];
@@ -329,6 +330,10 @@ export const Cart: React.FC<CartProps> = ({
       createdAt: newOrder.created_at,
       couponUsed: newOrder.coupon_used
     };
+    
+    // --- NOVO: Enviar notificação via Edge Function ---
+    await sendWhatsappNotification(formattedOrder);
+
     onOrderCreated(formattedOrder);
     onClose();
     setIsSubmitting(false);

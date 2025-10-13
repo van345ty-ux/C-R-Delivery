@@ -1,6 +1,6 @@
 import React from 'react';
 import { MapPin, User as UserIcon, ShoppingCart, ArrowLeft, Star } from 'lucide-react';
-import { User as UserType } from '../App';
+import { User as UserType } from '../types'; // Importando de types.ts
 
 interface HeaderProps {
   selectedCity: string;
