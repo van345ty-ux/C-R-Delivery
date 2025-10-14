@@ -115,7 +115,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ order: initialOrde
         <div className="bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded-lg flex items-center space-x-3">
           <AlertTriangle className="w-5 h-5 flex-shrink-0" />
           <p className="text-sm font-medium">
-            Atenção: Mantenha esta página aberta para acompanhar as atualizações do seu pedido em tempo real ou acompanhe as notificações em whatsapp em tempo real.
+            Atenção: Mantenha esta página aberta para acompanhar as atualizações do seu pedido em tempo real ou acompanhe as notificações no whatsapp em tempo real.
           </p>
         </div>
 
