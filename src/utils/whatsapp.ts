@@ -15,6 +15,7 @@ export const sendWhatsappNotification = async (order: Order) => {
       delivery_type: order.deliveryType,
       payment_method: order.paymentMethod,
       address: order.address,
+      status: order.status, // Adicionado o campo status aqui
       items: order.items.map(item => ({
         name: item.product.name,
         quantity: item.quantity,
