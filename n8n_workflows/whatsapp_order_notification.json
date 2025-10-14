@@ -29,15 +29,29 @@
     },
     {
       "parameters": {
-        "resource": "message",
-        "operation": "send",
-        "message": "={{$json.message}}",
-        "phoneNumber": "={{$json.phoneNumber}}",
+        "url": "https://api.uazapi.com/send-message",
+        "method": "POST",
+        "sendOnlySet": true,
+        "jsonBody": true,
+        "bodyParameters": [
+          {
+            "name": "phone",
+            "value": "={{$json.phoneNumber}}"
+          },
+          {
+            "name": "message",
+            "value": "={{$json.message}}"
+          },
+          {
+            "name": "token",
+            "value": "SEU_TOKEN_DA_UAZAPI_AQUI"
+          }
+        ],
         "options": {}
       },
-      "name": "WhatsApp API (Placeholder)",
-      "type": "n8n-nodes-base.whatsapp",
-      "typeVersion": 1,
+      "name": "Enviar Mensagem (Uazapi)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
       "position": [
         720,
         300
@@ -65,10 +79,10 @@
     ],
     "Formatar Mensagem WhatsApp": [
       [
-        "WhatsApp API (Placeholder)"
+        "Enviar Mensagem (Uazapi)"
       ]
     ],
-    "WhatsApp API (Placeholder)": [
+    "Enviar Mensagem (Uazapi)": [
       [
         "Responder Sucesso"
       ]
