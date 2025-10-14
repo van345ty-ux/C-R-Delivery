@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
 // Headers CORS obrigatórios (embora esta função seja chamada internamente pelo DB, é bom manter)
 const corsHeaders = {
@@ -12,6 +13,13 @@ serve(async (req) => {
   }
 
   try {
+    // 1. Inicializar o cliente Supabase Service Role
+    // Usamos a Service Role Key para garantir que podemos ler a tabela 'orders'
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
     // Obter o segredo do Webhook do n8n
     const N8N_WEBHOOK_URL = Deno.env.get('N8N_WEBHOOK_URL');
 
@@ -22,29 +30,51 @@ serve(async (req) => {
       });
     }
 
-    // O payload virá do trigger do banco de dados
+    // O payload virá do trigger do banco de dados (contém o ID e o novo status)
     const { record } = await req.json();
 
-    if (!record || !record.order_number || !record.customer_phone || !record.status) {
-      return new Response(JSON.stringify({ error: 'Missing required order data in payload.' }), {
+    if (!record || !record.id || !record.customer_phone || !record.status) {
+      return new Response(JSON.stringify({ error: 'Missing required order data in payload from DB trigger.' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    // Payload a ser enviado para o n8n
+    // 2. Buscar os detalhes completos do pedido usando o Service Role Key
+    const { data: fullOrder, error: fetchError } = await supabase
+      .from('orders')
+      .select('id, order_number, customer_name, customer_phone, items, total, delivery_fee, delivery_type, payment_method, address, status')
+      .eq('id', record.id)
+      .single();
+
+    if (fetchError || !fullOrder) {
+      console.error('Error fetching full order details:', fetchError);
+      return new Response(JSON.stringify({ error: 'Failed to fetch full order details.' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // 3. Payload a ser enviado para o n8n (agora com todos os detalhes)
     const n8nPayload = {
-      workflow_type: 'order_status_update', // Novo tipo de workflow para o n8n
-      phone_number: record.customer_phone,
+      workflow_type: 'order_status_update',
+      phone_number: fullOrder.customer_phone,
       message_data: {
-        order_number: `C&R${record.order_number.toString().padStart(2, '0')}`,
-        customer_name: record.customer_name,
-        new_status: record.status,
-        delivery_type: record.delivery_type,
+        order_id: fullOrder.id,
+        order_number: `C&R${fullOrder.order_number.toString().padStart(2, '0')}`,
+        customer_name: fullOrder.customer_name,
+        new_status: fullOrder.status,
+        delivery_type: fullOrder.delivery_type,
+        // Campos adicionais solicitados:
+        items: fullOrder.items,
+        total: fullOrder.total,
+        delivery_fee: fullOrder.delivery_fee,
+        payment_method: fullOrder.payment_method,
+        address: fullOrder.address,
       }
     };
 
-    console.log(`Forwarding status update for order ${n8nPayload.message_data.order_number} to n8n.`);
+    console.log(`Forwarding status update for order ${n8nPayload.message_data.order_number} to n8n with full details.`);
 
     // Encaminhar o payload para o Webhook do n8n
     const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
