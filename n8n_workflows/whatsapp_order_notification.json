@@ -109,7 +109,9 @@
     ],
     "IF (Novo Pedido)": [
       [
-        "Formatar Mensagem Novo Pedido",
+        "Formatar Mensagem Novo Pedido"
+      ],
+      [
         "Formatar Mensagem Status"
       ]
     ],
