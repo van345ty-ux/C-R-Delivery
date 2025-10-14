@@ -160,7 +160,30 @@
       ]
     }
   },
-  "pinData": {},
+  "pinData": {
+    "IF (Novo Pedido)": {
+      "main": [
+        {
+          "index": 0,
+          "pin": [
+            {
+              "index": 0,
+              "path": "true"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "pin": [
+            {
+              "index": 0,
+              "path": "false"
+            }
+          ]
+        }
+      ]
+    }
+  },
   "meta": {
     "instanceId": "0336e01f55f1a3955b71800383da87a25c76025d55c76025d55c3aff2faca185fb2e3c75b"
   }
