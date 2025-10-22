@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Package, Truck, CheckCircle } from 'lucide-react';
+import { Clock, Package, Truck, CheckCircle, Trash2 } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
 
@@ -87,6 +87,23 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
       }
       fetchOrders();
       toast.success(`Status do pedido ${orderId.substring(0, 6)} atualizado para "${newStatus}"`);
+    }
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este pedido permanentemente? Esta ação não pode ser desfeita.')) {
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', orderId);
+
+      if (error) {
+        toast.error('Erro ao excluir o pedido.');
+        console.error('Error deleting order:', error);
+      } else {
+        toast.success('Pedido excluído com sucesso.');
+        fetchOrders(); // Atualiza a lista de pedidos
+      }
     }
   };
 
@@ -240,14 +257,23 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
                 )}
                 <div className="bg-white rounded-lg shadow-sm border">
                   <div className="p-6 border-b">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">Pedido #C&R{order.order_number.toString().padStart(2, '0')}</h3> {/* Usando order_number */}
+                        <h3 className="text-lg font-semibold text-gray-900">Pedido #C&R{order.order_number.toString().padStart(2, '0')}</h3>
                         <p className="text-sm text-gray-600">{order.customer_name} • {order.customer_phone}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-green-600">R$ {order.total.toFixed(2)}</p>
-                        <p className="text-sm text-gray-600">{order.delivery_type === 'delivery' ? 'Delivery' : 'Retirada'}</p>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-green-600">R$ {order.total.toFixed(2)}</p>
+                          <p className="text-sm text-gray-600">{order.delivery_type === 'delivery' ? 'Delivery' : 'Retirada'}</p>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteOrder(order.id)}
+                          className="text-gray-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition-colors"
+                          title="Excluir Pedido Permanentemente"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
