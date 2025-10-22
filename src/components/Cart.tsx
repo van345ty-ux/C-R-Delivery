@@ -17,6 +17,7 @@ interface CartProps {
   isStoreOpen: boolean;
   canPlaceOrder: boolean;
   isMercadoPagoReturnFlow: boolean;
+  isPixReturnFlow: boolean;
 }
 
 interface Coupon {
@@ -43,6 +44,7 @@ export const Cart: React.FC<CartProps> = ({
   isStoreOpen,
   canPlaceOrder,
   isMercadoPagoReturnFlow,
+  isPixReturnFlow,
 }) => {
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>(() => {
     return localStorage.getItem('cartDeliveryType') as 'delivery' | 'pickup' || 'delivery';
@@ -74,6 +76,16 @@ export const Cart: React.FC<CartProps> = ({
   const [hasAcknowledgedPixReturnConfirmation, setHasAcknowledgedPixReturnConfirmation] = useState(() => JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false'));
 
   const isAwaitingPixPayment = paymentMethod === 'pix' && pixPaymentInitiated && !hasAcknowledgedPixReturnConfirmation;
+
+  useEffect(() => {
+    // On mount, check if we are in a return flow and set the payment method accordingly.
+    if (isMercadoPagoReturnFlow) {
+      setPaymentMethod('card');
+    } else if (isPixReturnFlow) {
+      setPaymentMethod('pix');
+    }
+    // If neither is true, paymentMethod remains null from its initial state.
+  }, [isMercadoPagoReturnFlow, isPixReturnFlow]);
 
   useEffect(() => {
     localStorage.setItem('cartDeliveryType', deliveryType);

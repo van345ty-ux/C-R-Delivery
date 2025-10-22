@@ -214,7 +214,8 @@ export const HomePage: React.FC<HomePageProps> = ({
           user={user}
           isStoreOpen={isStoreOpen}
           canPlaceOrder={canPlaceOrder}
-          isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
+          isMercadoPagoReturnFlow={isMercadoPagoReturnFlow}
+          isPixReturnFlow={isPixReturnFlow}
         />
       )}
 
