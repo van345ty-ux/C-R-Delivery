@@ -47,13 +47,7 @@ export const Cart: React.FC<CartProps> = ({
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>(() => {
     return localStorage.getItem('cartDeliveryType') as 'delivery' | 'pickup' || 'delivery';
   });
-  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'cash' | null>(() => {
-    if (typeof window !== 'undefined') {
-      const savedMethod = localStorage.getItem('cartPaymentMethod');
-      return savedMethod as 'pix' | 'card' | 'cash' | null;
-    }
-    return null;
-  });
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'cash' | null>(null);
   const [address, setAddress] = useState(() => localStorage.getItem('cartAddress') || '');
   const [couponCode, setCouponCode] = useState(() => localStorage.getItem('cartCouponCode') || '');
   const [appliedCoupon, setAppliedCoupon] = useState<{id: string; code: string; discount: number} | null>(() => {
@@ -83,15 +77,10 @@ export const Cart: React.FC<CartProps> = ({
 
   useEffect(() => {
     localStorage.setItem('cartDeliveryType', deliveryType);
-    if (paymentMethod) {
-      localStorage.setItem('cartPaymentMethod', paymentMethod);
-    } else {
-      localStorage.removeItem('cartPaymentMethod');
-    }
     localStorage.setItem('cartAddress', address);
     localStorage.setItem('cartCouponCode', couponCode);
     localStorage.setItem('cartAppliedCoupon', JSON.stringify(appliedCoupon));
-  }, [deliveryType, paymentMethod, address, couponCode, appliedCoupon]);
+  }, [deliveryType, address, couponCode, appliedCoupon]);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -446,7 +435,7 @@ export const Cart: React.FC<CartProps> = ({
           <h3 className="font-medium mb-3">Forma de Pagamento</h3>
           <div className="space-y-2">
             <label className="flex items-center">
-              <input type="radio" checked={paymentMethod === 'pix'} onChange={() => { setPaymentMethod('pix'); if (!hasSeenPixInstructions) setShowPixInstructions(true); localStorage.removeItem('hasSeenMercadoPagoWarning'); setIsMercadoPagoAcknowledged(false); }} className="mr-2" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment} />
+              <input type="radio" name="paymentMethod" checked={paymentMethod === 'pix'} onChange={() => { setPaymentMethod('pix'); if (!hasSeenPixInstructions) setShowPixInstructions(true); localStorage.removeItem('hasSeenMercadoPagoWarning'); setIsMercadoPagoAcknowledged(false); }} className="mr-2" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment} />
               <Smartphone className="w-4 h-4 mr-2" /><span>PIX</span>
             </label>
             {paymentMethod === 'pix' && hasSeenPixInstructions && pixKeyValue && (
@@ -471,11 +460,11 @@ export const Cart: React.FC<CartProps> = ({
               <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm mt-2">Atenção: A chave Pix não foi configurada no painel administrativo. Por favor, escolha outra forma de pagamento.</div>
             )}
             <label className="flex items-center">
-              <input type="radio" checked={paymentMethod === 'card'} onChange={() => { setPaymentMethod('card'); setHasSeenPixInstructions(false); localStorage.removeItem('hasSeenPixInstructions'); clearPixFlags(); }} className="mr-2" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment} />
+              <input type="radio" name="paymentMethod" checked={paymentMethod === 'card'} onChange={() => { setPaymentMethod('card'); setHasSeenPixInstructions(false); localStorage.removeItem('hasSeenPixInstructions'); clearPixFlags(); }} className="mr-2" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment} />
               <CreditCard className="w-4 h-4 mr-2" /><span>Cartão - você será redirecionado para o mercado pago</span>
             </label>
             <label className="flex items-center">
-              <input type="radio" checked={paymentMethod === 'cash'} onChange={() => { setPaymentMethod('cash'); setHasSeenPixInstructions(false); localStorage.removeItem('hasSeenPixInstructions'); localStorage.removeItem('hasSeenMercadoPagoWarning'); setIsMercadoPagoAcknowledged(false); clearPixFlags(); }} className="mr-2" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment} />
+              <input type="radio" name="paymentMethod" checked={paymentMethod === 'cash'} onChange={() => { setPaymentMethod('cash'); setHasSeenPixInstructions(false); localStorage.removeItem('hasSeenPixInstructions'); localStorage.removeItem('hasSeenMercadoPagoWarning'); setIsMercadoPagoAcknowledged(false); clearPixFlags(); }} className="mr-2" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment} />
               <DollarSign className="w-4 h-4 mr-2" /><span>Dinheiro (na entrega)</span>
             </label>
           </div>
