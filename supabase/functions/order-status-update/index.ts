@@ -14,17 +14,16 @@ serve(async (req) => {
 
   try {
     // 1. Inicializar o cliente Supabase Service Role
-    // Usamos a Service Role Key para garantir que podemos ler a tabela 'orders'
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Obter o segredo do Webhook do n8n
-    const N8N_WEBHOOK_URL = Deno.env.get('N8N_WEBHOOK_URL');
+    // Obter o segredo do Webhook do n8n (Usando N8N_DELIVERY_WEBHOOK_URL para consistência)
+    const N8N_WEBHOOK_URL = Deno.env.get('N8N_DELIVERY_WEBHOOK_URL');
 
     if (!N8N_WEBHOOK_URL) {
-      return new Response(JSON.stringify({ error: 'N8N_WEBHOOK_URL secret not configured.' }), {
+      return new Response(JSON.stringify({ error: 'N8N_DELIVERY_WEBHOOK_URL secret not configured.' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
       });
