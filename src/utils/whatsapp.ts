@@ -6,6 +6,7 @@ const EDGE_FUNCTION_URL = "https://lriqkvaxczvecwzvngqr.supabase.co/functions/v1
 
 export const sendWhatsappNotification = async (order: Order) => {
   const payload = {
+    project_type: 'delivery', // NOVO: Identificador do projeto para o roteador
     workflow_type: 'delivery_order', // Identificador para o n8n
     phone_number: order.customerPhone,
     message_data: {

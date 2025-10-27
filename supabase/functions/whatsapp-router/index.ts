@@ -13,38 +13,47 @@ serve(async (req) => {
   }
 
   try {
-    // 2. Obter o segredo do Webhook do n8n
-    const N8N_WEBHOOK_URL = Deno.env.get('N8N_WEBHOOK_URL');
+    // 2. Obter os segredos dos Webhooks do n8n
+    const DELIVERY_WEBHOOK_URL = Deno.env.get('N8N_DELIVERY_WEBHOOK_URL');
+    const NAIL_WEBHOOK_URL = Deno.env.get('N8N_NAIL_WEBHOOK_URL');
 
-    if (!N8N_WEBHOOK_URL) {
-      return new Response(JSON.stringify({ error: 'N8N_WEBHOOK_URL secret not configured.' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // 3. Obter o payload completo da requisição (incluindo workflow_type e message_data)
+    // 3. Obter o payload completo da requisição
     const requestPayload = await req.json();
+    const { project_type } = requestPayload;
 
-    if (!requestPayload.workflow_type || !requestPayload.phone_number || !requestPayload.message_data) {
-      return new Response(JSON.stringify({ error: 'Missing required fields: workflow_type, phone_number, message_data' }), {
+    if (!project_type) {
+      return new Response(JSON.stringify({ error: 'Missing required field: project_type' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log(`Routing request for workflow_type: ${requestPayload.workflow_type} to n8n.`);
+    let targetWebhookUrl = '';
 
-    // 4. Encaminhar o payload completo para o Webhook do n8n
-    const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
+    // 4. Lógica de Roteamento
+    if (project_type === 'delivery' && DELIVERY_WEBHOOK_URL) {
+      targetWebhookUrl = DELIVERY_WEBHOOK_URL;
+    } else if (project_type === 'nail_scheduler' && NAIL_WEBHOOK_URL) {
+      targetWebhookUrl = NAIL_WEBHOOK_URL;
+    } else {
+      return new Response(JSON.stringify({ error: `Webhook URL for project_type '${project_type}' is not configured.` }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log(`Routing request for project_type: '${project_type}' to n8n.`);
+
+    // 5. Encaminhar o payload completo para o Webhook do n8n correto
+    const n8nResponse = await fetch(targetWebhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(requestPayload),
+      body: JSON.stringify(requestPayload), // Encaminha o payload original
     });
 
-    // 5. Retornar o status do n8n (ou um sucesso genérico)
+    // 6. Retornar o status do n8n
     if (!n8nResponse.ok) {
       const errorText = await n8nResponse.text();
       console.error('n8n Webhook failed:', n8nResponse.status, errorText);
@@ -54,8 +63,7 @@ serve(async (req) => {
       });
     }
 
-    // O n8n geralmente retorna um 200/204. Retornamos sucesso para o cliente.
-    return new Response(JSON.stringify({ success: true, message: 'Request forwarded to n8n successfully.' }), {
+    return new Response(JSON.stringify({ success: true, message: `Request for '${project_type}' forwarded to n8n successfully.` }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
