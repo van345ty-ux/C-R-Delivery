@@ -603,6 +603,11 @@ function App() {
     }
   };
 
+  // Função onLogin que faltava
+  const handleLogin = () => {
+    setCurrentView('auth');
+  };
+
   const addToCart = (product: Product, quantity: number = 1, observations?: string) => {
     setCart(prevCart => {
       const existingItemIndex = prevCart.findIndex(item => item.product.id === product.id);
@@ -701,7 +706,7 @@ function App() {
         onAddToCart={addToCart}
         onRemoveFromCart={removeFromCart}
         onUpdateCartItem={updateCartItem}
-        onLogin={onLogin}
+        onLogin={handleLogin} // Usando a função definida
         onOrderCreated={(order) => {
           setCart([]);
           setCurrentOrder(order);
