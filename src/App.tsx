@@ -145,6 +145,10 @@ function App() {
     return false;
   });
 
+  // O aplicativo só para de carregar quando os dados iniciais E a autenticação estiverem prontos
+  const isLoading = initialAppDataLoading || authLoading;
+  console.log('App: isLoading:', isLoading, 'initialAppDataLoading:', initialAppDataLoading, 'authLoading:', authLoading);
+
   // Effect to save currentView to localStorage whenever it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -644,10 +648,6 @@ function App() {
     setIsPixReturnFlow(false); // Clear PIX flag when viewing order tracking
     localStorage.removeItem('isPixReturnFlow');
   };
-
-  // O aplicativo só para de carregar quando os dados iniciais E a autenticação estiverem prontos
-  const isLoading = initialAppDataLoading || authLoading;
-  console.log('App: isLoading:', isLoading, 'initialAppDataLoading:', initialAppDataLoading, 'authLoading:', authLoading);
 
   if (isLoading) {
     return (
