@@ -61,22 +61,45 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null
   return null;
 };
 
+// Constante para o limite de inatividade (3 horas em milissegundos)
+const INACTIVITY_LIMIT_MS = 3 * 60 * 60 * 1000; 
+const LAST_ACCESS_KEY = 'lastAccessTimestamp';
 
 function App() {
-  // Initialize state from localStorage or default values
-  const [currentView, setCurrentView] = useState<'location' | 'home' | 'admin' | 'auth' | 'tracking'>(() => {
-    if (typeof window !== 'undefined') {
-      const savedView = localStorage.getItem('lastView');
-      return savedView as 'location' | 'home' | 'admin' | 'auth' | 'tracking' || 'location';
+  // Função para determinar a view inicial, aplicando a regra de inatividade
+  const getInitialView = (savedView: string, savedCity: string): 'location' | 'home' | 'admin' | 'auth' | 'tracking' => {
+    if (typeof window === 'undefined') return 'location';
+
+    const lastAccess = localStorage.getItem(LAST_ACCESS_KEY);
+    const now = Date.now();
+
+    // Se houver um registro de último acesso e ele for mais antigo que 3 horas,
+    // ou se a cidade não estiver selecionada, forçamos a tela de localização.
+    if (
+      !savedCity ||
+      (lastAccess && (now - parseInt(lastAccess) > INACTIVITY_LIMIT_MS))
+    ) {
+      console.log('App: Forcing location view due to inactivity or missing city.');
+      return 'location';
     }
-    return 'location';
-  });
+
+    // Caso contrário, retorna a última view salva
+    return savedView as 'location' | 'home' | 'admin' | 'auth' | 'tracking' || 'location';
+  };
 
   const [selectedCity, setSelectedCity] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('selectedCity') || '';
     }
     return '';
+  });
+
+  const [currentView, setCurrentView] = useState<'location' | 'home' | 'admin' | 'auth' | 'tracking'>(() => {
+    if (typeof window !== 'undefined') {
+      const savedView = localStorage.getItem('lastView');
+      return getInitialView(savedView || 'location', selectedCity);
+    }
+    return 'location';
   });
 
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -156,6 +179,14 @@ function App() {
       localStorage.setItem('isPixReturnFlow', JSON.stringify(isPixReturnFlow));
     }
   }, [isPixReturnFlow]);
+
+  // NOVO EFEITO: Atualiza o timestamp de último acesso em cada renderização bem-sucedida
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !isLoading) {
+      localStorage.setItem(LAST_ACCESS_KEY, Date.now().toString());
+      console.log('App: Updated last access timestamp.');
+    }
+  }, [isLoading, currentView]); // Depende de isLoading para garantir que só atualize após o carregamento inicial
 
   // Debugging logs for App state
   useEffect(() => {
@@ -488,6 +519,9 @@ function App() {
     const city = cities.find(c => c.name === cityName);
     if (city?.active) {
       setSelectedCity(cityName);
+      
+      // Atualiza o timestamp de acesso ao selecionar a cidade
+      localStorage.setItem(LAST_ACCESS_KEY, Date.now().toString());
 
       const now = new Date();
       const currentDay = now.getDay();
@@ -667,7 +701,7 @@ function App() {
         onAddToCart={addToCart}
         onRemoveFromCart={removeFromCart}
         onUpdateCartItem={updateCartItem}
-        onLogin={() => setCurrentView('auth')}
+        onLogin={onLogin}
         onOrderCreated={(order) => {
           setCart([]);
           setCurrentOrder(order);
