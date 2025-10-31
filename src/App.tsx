@@ -61,8 +61,8 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null
   return null;
 };
 
-// Constante para o limite de inatividade (3 horas em milissegundos)
-const INACTIVITY_LIMIT_MS = 3 * 60 * 60 * 1000; 
+// Constante para o limite de inatividade (1 hora em milissegundos)
+const INACTIVITY_LIMIT_MS = 1 * 60 * 60 * 1000; 
 const LAST_ACCESS_KEY = 'lastAccessTimestamp';
 
 function App() {
@@ -73,7 +73,7 @@ function App() {
     const lastAccess = localStorage.getItem(LAST_ACCESS_KEY);
     const now = Date.now();
 
-    // Se houver um registro de último acesso e ele for mais antigo que 3 horas,
+    // Se houver um registro de último acesso e ele for mais antigo que 1 hora,
     // ou se a cidade não estiver selecionada, forçamos a tela de localização.
     if (
       !savedCity ||
