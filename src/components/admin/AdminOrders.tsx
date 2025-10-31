@@ -281,7 +281,16 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
                         <h4 className="font-medium text-gray-900 mb-2">Itens do Pedido</h4>
                         <div className="space-y-1">
                           {order.items.map((item, idx) => (
-                            <p key={idx} className="text-sm text-gray-600">{item.quantity}x {item.name} - R$ {(item.price * item.quantity).toFixed(2)}</p>
+                            <div key={idx}>
+                              <p className="text-sm text-gray-600">
+                                {item.quantity}x {item.name} - R$ {(item.price * item.quantity).toFixed(2)}
+                              </p>
+                              {item.observations && (
+                                <p className="text-xs text-red-600 ml-4 mt-0.5">
+                                  Obs: {item.observations}
+                                </p>
+                              )}
+                            </div>
                           ))}
                         </div>
                       </div>
