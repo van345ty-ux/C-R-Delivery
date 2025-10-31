@@ -36,6 +36,11 @@
   .animate-pulse-fade {
     animation: pulseFade 0.5s ease-in-out infinite;
   }
+
+  /* Nova: Animação de Pulo Suave para o MapPin */
+  .animate-bounce-subtle {
+    animation: bounceSubtle 1.5s infinite;
+  }
 }
 
 @keyframes fadeIn {
@@ -108,6 +113,16 @@
   }
   50% {
     opacity: 0; /* Alterado para 0 para que o pino desapareça completamente */
+  }
+}
+
+/* Keyframes para o pulo suave */
+@keyframes bounceSubtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px); /* Pulo de 3px */
   }
 }
 

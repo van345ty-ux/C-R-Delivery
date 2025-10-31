@@ -42,7 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
               <h1 className="text-xl font-bold text-red-600 whitespace-nowrap">C&R SUSHI</h1>
               <div className="flex items-center text-sm">
                 <div className="flex items-center text-gray-500">
-                  <MapPin className="w-3 h-3 mr-1" />
+                  <MapPin className="w-3 h-3 mr-1 animate-bounce-subtle" />
                   <span>{selectedCity}</span>
                 </div>
               </div>
