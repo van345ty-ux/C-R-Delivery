@@ -490,7 +490,16 @@ function App() {
       }
     };
 
+    // NOVO: Listener para forçar o recarregamento se a página for restaurada do cache/suspensão
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        console.log('App: Page restored from BFCache/Suspension. Forcing reload.');
+        window.location.reload();
+      }
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pageshow', handlePageShow); // Adicionando o novo listener
 
     return () => {
       if (authSubscription) {
@@ -498,6 +507,7 @@ function App() {
         authSubscription.unsubscribe();
       }
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pageshow', handlePageShow); // Removendo o novo listener
     };
   }, [checkAndShowCouponNotification]); // Dependência de checkAndShowCouponNotification
 
