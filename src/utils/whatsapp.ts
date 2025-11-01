@@ -13,6 +13,7 @@ export const sendWhatsappNotification = async (order: Order) => {
       order_number: `C&R${order.orderNumber.toString().padStart(2, '0')}`,
       customer_name: order.customerName,
       total: order.total.toFixed(2),
+      delivery_fee: order.deliveryFee.toFixed(2), // Adicionado deliveryFee
       delivery_type: order.deliveryType,
       payment_method: order.paymentMethod,
       address: order.address,
