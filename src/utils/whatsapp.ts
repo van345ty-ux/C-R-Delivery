@@ -1,29 +1,28 @@
 import { Order } from '../types';
 
-// URL da Edge Function que roteia para o n8n.
-// Usando o ID do projeto C&R Sushi (lriqkvaxczvecwzvngqr) onde a função está hospedada.
 const EDGE_FUNCTION_URL = "https://lriqkvaxczvecwzvngqr.supabase.co/functions/v1/whatsapp-router";
 
 export const sendWhatsappNotification = async (order: Order) => {
   const payload = {
-    project_type: 'delivery', // NOVO: Identificador do projeto para o roteador
-    workflow_type: 'delivery_order', // Identificador para o n8n
+    project_type: 'delivery',
+    workflow_type: 'delivery_order',
     phone_number: order.customerPhone,
     message_data: {
       order_number: `C&R${order.orderNumber.toString().padStart(2, '0')}`,
       customer_name: order.customerName,
       total: order.total.toFixed(2),
-      delivery_fee: order.deliveryFee.toFixed(2), // Adicionado deliveryFee
+      delivery_fee: order.deliveryFee.toFixed(2),
       delivery_type: order.deliveryType,
       payment_method: order.paymentMethod,
       address: order.address,
-      status: order.status, // Adicionado o campo status aqui
+      status: order.status,
       items: order.items.map(item => ({
         name: item.product.name,
         quantity: item.quantity,
         price: item.product.price,
         observations: item.observations,
       })),
+      change_for: order.changeFor, // Adicionado campo de troco
     }
   };
 

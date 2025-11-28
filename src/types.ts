@@ -53,6 +53,7 @@ export interface Order {
   customerPhone: string;
   createdAt: string;
   couponUsed?: string;
+  changeFor?: number | null; // Adicionado campo para o troco
 }
 
 export interface City {

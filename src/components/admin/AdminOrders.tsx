@@ -17,6 +17,7 @@ interface Order {
   address?: string;
   status: string;
   created_at: string;
+  change_for?: number | null; // Adicionado campo para o troco
 }
 
 interface AdminOrdersProps {
@@ -322,7 +323,12 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
                       <div>
                         <h4 className="font-medium text-gray-900 mb-2">Detalhes</h4>
                         <div className="space-y-1">
-                          <p className="text-sm text-gray-600"><strong>Pagamento:</strong> {order.payment_method}</p>
+                          <p className="text-sm text-gray-600">
+                            <strong>Pagamento:</strong> {order.payment_method}
+                            {order.change_for && order.change_for > order.total && (
+                              <span className="text-blue-600 font-semibold"> (Troco para R$ {order.change_for.toFixed(2)}, levar R$ {(order.change_for - order.total).toFixed(2)})</span>
+                            )}
+                          </p>
                           {order.address && (<p className="text-sm text-gray-600"><strong>Endereço:</strong> {order.address}</p>)}
                           <p className="text-sm text-gray-600"><strong>Pedido às:</strong> {new Date(order.created_at).toLocaleTimeString('pt-BR')}</p>
                         </div>

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Plus, Minus, CreditCard, Smartphone, DollarSign, Gift, ExternalLink, Copy } from 'lucide-react';
-import { CartItem, Order, User, Coupon } from '../types'; // Corrected import path
+import { CartItem, Order, User, Coupon } from '../types';
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
 import { PixInstructionsModal } from './PixInstructionsModal';
 import { PixReturnConfirmationModal } from './PixReturnConfirmationModal';
-import { sendWhatsappNotification } from '../utils/whatsapp'; // Importando a nova função
+import { sendWhatsappNotification } from '../utils/whatsapp';
 
 interface CartProps {
   items: CartItem[];
@@ -19,21 +19,6 @@ interface CartProps {
   isMercadoPagoReturnFlow: boolean;
   isPixReturnFlow: boolean;
 }
-
-// Re-using the imported Coupon type from types.ts
-// interface Coupon {
-//   id: string;
-//   name: string;
-//   code: string;
-//   discount: number;
-//   type: 'birthday' | 'loyalty' | 'promotion';
-//   valid_from: string;
-//   valid_to: string;
-//   active: boolean;
-//   usage_limit?: number;
-//   usage_count: number;
-//   user_id?: string;
-// }
 
 export const Cart: React.FC<CartProps> = ({
   items,
@@ -75,17 +60,19 @@ export const Cart: React.FC<CartProps> = ({
   const [pixPaymentInitiated, setPixPaymentInitiated] = useState(() => JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false'));
   const [showPixReturnConfirmation, setShowPixReturnConfirmation] = useState(false);
   const [hasAcknowledgedPixReturnConfirmation, setHasAcknowledgedPixReturnConfirmation] = useState(() => JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false'));
+  
+  // Novos estados para o troco
+  const [needsChange, setNeedsChange] = useState<boolean | null>(null);
+  const [changeForAmount, setChangeForAmount] = useState<string>('');
 
   const isAwaitingPixPayment = paymentMethod === 'pix' && pixPaymentInitiated && !hasAcknowledgedPixReturnConfirmation;
 
   useEffect(() => {
-    // On mount, check if we are in a return flow and set the payment method accordingly.
     if (isMercadoPagoReturnFlow) {
       setPaymentMethod('card');
     } else if (isPixReturnFlow) {
       setPaymentMethod('pix');
     }
-    // If neither is true, paymentMethod remains null from its initial state.
   }, [isMercadoPagoReturnFlow, isPixReturnFlow]);
 
   useEffect(() => {
@@ -106,7 +93,6 @@ export const Cart: React.FC<CartProps> = ({
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Efeito para verificar o estado do PIX no carregamento inicial (após refresh)
   useEffect(() => {
     const pixInitiated = JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false');
     const pixAcknowledged = JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false');
@@ -167,7 +153,6 @@ export const Cart: React.FC<CartProps> = ({
         const validTo = new Date(coupon.valid_to);
         validTo.setHours(23, 59, 59, 999);
         const isCurrentlyValid = today >= validFrom && today <= validTo;
-        // Fix: Check if usage_limit is defined before comparing
         const hasUsagesLeft = coupon.usage_limit === null || coupon.usage_limit === undefined || coupon.usage_count < coupon.usage_limit;
         if ((coupon.type === 'birthday' || coupon.type === 'loyalty') && !coupon.user_id) return false;
         return isCurrentlyValid && hasUsagesLeft;
@@ -228,7 +213,6 @@ export const Cart: React.FC<CartProps> = ({
       toast.error('Cupom expirado ou ainda não é válido.');
       return;
     }
-    // Fix: Check if usage_limit is defined before comparing
     if (coupon.usage_limit !== null && coupon.usage_limit !== undefined && coupon.usage_count >= coupon.usage_limit) {
       toast.error('Este cupom atingiu o limite de usos.');
       return;
@@ -258,6 +242,10 @@ export const Cart: React.FC<CartProps> = ({
     }
     if (!paymentMethod) {
       toast.error('Por favor, selecione uma forma de pagamento.');
+      return;
+    }
+    if (paymentMethod === 'cash' && needsChange === true && (!changeForAmount || parseFloat(changeForAmount) < total)) {
+      toast.error('Por favor, insira um valor para o troco que seja maior que o total do pedido.');
       return;
     }
     if (paymentMethod === 'pix' && isAwaitingPixPayment) {
@@ -293,7 +281,8 @@ export const Cart: React.FC<CartProps> = ({
       status: 'Pedido recebido',
       customer_name: user.name,
       customer_phone: user.phone,
-      coupon_used: appliedCoupon?.code
+      coupon_used: appliedCoupon?.code,
+      change_for: (paymentMethod === 'cash' && needsChange && parseFloat(changeForAmount) > 0) ? parseFloat(changeForAmount) : null,
     };
     const { data: newOrder, error } = await supabase
       .from('orders')
@@ -332,10 +321,10 @@ export const Cart: React.FC<CartProps> = ({
       customerName: newOrder.customer_name,
       customerPhone: newOrder.customer_phone,
       createdAt: newOrder.created_at,
-      couponUsed: newOrder.coupon_used
+      couponUsed: newOrder.coupon_used,
+      changeFor: newOrder.change_for,
     };
     
-    // --- NOVO: Enviar notificação via Edge Function ---
     await sendWhatsappNotification(formattedOrder);
 
     onOrderCreated(formattedOrder);
@@ -484,6 +473,47 @@ export const Cart: React.FC<CartProps> = ({
             </label>
           </div>
         </div>
+
+        {paymentMethod === 'cash' && (
+          <div className="border-t pt-4">
+            <h3 className="font-medium mb-2">Precisa de troco?</h3>
+            <div className="flex gap-2 mb-3">
+              <button
+                onClick={() => setNeedsChange(true)}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-colors ${needsChange === true ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+              >
+                Sim
+              </button>
+              <button
+                onClick={() => { setNeedsChange(false); setChangeForAmount(''); }}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-colors ${needsChange === false ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+              >
+                Não
+              </button>
+            </div>
+            {needsChange === true && (
+              <div className="animate-fade-in">
+                <label htmlFor="changeFor" className="block text-sm font-medium text-gray-700 mb-1">
+                  Troco para quanto?
+                </label>
+                <input
+                  id="changeFor"
+                  type="number"
+                  value={changeForAmount}
+                  onChange={(e) => setChangeForAmount(e.target.value)}
+                  className="w-full p-3 border rounded-lg text-sm"
+                  placeholder="Ex: 50.00"
+                  min={total}
+                />
+                {parseFloat(changeForAmount) > total && (
+                  <p className="text-sm text-green-600 mt-2">
+                    Seu troco será de: <strong>R$ {(parseFloat(changeForAmount) - total).toFixed(2)}</strong>
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="border-t p-4 bg-gray-50">
