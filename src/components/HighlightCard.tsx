@@ -1,5 +1,4 @@
 import React from 'react';
-import { Highlight } from '../types'; // Corrected import path
 
 interface HighlightCardProps {
   name: string;
