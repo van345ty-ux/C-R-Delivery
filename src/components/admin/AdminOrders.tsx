@@ -47,6 +47,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate, refetchT
   }, []);
 
   useEffect(() => {
+    console.log(`AdminOrders: useEffect triggered. refetchTrigger: ${refetchTrigger}`);
     fetchOrders();
   }, [fetchOrders, refetchTrigger]); // Adiciona refetchTrigger como dependência
 
