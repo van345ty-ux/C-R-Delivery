@@ -13,6 +13,7 @@ import { AdminBonificationCoupons } from './admin/AdminBonificationCoupons'; // 
 import { LoginNotification } from './LoginNotification';
 import { supabase } from '../integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import toast from 'react-hot-toast'; // Importação adicionada
 
 interface AdminPanelProps {
   onBack: () => void;
@@ -24,17 +25,27 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
   const [customerLoginNotificationUser, setCustomerLoginNotificationUser] = useState<string | null>(null);
   const [pendingBonificationCount, setPendingBonificationCount] = useState(0); // Novo estado para a contagem de cupons pendentes
 
+  const playNotificationSound = () => {
+    const audio = document.getElementById('login-sound') as HTMLAudioElement;
+    if (audio) {
+      audio.play().catch(error => {
+        console.warn("A reprodução automática do som foi bloqueada pelo navegador.", error);
+      });
+    }
+  };
+
   useEffect(() => {
-    let channel: RealtimeChannel | null = null;
+    let loginChannel: RealtimeChannel | null = null;
     let bonificationChannel: RealtimeChannel | null = null;
+    let orderChannel: RealtimeChannel | null = null; // Novo canal para pedidos
 
     const setupRealtime = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       const adminId = user ? user.id : null;
 
       if (adminId) {
-        // Realtime para notificações de login
-        channel = supabase
+        // 1. Realtime para notificações de login
+        loginChannel = supabase
           .channel('login_notifications_channel')
           .on(
             'postgres_changes',
@@ -47,20 +58,38 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
               const newLogin = payload.new as { user_id: string; user_name: string };
               if (newLogin.user_id !== adminId) {
                 setCustomerLoginNotificationUser(newLogin.user_name);
-                
-                // Toca o som de notificação
-                const audio = document.getElementById('login-sound') as HTMLAudioElement;
-                if (audio) {
-                  audio.play().catch(error => {
-                    console.warn("A reprodução automática do som foi bloqueada pelo navegador.", error);
-                  });
-                }
+                playNotificationSound(); // Toca o som
               }
             }
           )
           .subscribe();
 
-        // Realtime para cupons de bonificação pendentes
+        // 2. Realtime para novos pedidos (NOVO)
+        orderChannel = supabase
+          .channel('new_orders_channel')
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'orders',
+            },
+            (payload) => {
+              const newOrder = payload.new as { order_number: number };
+              toast.success(`Novo Pedido Recebido! #${newOrder.order_number.toString().padStart(2, '0')}`); // Toast agora funciona
+              playNotificationSound(); // Toca o som
+              
+              // Se estiver na aba de pedidos, força o refresh
+              if (activeTab === 'orders') {
+                // Força a remontagem do AdminOrders para buscar a lista atualizada
+                setActiveTab('dashboard'); 
+                setTimeout(() => setActiveTab('orders'), 10);
+              }
+            }
+          )
+          .subscribe();
+
+        // 3. Realtime para cupons de bonificação pendentes
         bonificationChannel = supabase
           .channel('pending_bonification_coupons')
           .on(
@@ -97,14 +126,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
     fetchPendingBonificationCount(); // Initial fetch
 
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
+      if (loginChannel) {
+        supabase.removeChannel(loginChannel);
       }
       if (bonificationChannel) {
         supabase.removeChannel(bonificationChannel);
       }
+      if (orderChannel) { // Limpa o novo canal
+        supabase.removeChannel(orderChannel);
+      }
     };
-  }, []);
+  }, [activeTab]); // Adicionado activeTab para que o useEffect possa reagir à mudança de aba
 
   const handleCloseLoginNotification = () => {
     setCustomerLoginNotificationUser(null);
