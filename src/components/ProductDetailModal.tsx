@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Plus, Minus } from 'lucide-react';
-import { Product } from '../App';
+import { Product } from '../types'; // Corrected import path
 import { Button } from './ui/button';
 import toast from 'react-hot-toast';
 
@@ -8,7 +8,6 @@ interface ProductDetailModalProps {
   product: Product;
   onClose: () => void;
   onAddToCart: (product: Product, quantity: number, observations?: string) => void;
-  isStoreOpen: boolean;
   canPlaceOrder: boolean; // Nova prop
   isMercadoPagoReturnFlow: boolean; // Nova prop
 }
@@ -17,7 +16,6 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   product,
   onClose,
   onAddToCart,
-  isStoreOpen,
   canPlaceOrder, // Nova prop
   isMercadoPagoReturnFlow, // Nova prop
 }) => {

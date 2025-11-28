@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Image as ImageIcon, Circle } from 'lucide-react';
+import { Plus, Edit, Trash2, Image as ImageIcon } from 'lucide-react'; // Removed unused Circle import
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
-import { Highlight } from '../../App'; // Importando a interface Highlight atualizada
+import { Highlight } from '../../types'; // Corrected import path
 
 export const AdminHighlights: React.FC = () => {
   const [highlights, setHighlights] = useState<Highlight[]>([]);

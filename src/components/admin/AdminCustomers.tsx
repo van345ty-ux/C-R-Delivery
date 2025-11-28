@@ -61,7 +61,7 @@ export const AdminCustomers: React.FC = () => {
       if (profilesError) throw profilesError;
 
       setCustomers(profiles || []);
-    } catch (error) {
+    } catch (error: any) { // Explicitly type error as any
       console.error('Erro ao carregar clientes:', error);
       setError(error.message);
     } finally {

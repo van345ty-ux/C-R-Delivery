@@ -4,7 +4,7 @@ import { Menu } from './Menu';
 import { Cart } from './Cart';
 import { PromotionModal } from './PromotionModal';
 import { Footer } from './Footer'; // Importando o novo componente Footer
-import { User, CartItem, Product, Order } from '../App';
+import { User, CartItem, Product, Order } from '../types'; // Corrected import path
 import { supabase } from '../integrations/supabase/client';
 import { PreOrderModal } from './PreOrderModal'; // Importando o novo modal
 
@@ -107,7 +107,8 @@ export const HomePage: React.FC<HomePageProps> = ({
           console.error('Error fetching promotions:', promotionsError);
         } else if (promotionsData && promotionsData.length > 0) {
           setPromotions(promotionsData);
-          const timer = setTimeout(() => {
+          // Removed unused timer variable
+          setTimeout(() => {
             setShowPromotions(true);
             localStorage.setItem('hasSeenPromotionModal', 'true'); // Define a flag após exibir
           }, 1000);

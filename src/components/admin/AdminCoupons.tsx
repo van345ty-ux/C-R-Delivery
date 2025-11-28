@@ -2,27 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, User as UserIcon } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
+import { Coupon as CouponType } from '../../types'; // Importando o tipo Coupon
 
-interface Coupon {
-  id: string;
-  name: string;
-  code: string;
-  discount: number;
-  type: 'birthday' | 'loyalty' | 'promotion';
-  valid_from: string;
-  valid_to: string;
-  active: boolean;
-  usage_limit?: number;
-  usage_count: number;
-  user_id?: string; // Adicionado user_id
-  profiles?: { full_name: string } | null; // Ajustado para não incluir email diretamente do join
+// Definindo a interface local para o cupom, garantindo que todas as propriedades do DB estejam presentes
+interface Coupon extends CouponType {
+  name: string; // Garantindo que 'name' esteja presente
+  active: boolean; // Garantindo que 'active' esteja presente
+  usage_count: number; // Garantindo que 'usage_count' esteja presente
+  profiles?: { full_name: string } | null;
 }
 
 interface Profile {
   id: string;
   full_name: string;
-  // O email não será mais buscado diretamente aqui por questões de segurança no frontend.
-  // Se o email for estritamente necessário para o admin, ele precisaria ser buscado via um Edge Function.
 }
 
 export const AdminCoupons: React.FC = () => {
@@ -74,7 +66,8 @@ export const AdminCoupons: React.FC = () => {
       console.error('Error fetching coupons:', error);
       toast.error('Erro ao buscar cupons.');
     } else {
-      setCoupons(data || []);
+      // Fix: Usando 'as unknown as Coupon[]' para forçar a tipagem correta do resultado do join
+      setCoupons(data as unknown as Coupon[] || []);
     }
     setLoading(false);
   };
@@ -256,7 +249,7 @@ export const AdminCoupons: React.FC = () => {
                   <div><p className="text-gray-600">Código</p><p className="font-mono font-bold text-red-600">{coupon.code}</p></div>
                   <div><p className="text-gray-600">Desconto</p><p className="font-semibold">{coupon.discount}%</p></div>
                   <div><p className="text-gray-600">Válido até</p><p className="font-semibold">{new Date(coupon.valid_to).toLocaleDateString('pt-BR')}</p></div>
-                  <div><p className="text-gray-600">Usos</p><p className="font-semibold">{coupon.usage_count}{coupon.usage_limit && `/${coupon.usage_limit}`}</p></div>
+                  <div><p className="text-gray-600">Usos</p><p className="font-semibold">{coupon.usage_count}{coupon.usage_limit !== undefined && coupon.usage_limit !== null && `/${coupon.usage_limit}`}</p></div>
                 </div>
               </div>
               <div className="flex items-center space-x-2">

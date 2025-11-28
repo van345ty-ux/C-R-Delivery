@@ -1,5 +1,5 @@
 import React from 'react';
-import { Product } from '../App';
+import { Product } from '../types'; // Corrected import path
 import { X, Plus } from 'lucide-react'; // Importando Plus
 import { Button } from './ui/button'; // Importando Button
 

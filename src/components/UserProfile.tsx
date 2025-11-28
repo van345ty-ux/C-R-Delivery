@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User as UserIcon, Mail, Phone, Calendar, LogOut, X, ShoppingBag, Gift, Edit, Settings } from 'lucide-react'; // Adicionado Settings icon
-import { User, Order } from '../App';
+import { User, Order, Coupon } from '../types'; // Corrected import path
 import { UserOrders } from './UserOrders';
 import { UserCoupons } from './UserCoupons';
 import { supabase } from '../integrations/supabase/client';
@@ -46,13 +46,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, onLogou
       }
 
       const today = new Date();
-      const availableCoupons = (couponsData || []).filter(coupon => {
+      const availableCoupons = (couponsData || []).filter((coupon: Coupon) => {
         const validFrom = new Date(coupon.valid_from);
         const validTo = new Date(coupon.valid_to);
         validTo.setHours(23, 59, 59, 999);
 
         const isCurrentlyValid = today >= validFrom && today <= validTo;
-        const hasUsagesLeft = coupon.usage_limit === null || coupon.usage_count < coupon.usage_limit;
+        const hasUsagesLeft = coupon.usage_limit === null || coupon.usage_limit === undefined || coupon.usage_count < coupon.usage_limit;
 
         if ((coupon.type === 'birthday' || coupon.type === 'loyalty') && !coupon.user_id) {
           return false; 
@@ -73,7 +73,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, onLogou
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setEditableUser(prev => ({ ...prev, [name]: value }));
+    setEditableUser((prev: User) => ({ ...prev, [name]: value })); // Explicitly typed prev
   };
 
   const handleSaveProfile = async () => {

@@ -88,7 +88,8 @@ export const useAuth = (onLogoutCallback?: () => void) => {
       validTo.setHours(23, 59, 59, 999);
 
       const isCurrentlyValid = today >= validFrom && today <= validTo;
-      const hasUsagesLeft = coupon.usage_limit === null || coupon.usage_count < coupon.usage_limit;
+      // Fix: Check if usage_limit is defined before comparing
+      const hasUsagesLeft = coupon.usage_limit === null || coupon.usage_limit === undefined || coupon.usage_count < coupon.usage_limit;
 
       if ((coupon.type === 'birthday' || coupon.type === 'loyalty') && !coupon.user_id) {
         return false; 
@@ -206,27 +207,12 @@ export const useAuth = (onLogoutCallback?: () => void) => {
       setAuthLoading(true);
       console.log('useAuth: initialLoad: Starting initial auth fetch.');
       try {
-        const { data: { session: initialSession }, error: initialSessionError } = await supabase.auth.getSession();
-        console.log(`useAuth: initialLoad: Initial session: ${initialSession ? 'active' : 'null'}`);
-
-        if (initialSessionError) {
-          console.error('useAuth: initialLoad: Error fetching initial session:', initialSessionError);
-          setSession(null);
-          setUser(null);
-        } else {
-          setSession(initialSession);
-          if (initialSession?.user) {
-            const profile = await fetchUserProfile(initialSession.user);
-            setUser(profile);
-            if (profile && profile.role === 'customer') {
-              checkAndShowCouponNotification(initialSession.user.id);
-            }
-          } else {
-            setUser(null);
-          }
-        }
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        await authStateChangeHandler('INITIAL_LOAD', initialSession); // Processa a sessão inicial
       } catch (error) {
-        console.error('useAuth: initialLoad: Unexpected error during initial auth fetch:', error);
+        console.error('useAuth: initialLoad: Erro ao buscar a sessão inicial:', error);
+        // Mesmo que haja um erro, precisamos parar o carregamento
+        setAuthLoading(false);
       } finally {
         setAuthLoading(false);
         console.log('useAuth: initialLoad: Initial auth fetch completed, authLoading set to false.');
@@ -234,7 +220,7 @@ export const useAuth = (onLogoutCallback?: () => void) => {
     };
 
     initialLoad();
-  }, [checkAndShowCouponNotification]);
+  }, [authStateChangeHandler]);
 
   // Effect to set up the auth state listener (runs once on mount)
   useEffect(() => {

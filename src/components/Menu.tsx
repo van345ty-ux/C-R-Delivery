@@ -3,7 +3,7 @@ import { Search } from 'lucide-react';
 import { ProductCard } from './ProductCard';
 import { HighlightCard } from './HighlightCard';
 import { ProductDetailModal } from './ProductDetailModal'; // Importando o novo modal
-import { Product, Highlight } from '../App';
+import { Product, Highlight } from '../types'; // Corrected import path
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
 
@@ -34,6 +34,7 @@ const categories = [
   'Sushi',      // Ordem alterada
   'Especiais',
   'Bebidas',
+  'Black Friday C&R', // NOVO
   'Promoções'   // Ordem alterada
 ];
 
@@ -307,7 +308,6 @@ export const Menu: React.FC<MenuProps> = ({
           product={selectedProductForDetail}
           onClose={() => setShowProductDetailModal(false)}
           onAddToCart={onAddToCart}
-          isStoreOpen={isStoreOpen}
           canPlaceOrder={canPlaceOrder} // Passando o novo estado
           isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
         />

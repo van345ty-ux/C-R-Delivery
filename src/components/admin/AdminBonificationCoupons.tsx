@@ -2,17 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { CheckCircle, Clock, User as UserIcon, Gift, XCircle } from 'lucide-react'; // Adicionado XCircle para o ícone de recusar
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
+import { Coupon as CouponType } from '../../types'; // Importando o tipo Coupon
 
-interface PendingCoupon {
-  id: string;
-  name: string;
-  code: string;
-  discount: number;
-  type: 'birthday' | 'loyalty' | 'promotion';
-  valid_from: string;
-  valid_to: string;
-  user_id: string;
-  profiles: { full_name: string } | null; // Ajustado para não incluir email diretamente do join
+// Definindo a interface local para o cupom, garantindo que todas as propriedades do DB estejam presentes
+interface PendingCoupon extends CouponType {
+  name: string; // Garantindo que 'name' esteja presente
+  active: boolean; // Garantindo que 'active' esteja presente
+  usage_count: number; // Garantindo que 'usage_count' esteja presente
+  profiles: { full_name: string } | null;
 }
 
 export const AdminBonificationCoupons: React.FC = () => {
@@ -36,9 +33,11 @@ export const AdminBonificationCoupons: React.FC = () => {
         type,
         valid_from,
         valid_to,
+        active,
+        usage_count,
         user_id,
         profiles (full_name)
-      `) // Removido 'email' do select de profiles
+      `) // Adicionado 'name', 'active', 'usage_count' ao select
       .eq('is_pending_admin_approval', true)
       .order('created_at', { ascending: true });
 
@@ -46,12 +45,13 @@ export const AdminBonificationCoupons: React.FC = () => {
       console.error('Error fetching pending coupons:', error);
       toast.error('Erro ao buscar cupons pendentes.');
     } else {
-      setPendingCoupons(data || []);
+      // Fix: Usando 'as unknown as PendingCoupon[]' para forçar a tipagem correta do resultado do join
+      setPendingCoupons(data as unknown as PendingCoupon[] || []);
     }
     setLoading(false);
   };
 
-  const handleSendCoupon = async (couponId: string, userId: string) => {
+  const handleSendCoupon = async (couponId: string) => { // Removed unused userId parameter
     setIsUpdating(true);
     const { error } = await supabase
       .from('coupons')
@@ -155,7 +155,7 @@ export const AdminBonificationCoupons: React.FC = () => {
                     Recusar
                   </button>
                   <button
-                    onClick={() => handleSendCoupon(coupon.id, coupon.user_id)}
+                    onClick={() => handleSendCoupon(coupon.id)}
                     disabled={isUpdating}
                     className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center"
                   >

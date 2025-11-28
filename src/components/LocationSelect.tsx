@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MapPin, AlertTriangle } from 'lucide-react';
-import { City } from '../App';
+import { City } from '../types'; // Corrected import path
 
 interface LocationSelectProps {
   cities: City[];

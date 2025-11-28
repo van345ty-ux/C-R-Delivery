@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Plus, Minus, CreditCard, Smartphone, DollarSign, Gift, ExternalLink, Copy } from 'lucide-react';
-import { CartItem, Order, User } from '../types'; // Importando de types.ts
+import { CartItem, Order, User, Coupon } from '../types'; // Corrected import path
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
 import { PixInstructionsModal } from './PixInstructionsModal';
@@ -20,19 +20,20 @@ interface CartProps {
   isPixReturnFlow: boolean;
 }
 
-interface Coupon {
-  id: string;
-  name: string;
-  code: string;
-  discount: number;
-  type: 'birthday' | 'loyalty' | 'promotion';
-  valid_from: string;
-  valid_to: string;
-  active: boolean;
-  usage_limit?: number;
-  usage_count: number;
-  user_id?: string;
-}
+// Re-using the imported Coupon type from types.ts
+// interface Coupon {
+//   id: string;
+//   name: string;
+//   code: string;
+//   discount: number;
+//   type: 'birthday' | 'loyalty' | 'promotion';
+//   valid_from: string;
+//   valid_to: string;
+//   active: boolean;
+//   usage_limit?: number;
+//   usage_count: number;
+//   user_id?: string;
+// }
 
 export const Cart: React.FC<CartProps> = ({
   items,
@@ -132,10 +133,10 @@ export const Cart: React.FC<CartProps> = ({
     const fetchSettings = async () => {
       const { data, error } = await supabase.from('settings').select('key, value');
       if (!error && data) {
-        const settingsMap = data.reduce((acc, { key, value }) => {
+        const settingsMap = data.reduce((acc: { [key: string]: string }, { key, value }: { key: string, value: string }) => {
           acc[key] = value;
           return acc;
-        }, {} as { [key: string]: string });
+        }, {});
         if (!isNaN(parseFloat(settingsMap.delivery_fee))) setDeliveryFeeValue(parseFloat(settingsMap.delivery_fee));
         setPixKeyValue(settingsMap.pix_key || '');
         setMercadoPagoLink(settingsMap.mercado_pago_link || 'https://link.mercadopago.com.br/sushicr');
@@ -166,7 +167,8 @@ export const Cart: React.FC<CartProps> = ({
         const validTo = new Date(coupon.valid_to);
         validTo.setHours(23, 59, 59, 999);
         const isCurrentlyValid = today >= validFrom && today <= validTo;
-        const hasUsagesLeft = coupon.usage_limit === null || coupon.usage_count < coupon.usage_limit;
+        // Fix: Check if usage_limit is defined before comparing
+        const hasUsagesLeft = coupon.usage_limit === null || coupon.usage_limit === undefined || coupon.usage_count < coupon.usage_limit;
         if ((coupon.type === 'birthday' || coupon.type === 'loyalty') && !coupon.user_id) return false;
         return isCurrentlyValid && hasUsagesLeft;
       });
@@ -226,7 +228,8 @@ export const Cart: React.FC<CartProps> = ({
       toast.error('Cupom expirado ou ainda não é válido.');
       return;
     }
-    if (coupon.usage_limit !== null && coupon.usage_count >= coupon.usage_limit) {
+    // Fix: Check if usage_limit is defined before comparing
+    if (coupon.usage_limit !== null && coupon.usage_limit !== undefined && coupon.usage_count >= coupon.usage_limit) {
       toast.error('Este cupom atingiu o limite de usos.');
       return;
     }
@@ -323,7 +326,7 @@ export const Cart: React.FC<CartProps> = ({
       total: newOrder.total,
       deliveryFee: newOrder.delivery_fee,
       deliveryType: newOrder.delivery_type,
-      paymentMethod: newOrder.payment_method,
+      paymentMethod: newOrder.payment_method as 'pix' | 'card' | 'cash',
       address: newOrder.address,
       status: newOrder.status,
       customerName: newOrder.customer_name,

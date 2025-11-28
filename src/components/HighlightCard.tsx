@@ -1,5 +1,5 @@
 import React from 'react';
-import { Highlight } from '../App'; // Importando a interface Highlight atualizada
+import { Highlight } from '../types'; // Corrected import path
 
 interface HighlightCardProps {
   name: string;

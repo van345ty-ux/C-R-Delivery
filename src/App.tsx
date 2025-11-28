@@ -9,7 +9,7 @@ import { UserCouponNotification } from './components/UserCouponNotification';
 import { supabase } from './integrations/supabase/client';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import toast, { Toaster } from 'react-hot-toast';
-import { User, Coupon, Product, CartItem, Order, City, OperatingHour, Highlight } from './types'; // Importando tipos de types.ts
+import { User, Coupon, Product, CartItem, Order, City, OperatingHour } from './types'; // Importando tipos de types.ts
 
 const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null> => {
   console.log('fetchUserProfile: Attempting to fetch profile for user ID:', supabaseUser.id);
@@ -230,7 +230,8 @@ function App() {
       validTo.setHours(23, 59, 59, 999); // Considerar o dia inteiro
 
       const isCurrentlyValid = today >= validFrom && today <= validTo;
-      const hasUsagesLeft = coupon.usage_limit === null || coupon.usage_count < coupon.usage_limit;
+      // Fix: Check if usage_limit is defined before comparing
+      const hasUsagesLeft = coupon.usage_limit === null || coupon.usage_limit === undefined || coupon.usage_count < coupon.usage_limit;
 
       // Validação adicional: cupons de aniversário e fidelidade DEVEM ser específicos do usuário
       if ((coupon.type === 'birthday' || coupon.type === 'loyalty') && !coupon.user_id) {
@@ -265,7 +266,7 @@ function App() {
           toast.error('Erro ao carregar configurações: ' + settingsResult.error.message);
           console.error('fetchInitialAppData: Settings error:', settingsResult.error);
         } else if (settingsResult.data) {
-          const settingsMap = settingsResult.data.reduce((acc, { key, value }) => {
+          const settingsMap = settingsResult.data.reduce((acc: { [key: string]: string }, { key, value }: { key: string, value: string }) => {
             acc[key] = value;
             return acc;
           }, {} as { [key: string]: string });

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
-import { Product } from '../../App';
+import { Product } from '../../types'; // Corrected import path
 import { supabase } from '../../integrations/supabase/client';
 
 export const AdminProducts: React.FC = () => {

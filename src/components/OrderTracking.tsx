@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Clock, CheckCircle, Package, Truck, Home, AlertTriangle } from 'lucide-react';
-import { Order } from '../App';
+import { Order, CartItem } from '../types'; // Corrected import path and added CartItem type
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
 
@@ -29,7 +29,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ order: initialOrde
       }
 
       if (data && (data.status !== order.status || data.order_number !== order.orderNumber)) {
-        setOrder((prevOrder) => ({
+        setOrder((prevOrder: Order) => ({ // Explicitly typed prevOrder
           ...prevOrder,
           status: data.status,
           orderNumber: data.order_number, // Atualiza orderNumber se necessário
@@ -209,7 +209,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ order: initialOrde
           <h2 className="text-lg font-semibold mb-4">Itens do Pedido</h2>
           
           <div className="space-y-3">
-            {order.items.map((item) => (
+            {order.items.map((item: CartItem) => ( // Explicitly typed item
               <div key={item.product.id} className="flex justify-between items-start">
                 <div className="flex-1">
                   <p className="font-medium">{item.product.name}</p>

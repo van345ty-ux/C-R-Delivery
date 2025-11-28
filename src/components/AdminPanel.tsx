@@ -188,7 +188,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
                 >
                   <Icon className="w-4 h-4 mr-2" />
                   {tab.label}
-                  {tab.id === 'bonification_coupons' && tab.notificationCount > 0 && (
+                  {tab.id === 'bonification_coupons' && tab.notificationCount !== undefined && tab.notificationCount > 0 && (
                     <span className="absolute -top-1 -right-1 block h-3 w-3 rounded-full bg-red-500 animate-pulse" />
                   )}
                 </button>

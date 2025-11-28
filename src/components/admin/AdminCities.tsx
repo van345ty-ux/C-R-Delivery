@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, MapPin } from 'lucide-react';
-import { City } from '../../App';
+import { City } from '../../types'; // Corrected import path
 import { supabase } from '../../integrations/supabase/client';
 
 export const AdminCities: React.FC = () => {

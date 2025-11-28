@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../integrations/supabase/client';
+import { supabase } from '../integrations/supabase/client'; // Corrected import path
 import toast from 'react-hot-toast';
 
 interface Settings {
@@ -29,7 +29,6 @@ export const AdminSettings: React.FC = () => {
     hero_subtitle_font_size: '20px',
     hero_subtitle_font_color: '#ffffff',
     hero_subtitle_border_color: '#000000',
-    mercado_pago_link: 'https://link.mercadopago.com.br/sushicr', // Novo campo para o link do Mercado Pago
   });
   const [operatingHours, setOperatingHours] = useState<OperatingHour[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +51,7 @@ export const AdminSettings: React.FC = () => {
       if (settingsResult.error) {
         toast.error('Erro ao carregar as configurações.');
       } else if (settingsResult.data) {
-        const fetchedSettings = settingsResult.data.reduce((acc: Settings, { key, value }) => {
+        const fetchedSettings = settingsResult.data.reduce((acc: Settings, { key, value }: { key: string, value: string }) => {
           acc[key] = value;
           return acc;
         }, {});
@@ -377,22 +376,6 @@ export const AdminSettings: React.FC = () => {
           />
           <p className="text-xs text-gray-500 mt-1">
             Esta chave será exibida ao cliente quando ele escolher pagar com Pix.
-          </p>
-        </div>
-        <div className="mt-4">
-          <label htmlFor="mercadoPagoLink" className="block text-sm font-medium text-gray-700 mb-2">
-            Link Mercado Pago (para pagamento com cartão)
-          </label>
-          <input
-            id="mercadoPagoLink"
-            type="url"
-            value={settings.mercado_pago_link}
-            onChange={(e) => handleInputChange('mercado_pago_link', e.target.value)}
-            className="w-full max-w-md p-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-            placeholder="Ex: https://link.mercadopago.com.br/sushicr"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Este link será aberto em uma nova aba quando o cliente escolher pagar com cartão.
           </p>
         </div>
       </div>

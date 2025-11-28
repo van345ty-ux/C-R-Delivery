@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../integrations/supabase/client';
-import { Order, CartItem } from '../App';
+import { Order, CartItem } from '../types'; // Corrected import path
 import { Package, Calendar, Hash, ChevronRight } from 'lucide-react';
 
 interface UserOrdersProps {
