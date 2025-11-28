@@ -536,6 +536,9 @@ function App() {
     if (city?.active) {
       setSelectedCity(cityName);
       
+      // Sinaliza que o modal de promoção deve ser exibido ao carregar a HomePage
+      localStorage.setItem('showPromotionModalOnLoad', 'true');
+
       // Atualiza o timestamp de acesso ao selecionar a cidade
       localStorage.setItem(LAST_ACCESS_KEY, Date.now().toString());
 

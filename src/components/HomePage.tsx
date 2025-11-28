@@ -85,51 +85,63 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [menuFilter, setMenuFilter] = useState('Todos');
 
   useEffect(() => {
-    const fetchPromotionsAndSettings = async () => {
-      // Se estiver no fluxo de retorno do Mercado Pago, abre o carrinho e suprime o modal de promoção
-      if (isMercadoPagoReturnFlow || isPixReturnFlow) {
-        console.log('HomePage: External payment return flow detected, suppressing promotion modal.');
-        setShowPromotions(false); // Suprime o modal de promoção
-        setShowCart(true); // Abre o carrinho automaticamente
-        return; // Não busca promoções se estiver retornando de pagamento externo
-      }
+    const PROMOTION_MODAL_COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 horas
+    const LAST_SHOWN_KEY = 'promotionModalLastShown';
 
-      // Busca promoções
-      const { data: promotionsData, error: promotionsError } = await supabase
-        .from('products')
-        .select('*')
-        .eq('category', 'Promoção')
-        .eq('available', true);
-
-      if (promotionsError) {
-        console.error('Error fetching promotions:', promotionsError);
-      } else if (promotionsData && promotionsData.length > 0) {
-        setPromotions(promotionsData);
-        
-        // Se o modal de pré-pedido NÃO estiver ativo, mostra o modal de promoção
-        if (!showPreOrderModal) {
-          setTimeout(() => {
-            setShowPromotions(true);
-          }, 1000);
-        }
-      }
-
-      const { data: settingsData, error: settingsError } = await supabase
+    // Função para buscar o título do modal, que pode ser executada independentemente
+    const fetchModalTitle = async () => {
+      const { data, error } = await supabase
         .from('settings')
         .select('value')
         .eq('key', 'promotion_modal_title')
         .single();
-      
-      if (settingsError && settingsError.code !== 'PGRST116') {
-        console.error('Error fetching promotion title setting:', settingsError);
-      } else if (settingsData && settingsData.value) {
-        setPromotionModalTitle(settingsData.value);
+      if (!error && data) {
+        setPromotionModalTitle(data.value);
       }
     };
 
-    // Só busca promoções e configurações se o modal de pré-pedido não estiver ativo
-    fetchPromotionsAndSettings();
-  }, [showPreOrderModal, isMercadoPagoReturnFlow, isPixReturnFlow]); // showPreOrderModal é a única dependência relevante para a exibição inicial
+    fetchModalTitle();
+
+    // Condições de saída antecipada: não mostrar modal se estiver em fluxos de pagamento ou pré-pedido
+    if (isMercadoPagoReturnFlow || isPixReturnFlow || showPreOrderModal) {
+      return;
+    }
+
+    const shouldShowOnLoadFromLocation = localStorage.getItem('showPromotionModalOnLoad') === 'true';
+    
+    // Se a flag estiver presente, remove-a para não disparar novamente em um refresh
+    if (shouldShowOnLoadFromLocation) {
+      localStorage.removeItem('showPromotionModalOnLoad');
+    }
+
+    const lastShownTimestamp = parseInt(localStorage.getItem(LAST_SHOWN_KEY) || '0');
+    const isCooldownActive = (Date.now() - lastShownTimestamp) < PROMOTION_MODAL_COOLDOWN_MS;
+
+    // A condição para mostrar é: (veio da tela de cidades) OU (o cooldown de 2h expirou)
+    if (shouldShowOnLoadFromLocation || !isCooldownActive) {
+      const fetchAndShowPromotions = async () => {
+        const { data: promotionsData, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('category', 'Promoção')
+          .eq('available', true);
+
+        if (error) {
+          console.error('Error fetching promotions:', error);
+          return;
+        }
+
+        if (promotionsData && promotionsData.length > 0) {
+          setPromotions(promotionsData);
+          setShowPromotions(true);
+          // Atualiza o timestamp de quando o modal foi exibido pela última vez
+          localStorage.setItem(LAST_SHOWN_KEY, Date.now().toString());
+        }
+      };
+
+      fetchAndShowPromotions();
+    }
+  }, [isMercadoPagoReturnFlow, isPixReturnFlow, showPreOrderModal]);
 
   const handleAddToCart = (product: Product, quantity = 1, observations?: string) => {
     onAddToCart(product, quantity, observations || undefined);
