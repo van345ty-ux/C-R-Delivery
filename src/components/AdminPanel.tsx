@@ -20,9 +20,18 @@ interface AdminPanelProps {
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  // Inicializa o estado lendo do localStorage, com 'dashboard' como padrão.
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('adminActiveTab') || 'dashboard';
+  });
+  
   const [customerLoginNotificationUser, setCustomerLoginNotificationUser] = useState<string | null>(null);
   const [pendingBonificationCount, setPendingBonificationCount] = useState(0);
+
+  // Salva a aba ativa no localStorage sempre que ela mudar.
+  useEffect(() => {
+    localStorage.setItem('adminActiveTab', activeTab);
+  }, [activeTab]);
 
   const playNotificationSound = () => {
     const audio = document.getElementById('login-sound') as HTMLAudioElement;
