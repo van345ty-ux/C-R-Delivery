@@ -35,10 +35,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
     }
   };
 
+  // Função para buscar a contagem de bonificações pendentes
+  const fetchPendingBonificationCount = async () => {
+    const { count, error } = await supabase
+      .from('coupons')
+      .select('id', { count: 'exact' })
+      .eq('is_pending_admin_approval', true);
+
+    if (error) {
+      console.error('Error fetching pending bonification count:', error);
+      setPendingBonificationCount(0);
+    } else {
+      setPendingBonificationCount(count || 0);
+    }
+  };
+
   useEffect(() => {
     let loginChannel: RealtimeChannel | null = null;
     let bonificationChannel: RealtimeChannel | null = null;
-    let orderChannel: RealtimeChannel | null = null; // Novo canal para pedidos
+    let orderChannel: RealtimeChannel | null = null;
 
     const setupRealtime = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -80,7 +95,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
               toast.success(`Novo Pedido Recebido! #${newOrder.order_number.toString().padStart(2, '0')}`);
               playNotificationSound(); // Toca o som
               
-              // Força a recarga da lista de pedidos
+              // Força a recarga da lista de pedidos, independentemente da aba ativa
               setOrderRefetchTrigger(prev => prev + 1);
             }
           )
@@ -105,35 +120,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
       }
     };
 
-    const fetchPendingBonificationCount = async () => {
-      const { count, error } = await supabase
-        .from('coupons')
-        .select('id', { count: 'exact' })
-        .eq('is_pending_admin_approval', true);
-
-      if (error) {
-        console.error('Error fetching pending bonification count:', error);
-        setPendingBonificationCount(0);
-      } else {
-        setPendingBonificationCount(count || 0);
-      }
-    };
-
     setupRealtime();
     fetchPendingBonificationCount(); // Initial fetch
 
     return () => {
-      if (loginChannel) {
-        supabase.removeChannel(loginChannel);
-      }
-      if (bonificationChannel) {
-        supabase.removeChannel(bonificationChannel);
-      }
-      if (orderChannel) { // Limpa o novo canal
-        supabase.removeChannel(orderChannel);
-      }
+      // Limpeza de todos os canais
+      if (loginChannel) supabase.removeChannel(loginChannel);
+      if (bonificationChannel) supabase.removeChannel(bonificationChannel);
+      if (orderChannel) supabase.removeChannel(orderChannel);
     };
-  }, []); // Removido activeTab das dependências, pois o trigger de recarga agora é orderRefetchTrigger
+  }, []); // Lista de dependências vazia para rodar apenas na montagem
 
   const handleCloseLoginNotification = () => {
     setCustomerLoginNotificationUser(null);
