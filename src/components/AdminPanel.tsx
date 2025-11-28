@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Package, Users, BarChart, MapPin, Tag, SlidersHorizontal, Star, Gift } from 'lucide-react'; // Adicionado Star para o ícone de Destaques e Gift para Bonificações
+import { ArrowLeft, Package, Users, BarChart, MapPin, Tag, SlidersHorizontal, Star, Gift } from 'lucide-react';
 import { AdminOrders } from './admin/AdminOrders';
 import { AdminProducts } from './admin/AdminProducts';
 import { AdminCities } from './admin/AdminCities';
@@ -9,11 +9,10 @@ import { AdminDashboard } from './admin/AdminDashboard';
 import { AdminCustomers } from './admin/AdminCustomers';
 import { AdminSettings } from './admin/AdminSettings';
 import { AdminHighlights } from './admin/AdminHighlights';
-import { AdminBonificationCoupons } from './admin/AdminBonificationCoupons'; // Importando o novo componente
+import { AdminBonificationCoupons } from './admin/AdminBonificationCoupons';
 import { LoginNotification } from './LoginNotification';
 import { supabase } from '../integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
-import toast from 'react-hot-toast'; // Importação adicionada
 
 interface AdminPanelProps {
   onBack: () => void;
@@ -23,8 +22,7 @@ interface AdminPanelProps {
 export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [customerLoginNotificationUser, setCustomerLoginNotificationUser] = useState<string | null>(null);
-  const [pendingBonificationCount, setPendingBonificationCount] = useState(0); // Novo estado para a contagem de cupons pendentes
-  const [orderRefetchTrigger, setOrderRefetchTrigger] = useState(0); // Novo estado para forçar a recarga de pedidos
+  const [pendingBonificationCount, setPendingBonificationCount] = useState(0);
 
   const playNotificationSound = () => {
     const audio = document.getElementById('login-sound') as HTMLAudioElement;
@@ -35,7 +33,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
     }
   };
 
-  // Função para buscar a contagem de bonificações pendentes
   const fetchPendingBonificationCount = async () => {
     const { count, error } = await supabase
       .from('coupons')
@@ -53,14 +50,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
   useEffect(() => {
     let loginChannel: RealtimeChannel | null = null;
     let bonificationChannel: RealtimeChannel | null = null;
-    let orderChannel: RealtimeChannel | null = null;
 
     const setupRealtime = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       const adminId = user ? user.id : null;
 
       if (adminId) {
-        // 1. Realtime para notificações de login
         loginChannel = supabase
           .channel('login_notifications_channel')
           .on(
@@ -74,46 +69,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
               const newLogin = payload.new as { user_id: string; user_name: string };
               if (newLogin.user_id !== adminId) {
                 setCustomerLoginNotificationUser(newLogin.user_name);
-                playNotificationSound(); // Toca o som
+                playNotificationSound();
               }
             }
           )
           .subscribe();
 
-        // 2. Realtime para novos pedidos (NOVO)
-        orderChannel = supabase
-          .channel('new_orders_channel')
-          .on(
-            'postgres_changes',
-            {
-              event: 'INSERT',
-              schema: 'public',
-              table: 'orders',
-            },
-            (payload) => {
-              const newOrder = payload.new as { order_number: number };
-              toast.success(`Novo Pedido Recebido! #${newOrder.order_number.toString().padStart(2, '0')}`);
-              playNotificationSound(); // Toca o som
-              
-              // Força a recarga da lista de pedidos, independentemente da aba ativa
-              setOrderRefetchTrigger(prev => prev + 1);
-            }
-          )
-          .subscribe();
-
-        // 3. Realtime para cupons de bonificação pendentes
         bonificationChannel = supabase
           .channel('pending_bonification_coupons')
           .on(
             'postgres_changes',
             {
-              event: '*', // Listen to INSERT, UPDATE, DELETE
+              event: '*',
               schema: 'public',
               table: 'coupons',
-              filter: 'is_pending_admin_approval=eq.true', // Only interested in pending ones
+              filter: 'is_pending_admin_approval=eq.true',
             },
             () => {
-              fetchPendingBonificationCount(); // Refetch count on any change to pending coupons
+              fetchPendingBonificationCount();
             }
           )
           .subscribe();
@@ -121,15 +94,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
     };
 
     setupRealtime();
-    fetchPendingBonificationCount(); // Initial fetch
+    fetchPendingBonificationCount();
 
     return () => {
-      // Limpeza de todos os canais
       if (loginChannel) supabase.removeChannel(loginChannel);
       if (bonificationChannel) supabase.removeChannel(bonificationChannel);
-      if (orderChannel) supabase.removeChannel(orderChannel);
     };
-  }, []); // Lista de dependências vazia para rodar apenas na montagem
+  }, []);
 
   const handleCloseLoginNotification = () => {
     setCustomerLoginNotificationUser(null);
@@ -141,7 +112,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
     { id: 'products', label: 'Produtos', icon: Package },
     { id: 'highlights', label: 'Destaques', icon: Star },
     { id: 'cities', label: 'Rota Atual', icon: MapPin },
-    { id: 'bonification_coupons', label: 'Bonificações', icon: Gift, notificationCount: pendingBonificationCount }, // Nova aba de Bonificações com notificação
+    { id: 'bonification_coupons', label: 'Bonificações', icon: Gift, notificationCount: pendingBonificationCount },
     { id: 'coupons', label: 'Cupons', icon: Tag },
     { id: 'promotions', label: 'Promoções', icon: Tag },
     { id: 'customers', label: 'Clientes', icon: Users },
@@ -149,37 +120,34 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
   ];
 
   const renderTabContent = () => {
-    // Usando activeTab como parte da key para forçar a remontagem do componente
     switch (activeTab) {
       case 'dashboard':
-        return <AdminDashboard key={`admin-dashboard-${activeTab}`} />;
+        return <AdminDashboard />;
       case 'orders':
-        // Passa o orderRefetchTrigger para forçar a recarga quando um novo pedido chega
-        return <AdminOrders key={`admin-orders-${activeTab}`} onUserUpdate={onUserUpdate} refetchTrigger={orderRefetchTrigger} />;
+        return <AdminOrders onUserUpdate={onUserUpdate} />;
       case 'products':
-        return <AdminProducts key={`admin-products-${activeTab}`} />;
+        return <AdminProducts />;
       case 'highlights':
-        return <AdminHighlights key={`admin-highlights-${activeTab}`} />;
+        return <AdminHighlights />;
       case 'cities':
-        return <AdminCities key={`admin-cities-${activeTab}`} />;
+        return <AdminCities />;
       case 'bonification_coupons':
-        return <AdminBonificationCoupons key={`admin-bonification-coupons-${activeTab}`} />;
+        return <AdminBonificationCoupons />;
       case 'coupons':
-        return <AdminCoupons key={`admin-coupons-${activeTab}`} />;
+        return <AdminCoupons />;
       case 'promotions':
-        return <AdminPromotions key={`admin-promotions-${activeTab}`} />;
+        return <AdminPromotions />;
       case 'customers':
-        return <AdminCustomers key={`admin-customers-${activeTab}`} />;
+        return <AdminCustomers />;
       case 'settings':
-        return <AdminSettings key={`admin-settings-${activeTab}`} />;
+        return <AdminSettings />;
       default:
-        return <AdminDashboard key={`admin-dashboard-default-${activeTab}`} />;
+        return <AdminDashboard />;
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -196,7 +164,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
         </div>
       </div>
 
-      {/* Navigation Tabs */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4">
           <nav className="flex space-x-8 overflow-x-auto">
@@ -224,12 +191,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
         </div>
       </div>
 
-      {/* Content */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         {renderTabContent()}
       </div>
 
-      {/* Customer Login Notification */}
       {customerLoginNotificationUser && (
         <LoginNotification 
           userName={customerLoginNotificationUser} 

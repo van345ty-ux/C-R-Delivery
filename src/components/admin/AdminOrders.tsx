@@ -2,11 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Clock, Package, Truck, CheckCircle, Trash2 } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface Order {
   id: string;
-  user_id: string; // Adicionado user_id para associar o pedido ao cliente
-  order_number: number; // Adicionado order_number
+  user_id: string;
+  order_number: number;
   customer_name: string;
   customer_phone: string;
   items: Array<{ name: string; quantity: number; price: number; observations?: string }>;
@@ -19,11 +20,10 @@ interface Order {
 }
 
 interface AdminOrdersProps {
-  onUserUpdate: () => void; // Callback para notificar o App.tsx sobre a atualização do usuário
-  refetchTrigger?: number; // Novo prop para forçar a recarga
+  onUserUpdate: () => void;
 }
 
-export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate, refetchTrigger }) => {
+export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,23 +33,53 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate, refetchT
     const { data, error } = await supabase
       .from('orders')
       .select('*')
-      .order('created_at', { ascending: false }); // Ordena por mais recente primeiro
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching orders:', error);
       toast.error('Erro ao buscar pedidos.');
     } else {
-      // Simplificando a ordenação: apenas ordena por data de criação.
-      // A separação visual de 'Finalizados' será feita no mapeamento.
       setOrders(data || []);
     }
     setLoading(false);
   }, []);
 
   useEffect(() => {
-    console.log(`AdminOrders: useEffect triggered. refetchTrigger: ${refetchTrigger}`);
     fetchOrders();
-  }, [fetchOrders, refetchTrigger]); // Adiciona refetchTrigger como dependência
+  }, [fetchOrders]);
+
+  useEffect(() => {
+    const playNotificationSound = () => {
+      const audio = document.getElementById('login-sound') as HTMLAudioElement;
+      if (audio) {
+        audio.play().catch(error => {
+          console.warn("A reprodução automática do som foi bloqueada pelo navegador.", error);
+        });
+      }
+    };
+
+    const orderChannel: RealtimeChannel = supabase
+      .channel('admin-orders-realtime-channel')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'orders',
+        },
+        (payload) => {
+          const newOrder = payload.new as { order_number: number };
+          toast.success(`Novo Pedido Recebido! #C&R${newOrder.order_number.toString().padStart(2, '0')}`);
+          playNotificationSound();
+          fetchOrders(); // Atualiza a lista de pedidos
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(orderChannel);
+    };
+  }, [fetchOrders]);
 
   const getDeliverySteps = () => [
     'Pedido recebido',
@@ -80,7 +110,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate, refetchT
         onUserUpdate();
       }
       fetchOrders();
-      toast.success(`Status do pedido ${orderId.substring(0, 6)} atualizado para "${newStatus}"`);
+      toast.success(`Status do pedido atualizado para "${newStatus}"`);
     }
   };
 
@@ -96,7 +126,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate, refetchT
         console.error('Error deleting order:', error);
       } else {
         toast.success('Pedido excluído com sucesso.');
-        fetchOrders(); // Atualiza a lista de pedidos
+        fetchOrders();
       }
     }
   };
@@ -122,7 +152,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate, refetchT
         .select('id')
         .eq('user_id', userId)
         .eq('code', 'CLIENTE10')
-        .eq('is_pending_admin_approval', true) // Check for pending coupon
+        .eq('is_pending_admin_approval', true)
         .single();
 
       if (couponError && couponError.code !== 'PGRST116') {
@@ -132,7 +162,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate, refetchT
       if (!existingCoupon) {
         const today = new Date();
         const validTo = new Date(today);
-        validTo.setDate(today.getDate() + 7); // 7 days validity
+        validTo.setDate(today.getDate() + 7);
 
         const { error: insertCouponError } = await supabase
           .from('coupons')
@@ -143,10 +173,10 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate, refetchT
             type: 'loyalty',
             valid_from: today.toISOString().split('T')[0],
             valid_to: validTo.toISOString().split('T')[0],
-            active: false, // Not active until admin approves
+            active: false,
             usage_limit: 1,
             user_id: userId,
-            is_pending_admin_approval: true, // Mark as pending admin approval
+            is_pending_admin_approval: true,
           });
 
         if (insertCouponError) {
