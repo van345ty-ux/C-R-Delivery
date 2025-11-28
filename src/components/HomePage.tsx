@@ -94,23 +94,22 @@ export const HomePage: React.FC<HomePageProps> = ({
         return; // Não busca promoções se estiver retornando de pagamento externo
       }
 
-      // Só mostra o pop-up de promoção se ainda não foi visto E o modal de pré-pedido não estiver ativo
-      const hasSeenPromotionModal = localStorage.getItem('hasSeenPromotionModal');
-      if (hasSeenPromotionModal !== 'true' && !showPreOrderModal) {
-        const { data: promotionsData, error: promotionsError } = await supabase
-          .from('products')
-          .select('*')
-          .eq('category', 'Promoção')
-          .eq('available', true);
+      // Busca promoções
+      const { data: promotionsData, error: promotionsError } = await supabase
+        .from('products')
+        .select('*')
+        .eq('category', 'Promoção')
+        .eq('available', true);
 
-        if (promotionsError) {
-          console.error('Error fetching promotions:', promotionsError);
-        } else if (promotionsData && promotionsData.length > 0) {
-          setPromotions(promotionsData);
-          // Removed unused timer variable
+      if (promotionsError) {
+        console.error('Error fetching promotions:', promotionsError);
+      } else if (promotionsData && promotionsData.length > 0) {
+        setPromotions(promotionsData);
+        
+        // Se o modal de pré-pedido NÃO estiver ativo, mostra o modal de promoção
+        if (!showPreOrderModal) {
           setTimeout(() => {
             setShowPromotions(true);
-            localStorage.setItem('hasSeenPromotionModal', 'true'); // Define a flag após exibir
           }, 1000);
         }
       }
@@ -129,10 +128,8 @@ export const HomePage: React.FC<HomePageProps> = ({
     };
 
     // Só busca promoções e configurações se o modal de pré-pedido não estiver ativo
-    if (!showPreOrderModal) {
-      fetchPromotionsAndSettings();
-    }
-  }, [showPreOrderModal, isMercadoPagoReturnFlow, isPixReturnFlow]); // Adicionado isPixReturnFlow como dependência
+    fetchPromotionsAndSettings();
+  }, [showPreOrderModal, isMercadoPagoReturnFlow, isPixReturnFlow]); // showPreOrderModal é a única dependência relevante para a exibição inicial
 
   const handleAddToCart = (product: Product, quantity = 1, observations?: string) => {
     onAddToCart(product, quantity, observations || undefined);
@@ -225,10 +222,8 @@ export const HomePage: React.FC<HomePageProps> = ({
         <PreOrderModal onClose={() => {
           setShowPreOrderModal(false);
           // Após fechar o modal de pré-pedido, verifica se o modal de promoção deve abrir
-          const hasSeenPromotionModal = localStorage.getItem('hasSeenPromotionModal');
-          if (hasSeenPromotionModal !== 'true' && promotions.length > 0) {
+          if (promotions.length > 0) {
             setShowPromotions(true);
-            localStorage.setItem('hasSeenPromotionModal', 'true');
           }
         }} />
       ) : (
