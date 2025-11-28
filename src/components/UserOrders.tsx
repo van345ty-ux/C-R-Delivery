@@ -10,7 +10,7 @@ interface UserOrdersProps {
 
 interface DbOrder {
   id: string;
-  order_number: number; // Adicionado order_number
+  order_number: number;
   items: Array<{ name: string; quantity: number; price: number; observations?: string; product_id: string }>;
   total: number;
   delivery_fee: number;
@@ -22,6 +22,7 @@ interface DbOrder {
   customer_phone: string;
   created_at: string;
   coupon_used?: string;
+  change_for?: number | null; // Adicionado campo para o troco
 }
 
 export const UserOrders: React.FC<UserOrdersProps> = ({ userId, onViewOrder }) => {
@@ -65,7 +66,7 @@ export const UserOrders: React.FC<UserOrdersProps> = ({ userId, onViewOrder }) =
 
     const formattedOrder: Order = {
       id: dbOrder.id,
-      orderNumber: dbOrder.order_number, // Mapeia o order_number
+      orderNumber: dbOrder.order_number,
       items: formattedItems,
       total: dbOrder.total,
       deliveryFee: dbOrder.delivery_fee,
@@ -76,7 +77,8 @@ export const UserOrders: React.FC<UserOrdersProps> = ({ userId, onViewOrder }) =
       customerName: dbOrder.customer_name,
       customerPhone: dbOrder.customer_phone,
       createdAt: dbOrder.created_at,
-      couponUsed: dbOrder.coupon_used
+      couponUsed: dbOrder.coupon_used,
+      changeFor: dbOrder.change_for, // Passando a informação de troco
     };
     
     onViewOrder(formattedOrder);
@@ -109,7 +111,7 @@ export const UserOrders: React.FC<UserOrdersProps> = ({ userId, onViewOrder }) =
         <div>
           <div className="flex items-center text-sm text-gray-500 mb-1">
             <Hash className="w-3 h-3 mr-1" />
-            <span>Pedido #C&R{order.order_number.toString().padStart(2, '0')}</span> {/* Usando order_number */}
+            <span>Pedido #C&R{order.order_number.toString().padStart(2, '0')}</span>
             <span className="mx-2">•</span>
             <Calendar className="w-3 h-3 mr-1" />
             <span>{new Date(order.created_at).toLocaleDateString('pt-BR')}</span>

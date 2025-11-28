@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Clock, CheckCircle, Package, Truck, Home, AlertTriangle } from 'lucide-react';
-import { Order, CartItem } from '../types'; // Corrected import path and added CartItem type
+import { Order, CartItem } from '../types';
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
 
@@ -18,35 +18,32 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ order: initialOrde
     const fetchOrderStatus = async () => {
       const { data, error } = await supabase
         .from('orders')
-        .select('status, order_number') // Seleciona order_number também
+        .select('status, order_number')
         .eq('id', order.id)
         .single();
 
       if (error) {
         console.error('Error fetching order status:', error);
-        // toast.error('Erro ao buscar status do pedido.'); // Pode ser muito intrusivo para polling
         return;
       }
 
       if (data && (data.status !== order.status || data.order_number !== order.orderNumber)) {
-        setOrder((prevOrder: Order) => ({ // Explicitly typed prevOrder
+        setOrder((prevOrder: Order) => ({
           ...prevOrder,
           status: data.status,
-          orderNumber: data.order_number, // Atualiza orderNumber se necessário
+          orderNumber: data.order_number,
         }));
         toast.success(`Status do pedido atualizado para: ${data.status}`);
       }
     };
 
-    // Fetch immediately and then every 5 seconds
     fetchOrderStatus();
-    intervalId = setInterval(fetchOrderStatus, 5000); // Poll every 5 seconds
+    intervalId = setInterval(fetchOrderStatus, 5000);
 
-    // Cleanup interval on component unmount
     return () => {
       clearInterval(intervalId);
     };
-  }, [order.id, order.status, order.orderNumber]); // Dependência de order.status e order.orderNumber para re-renderizar e atualizar o UI
+  }, [order.id, order.status, order.orderNumber]);
 
   const getDeliverySteps = () => {
     return [
@@ -196,9 +193,22 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ order: initialOrde
                 <span className="font-medium text-right">{order.address}</span>
               </div>
             )}
+
+            {order.changeFor && order.changeFor > order.total && (
+              <>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Troco para:</span>
+                  <span className="font-medium">R$ {order.changeFor.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-blue-600">
+                  <span className="font-semibold">Seu troco:</span>
+                  <span className="font-semibold">R$ {(order.changeFor - order.total).toFixed(2)}</span>
+                </div>
+              </>
+            )}
             
-            <div className="flex justify-between">
-              <span className="text-gray-600">Total:</span>
+            <div className="flex justify-between border-t pt-3 mt-3">
+              <span className="font-bold text-lg">Total:</span>
               <span className="font-bold text-lg">R$ {order.total.toFixed(2)}</span>
             </div>
           </div>
@@ -209,7 +219,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ order: initialOrde
           <h2 className="text-lg font-semibold mb-4">Itens do Pedido</h2>
           
           <div className="space-y-3">
-            {order.items.map((item: CartItem) => ( // Explicitly typed item
+            {order.items.map((item: CartItem) => (
               <div key={item.product.id} className="flex justify-between items-start">
                 <div className="flex-1">
                   <p className="font-medium">{item.product.name}</p>
