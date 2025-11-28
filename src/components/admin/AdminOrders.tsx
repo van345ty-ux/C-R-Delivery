@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Clock, Package, Truck, CheckCircle, Trash2 } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
@@ -20,42 +20,35 @@ interface Order {
 
 interface AdminOrdersProps {
   onUserUpdate: () => void; // Callback para notificar o App.tsx sobre a atualização do usuário
+  refetchTrigger?: number; // Novo prop para forçar a recarga
 }
 
-export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
+export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate, refetchTrigger }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
-    console.log('AdminOrders: fetchOrders called.'); // Adicionado log aqui
+  const fetchOrders = useCallback(async () => {
+    console.log('AdminOrders: fetchOrders called.');
     setLoading(true);
     const { data, error } = await supabase
       .from('orders')
-      .select('*') // Seleciona order_number também
-      .order('created_at', { ascending: false });
+      .select('*')
+      .order('created_at', { ascending: false }); // Ordena por mais recente primeiro
 
     if (error) {
       console.error('Error fetching orders:', error);
       toast.error('Erro ao buscar pedidos.');
     } else {
-      const sortedData = (data || []).sort((a, b) => {
-        const completedStatuses = ['Entregue', 'Cliente já fez a retirada'];
-        const aIsCompleted = completedStatuses.includes(a.status);
-        const bIsCompleted = completedStatuses.includes(b.status);
-
-        if (aIsCompleted === bIsCompleted) {
-          return 0; // Mantém a ordem original (mais recentes primeiro)
-        }
-        return aIsCompleted ? 1 : -1; // Pedidos ativos vêm primeiro
-      });
-      setOrders(sortedData);
+      // Simplificando a ordenação: apenas ordena por data de criação.
+      // A separação visual de 'Finalizados' será feita no mapeamento.
+      setOrders(data || []);
     }
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders, refetchTrigger]); // Adiciona refetchTrigger como dependência
 
   const getDeliverySteps = () => [
     'Pedido recebido',
@@ -211,9 +204,11 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
     return <div>Carregando pedidos...</div>;
   }
 
-  const activeOrdersCount = orders.filter(
-    (order) => order.status !== 'Entregue' && order.status !== 'Cliente já fez a retirada'
-  ).length;
+  const completedStatuses = ['Entregue', 'Cliente já fez a retirada'];
+  const activeOrders = orders.filter(order => !completedStatuses.includes(order.status));
+  const finishedOrders = orders.filter(order => completedStatuses.includes(order.status));
+  
+  const activeOrdersCount = activeOrders.length;
 
   return (
     <div className="space-y-6">
@@ -233,10 +228,9 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
         </div>
       ) : (
         <div className="grid gap-6">
-          {orders.map((order, index) => {
-            const completedStatuses = ['Entregue', 'Cliente já fez a retirada'];
+          {[...activeOrders, ...finishedOrders].map((order, index) => {
             const isCompleted = completedStatuses.includes(order.status);
-            const previousOrder = index > 0 ? orders[index - 1] : null;
+            const previousOrder = index > 0 ? [...activeOrders, ...finishedOrders][index - 1] : null;
             const previousIsCompleted = previousOrder ? completedStatuses.includes(previousOrder.status) : false;
             const showSeparator = isCompleted && !previousIsCompleted;
             const steps = order.delivery_type === 'delivery' ? getDeliverySteps() : getPickupSteps();

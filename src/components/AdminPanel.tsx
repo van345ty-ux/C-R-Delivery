@@ -24,6 +24,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [customerLoginNotificationUser, setCustomerLoginNotificationUser] = useState<string | null>(null);
   const [pendingBonificationCount, setPendingBonificationCount] = useState(0); // Novo estado para a contagem de cupons pendentes
+  const [orderRefetchTrigger, setOrderRefetchTrigger] = useState(0); // Novo estado para forçar a recarga de pedidos
 
   const playNotificationSound = () => {
     const audio = document.getElementById('login-sound') as HTMLAudioElement;
@@ -76,15 +77,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
             },
             (payload) => {
               const newOrder = payload.new as { order_number: number };
-              toast.success(`Novo Pedido Recebido! #${newOrder.order_number.toString().padStart(2, '0')}`); // Toast agora funciona
+              toast.success(`Novo Pedido Recebido! #${newOrder.order_number.toString().padStart(2, '0')}`);
               playNotificationSound(); // Toca o som
               
-              // Se estiver na aba de pedidos, força o refresh
-              if (activeTab === 'orders') {
-                // Força a remontagem do AdminOrders para buscar a lista atualizada
-                setActiveTab('dashboard'); 
-                setTimeout(() => setActiveTab('orders'), 10);
-              }
+              // Força a recarga da lista de pedidos
+              setOrderRefetchTrigger(prev => prev + 1);
             }
           )
           .subscribe();
@@ -136,7 +133,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
         supabase.removeChannel(orderChannel);
       }
     };
-  }, [activeTab]); // Adicionado activeTab para que o useEffect possa reagir à mudança de aba
+  }, []); // Removido activeTab das dependências, pois o trigger de recarga agora é orderRefetchTrigger
 
   const handleCloseLoginNotification = () => {
     setCustomerLoginNotificationUser(null);
@@ -161,7 +158,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
       case 'dashboard':
         return <AdminDashboard key={`admin-dashboard-${activeTab}`} />;
       case 'orders':
-        return <AdminOrders key={`admin-orders-${activeTab}`} onUserUpdate={onUserUpdate} />;
+        // Passa o orderRefetchTrigger para forçar a recarga quando um novo pedido chega
+        return <AdminOrders key={`admin-orders-${activeTab}`} onUserUpdate={onUserUpdate} refetchTrigger={orderRefetchTrigger} />;
       case 'products':
         return <AdminProducts key={`admin-products-${activeTab}`} />;
       case 'highlights':
