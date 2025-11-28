@@ -19,7 +19,7 @@ export const AdminProducts: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const categories = ['Sushi', 'Temaki', 'Combinados', 'Especiais', 'Bebidas'];
+  const categories = ['Black Friday C&R', 'Sushi', 'Temaki', 'Combinados', 'Especiais', 'Bebidas', 'Promoção'];
 
   useEffect(() => {
     fetchProducts();
