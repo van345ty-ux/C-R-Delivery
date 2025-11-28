@@ -67,6 +67,9 @@ export const Cart: React.FC<CartProps> = ({
 
   const isAwaitingPixPayment = paymentMethod === 'pix' && pixPaymentInitiated && !hasAcknowledgedPixReturnConfirmation;
 
+  // Verifica se hoje é domingo (0 = Domingo)
+  const isSunday = new Date().getDay() === 0;
+
   useEffect(() => {
     if (isMercadoPagoReturnFlow) {
       setPaymentMethod('card');
@@ -163,7 +166,7 @@ export const Cart: React.FC<CartProps> = ({
   }, [user?.id]);
 
   const subtotal = items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  const deliveryFee = deliveryType === 'delivery' ? deliveryFeeValue : 0;
+  const deliveryFee = deliveryType === 'delivery' && !isSunday ? deliveryFeeValue : 0;
   const discount = appliedCoupon ? (subtotal * appliedCoupon.discount / 100) : 0;
   const total = subtotal + deliveryFee - discount;
 
@@ -423,7 +426,16 @@ export const Cart: React.FC<CartProps> = ({
         <div className="border-t pt-4">
           <h3 className="font-medium mb-3">Tipo de Entrega</h3>
           <div className="space-y-2">
-            <label className="flex items-center"><input type="radio" checked={deliveryType === 'delivery'} onChange={() => setDeliveryType('delivery')} className="mr-2" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment} /><span>Delivery (+R$ {deliveryFeeValue.toFixed(2)})</span></label>
+            <label className="flex items-center">
+              <input type="radio" checked={deliveryType === 'delivery'} onChange={() => setDeliveryType('delivery')} className="mr-2" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment} />
+              {isSunday ? (
+                <span className="font-bold text-green-600 animate-pulse-text">
+                  🎁 BLACK FRIDAY: Entrega Grátis Hoje! 🎁
+                </span>
+              ) : (
+                <span>Delivery (+R$ {deliveryFeeValue.toFixed(2)})</span>
+              )}
+            </label>
             <label className="flex items-center"><input type="radio" checked={deliveryType === 'pickup'} onChange={() => setDeliveryType('pickup')} className="mr-2" disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment} /><span>Retirada no local (Grátis)</span></label>
           </div>
         </div>

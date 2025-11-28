@@ -41,6 +41,11 @@
   .animate-bounce-subtle {
     animation: bounceSubtle 1.5s infinite;
   }
+
+  /* Nova: Animação de Pulso para o texto da Black Friday */
+  .animate-pulse-text {
+    animation: pulseText 1.5s ease-in-out infinite;
+  }
 }
 
 @keyframes fadeIn {
@@ -123,6 +128,18 @@
   }
   50% {
     transform: translateY(-3px); /* Pulo de 3px */
+  }
+}
+
+/* Keyframes para o texto pulsante */
+@keyframes pulseText {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
   }
 }
 
