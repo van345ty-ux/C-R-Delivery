@@ -67,8 +67,8 @@ export const Cart: React.FC<CartProps> = ({
 
   const isAwaitingPixPayment = paymentMethod === 'pix' && pixPaymentInitiated && !hasAcknowledgedPixReturnConfirmation;
 
-  // MUDANÇA TEMPORÁRIA PARA VISUALIZAÇÃO
-  const isSunday = true;
+  // Verifica se hoje é domingo (0 = Domingo)
+  const isSunday = new Date().getDay() === 0;
 
   useEffect(() => {
     if (isMercadoPagoReturnFlow) {
