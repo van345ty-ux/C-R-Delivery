@@ -61,25 +61,18 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null
   return null;
 };
 
-// Constante para o limite de inatividade (1 hora em milissegundos)
-const INACTIVITY_LIMIT_MS = 1 * 60 * 60 * 1000; 
+// Constante para o limite de inatividade (5 horas em milissegundos, conforme solicitado)
+const INACTIVITY_LIMIT_MS = 5 * 60 * 60 * 1000; 
 const LAST_ACCESS_KEY = 'lastAccessTimestamp';
 
 function App() {
-  // Função para determinar a view inicial, aplicando a regra de inatividade
+  // Função para determinar a view inicial, agora simplificada
   const getInitialView = (savedView: string, savedCity: string): 'location' | 'home' | 'admin' | 'auth' | 'tracking' => {
     if (typeof window === 'undefined') return 'location';
 
-    const lastAccess = localStorage.getItem(LAST_ACCESS_KEY);
-    const now = Date.now();
-
-    // Se houver um registro de último acesso e ele for mais antigo que 1 hora,
-    // ou se a cidade não estiver selecionada, forçamos a tela de localização.
-    if (
-      !savedCity ||
-      (lastAccess && (now - parseInt(lastAccess) > INACTIVITY_LIMIT_MS))
-    ) {
-      console.log('App: Forcing location view due to inactivity or missing city.');
+    // Se a cidade não estiver selecionada, força a tela de localização.
+    if (!savedCity) {
+      console.log('App: Forcing location view due to missing city.');
       return 'location';
     }
 
@@ -184,13 +177,41 @@ function App() {
     }
   }, [isPixReturnFlow]);
 
-  // NOVO EFEITO: Atualiza o timestamp de último acesso em cada renderização bem-sucedida
+  // EFEITO REFORÇADO: Atualiza o timestamp de último acesso e força o recarregamento se necessário
   useEffect(() => {
+    // Atualiza o timestamp sempre que o app estiver ativo e não carregando
     if (typeof window !== 'undefined' && !isLoading) {
       localStorage.setItem(LAST_ACCESS_KEY, Date.now().toString());
       console.log('App: Updated last access timestamp.');
     }
-  }, [isLoading, currentView]); // Depende de isLoading para garantir que só atualize após o carregamento inicial
+
+    // Lógica para forçar o recarregamento
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const lastAccess = localStorage.getItem(LAST_ACCESS_KEY);
+        const now = Date.now();
+        if (lastAccess && (now - parseInt(lastAccess) > INACTIVITY_LIMIT_MS)) {
+          console.log(`App: Tab became visible after >${INACTIVITY_LIMIT_MS / 1000 / 60 / 60} hours of inactivity. Forcing reload.`);
+          window.location.reload();
+        }
+      }
+    };
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        console.log('App: Page restored from BFCache/Suspension. Forcing reload.');
+        window.location.reload();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pageshow', handlePageShow);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
+  }, [isLoading]); // Depende de isLoading para garantir que só rode após o carregamento inicial
 
   // Debugging logs for App state
   useEffect(() => {
@@ -479,37 +500,13 @@ function App() {
       console.log('initializeAuth: Auth state change listener set up.');
     };
 
-    // --- NOVO AJUSTE DE RECARREGAMENTO ---
-    // Listener para forçar o recarregamento se a aba se tornar visível ou for restaurada do cache
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log('App: Tab became visible. Forcing full page reload to ensure fresh data and session.');
-        // Força o recarregamento completo da página
-        window.location.reload(); 
-      }
-    };
-
-    const handlePageShow = (event: PageTransitionEvent) => {
-      if (event.persisted) {
-        console.log('App: Page restored from BFCache/Suspension. Forcing reload.');
-        // Força o recarregamento completo da página se restaurada do cache
-        window.location.reload();
-      }
-    };
-    // --- FIM DO NOVO AJUSTE DE RECARREGAMENTO ---
-
     initializeAuth();
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('pageshow', handlePageShow); 
 
     return () => {
       if (authSubscription) {
         console.log('Auth subscription unsubscribed.');
         authSubscription.unsubscribe();
       }
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('pageshow', handlePageShow); 
     };
   }, [checkAndShowCouponNotification]); // Dependência de checkAndShowCouponNotification
 
