@@ -63,6 +63,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
     const setupRealtime = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       const adminId = user ? user.id : null;
+      console.log('AdminPanel: setupRealtime called. Admin ID:', adminId); // Log de depuração
 
       if (adminId) {
         loginChannel = supabase
@@ -76,13 +77,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
             },
             (payload) => {
               const newLogin = payload.new as { user_id: string; user_name: string };
+              console.log('AdminPanel: New login notification received:', newLogin); // Log de depuração
               if (newLogin.user_id !== adminId) {
                 setCustomerLoginNotificationUser(newLogin.user_name);
                 playNotificationSound();
               }
             }
           )
-          .subscribe();
+          .subscribe((status) => {
+            console.log('AdminPanel: Login Channel Status:', status); // Log de status da subscrição
+          });
 
         bonificationChannel = supabase
           .channel('pending_bonification_coupons')
@@ -95,10 +99,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
               filter: 'is_pending_admin_approval=eq.true',
             },
             () => {
+              console.log('AdminPanel: Bonification change detected. Refetching count.'); // Log de depuração
               fetchPendingBonificationCount();
             }
           )
-          .subscribe();
+          .subscribe((status) => {
+            console.log('AdminPanel: Bonification Channel Status:', status); // Log de status da subscrição
+          });
       }
     };
 
@@ -106,8 +113,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
     fetchPendingBonificationCount();
 
     return () => {
-      if (loginChannel) supabase.removeChannel(loginChannel);
-      if (bonificationChannel) supabase.removeChannel(bonificationChannel);
+      if (loginChannel) {
+        console.log('AdminPanel: Unsubscribing from loginChannel.');
+        supabase.removeChannel(loginChannel);
+      }
+      if (bonificationChannel) {
+        console.log('AdminPanel: Unsubscribing from bonificationChannel.');
+        supabase.removeChannel(bonificationChannel);
+      }
     };
   }, []);
 
