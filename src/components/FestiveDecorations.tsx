@@ -1,35 +1,51 @@
 import React from 'react';
 
 export const ChristmasLights: React.FC = () => {
-    // Generate a sequence of lights
-    const lights = Array.from({ length: 30 });
+    // Generate a sequence of lights - increased count to ensure coverage
+    const lightCount = 40;
+    const lights = Array.from({ length: lightCount });
 
     return (
-        <div className="fixed top-0 left-0 w-full h-12 z-[60] pointer-events-none overflow-hidden flex justify-center space-x-4 sm:space-x-8 px-4">
-            {/* The Wire */}
-            <svg className="absolute top-[-10px] left-0 w-full h-12" preserveAspectRatio="none">
-                <path d="M0,0 Q50,20 100,0 T200,0 T300,0 T400,0 T500,0 T600,0 T700,0 T800,0 T900,0 T1000,0 T1100,0 T1200,0 T1300,0 T1400,0 T1500,0 T1600,0"
-                    fill="none" stroke="#374151" strokeWidth="2" />
-            </svg>
+        <div className="fixed top-0 left-0 w-full h-16 z-[60] pointer-events-none overflow-hidden flex justify-center items-start pt-2">
+            <div className="flex items-start">
+                {lights.map((_, i) => {
+                    // Colors: Red, Green, Yellow, Blue (added Blue to match image)
+                    const colors = [
+                        'bg-red-500 shadow-red-500',
+                        'bg-green-500 shadow-green-500',
+                        'bg-yellow-400 shadow-yellow-400',
+                        'bg-blue-400 shadow-blue-400'
+                    ];
+                    const colorClass = colors[i % 4];
 
-            {/* The Lights */}
-            {lights.map((_, i) => {
-                const colorClass = i % 3 === 0 ? 'bg-red-500 shadow-red-500' : i % 3 === 1 ? 'bg-green-500 shadow-green-500' : 'bg-yellow-400 shadow-yellow-400';
-                const animationClass = i % 2 === 0 ? 'animate-blink-odd' : 'animate-blink-even';
+                    // Blink animations
+                    const animationClass = i % 2 === 0 ? 'animate-blink-odd' : 'animate-blink-even';
 
-                return (
-                    <div
-                        key={i}
-                        className={`relative w-3 h-3 sm:w-4 sm:h-4 rounded-full mt-2 ${colorClass} ${animationClass}`}
-                        style={{
-                            boxShadow: `0 0 10px currentColor`
-                        }}
-                    >
-                        {/* Socket */}
-                        <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-700 rounded-sm"></div>
-                    </div>
-                );
-            })}
+                    return (
+                        <React.Fragment key={i}>
+                            {/* The Light */}
+                            <div className="relative flex flex-col items-center">
+                                {/* Socket */}
+                                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gray-800 rounded-sm z-10"></div>
+                                {/* Bulb */}
+                                <div
+                                    className={`w-3 h-4 sm:w-4 sm:h-5 rounded-full -mt-1 ${colorClass} ${animationClass}`}
+                                    style={{
+                                        boxShadow: `0 0 10px currentColor`
+                                    }}
+                                ></div>
+                            </div>
+
+                            {/* The Wire (between lights) */}
+                            {i < lightCount - 1 && (
+                                <div className="relative w-4 sm:w-8 h-4 -mt-2">
+                                    <div className="absolute top-2 left-0 w-full h-4 border-b-2 border-gray-800 rounded-[50%]"></div>
+                                </div>
+                            )}
+                        </React.Fragment>
+                    );
+                })}
+            </div>
         </div>
     );
 };
