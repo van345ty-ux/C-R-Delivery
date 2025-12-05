@@ -10,6 +10,8 @@ import { supabase } from './integrations/supabase/client';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import toast, { Toaster } from 'react-hot-toast';
 import { User, Coupon, Product, CartItem, Order, City, OperatingHour } from './types'; // Importando tipos de types.ts
+import { SnowEffect } from './components/SnowEffect';
+import { ChristmasLights } from './components/FestiveDecorations';
 
 const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null> => {
   console.log('fetchUserProfile: Attempting to fetch profile for user ID:', supabaseUser.id);
@@ -684,6 +686,7 @@ function App() {
   const heroSubtitleFontSize = appSettings.hero_subtitle_font_size || '20px';
   const heroSubtitleFontColor = appSettings.hero_subtitle_font_color || '#ffffff';
   const heroSubtitleBorderColor = appSettings.hero_subtitle_border_color || '#000000';
+  const isFestiveMode = appSettings.is_festive_mode_enabled === 'true';
 
   const renderContent = () => {
     if (currentView === 'location') {
@@ -749,12 +752,19 @@ function App() {
         isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
         isPixReturnFlow={isPixReturnFlow} // Passando a nova prop
         setIsPixReturnFlow={setIsPixReturnFlow} // Passando a nova prop
+        isFestiveMode={isFestiveMode} // Passando modo festivo
       />
     );
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {isFestiveMode && (
+        <>
+          <SnowEffect />
+          <ChristmasLights />
+        </>
+      )}
       {renderContent()}
       {showProfile && user && (
         <UserProfile

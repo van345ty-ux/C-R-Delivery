@@ -119,6 +119,109 @@
   }
 }
 
+@keyframes snowfall {
+  0% {
+    transform: translateY(-10px) translateX(0);
+  }
+
+  100% {
+    transform: translateY(100vh) translateX(20px);
+  }
+}
+
+.animate-snowfall {
+  animation-name: snowfall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* Festive Theme Utilities */
+.festive-border {
+  border-color: #FFD700 !important;
+  /* Gold */
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.festive-text-gold {
+  color: #FFD700 !important;
+}
+
+.festive-bg-gradient {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #FFD700 100%);
+}
+
+.festive-card-hover:hover {
+  border-color: #FFD700;
+  box-shadow: 0 10px 15px -3px rgba(255, 215, 0, 0.1), 0 4px 6px -2px rgba(255, 215, 0, 0.05);
+}
+
+/* Festive Animations */
+@keyframes blink-1 {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  50% {
+    opacity: 0.4;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes blink-2 {
+
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.9);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+.animate-blink-odd {
+  animation: blink-1 1.5s infinite alternate;
+}
+
+.animate-blink-even {
+  animation: blink-2 1.5s infinite alternate;
+}
+
+@keyframes swing {
+  0% {
+    transform: rotate(-5deg);
+  }
+
+  100% {
+    transform: rotate(5deg);
+  }
+}
+
+.animate-swing {
+  animation: swing 2s infinite alternate ease-in-out;
+}
+
+@keyframes bounce-slight {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-bounce-slight {
+  animation: bounce-slight 3s infinite ease-in-out;
+}
+
 /* Keyframes for Promotion Badge */
 @keyframes pulseFade {
 

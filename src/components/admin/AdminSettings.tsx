@@ -29,6 +29,7 @@ export const AdminSettings: React.FC = () => {
     hero_subtitle_font_size: '20px',
     hero_subtitle_font_color: '#ffffff',
     hero_subtitle_border_color: '#000000',
+    is_festive_mode_enabled: 'false',
   });
   const [operatingHours, setOperatingHours] = useState<OperatingHour[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +42,7 @@ export const AdminSettings: React.FC = () => {
   useEffect(() => {
     const fetchAllSettings = async () => {
       setLoading(true);
-      
+
       const settingsPromise = supabase.from('settings').select('key, value');
       const hoursPromise = supabase.from('operating_hours').select('*').order('day_of_week', { ascending: true });
 
@@ -98,13 +99,13 @@ export const AdminSettings: React.FC = () => {
     const { data: { publicUrl } } = supabase.storage
       .from(bucketName)
       .getPublicUrl(fileName);
-    
+
     return publicUrl;
   };
 
   const handleSave = async () => {
     setIsSaving(true);
-    
+
     let newLogoUrl = settings.app_logo_url;
     if (selectedLogoFile) {
       const uploadedUrl = await uploadFile(selectedLogoFile, 'app_assets');
@@ -127,10 +128,10 @@ export const AdminSettings: React.FC = () => {
       }
     }
 
-    const settingsToSave = { 
-      ...settings, 
-      app_logo_url: newLogoUrl, 
-      hero_image_url: newHeroImageUrl 
+    const settingsToSave = {
+      ...settings,
+      app_logo_url: newLogoUrl,
+      hero_image_url: newHeroImageUrl
     };
     const settingsPayload = Object.entries(settingsToSave).map(([key, value]) => ({ key, value }));
 
@@ -377,6 +378,29 @@ export const AdminSettings: React.FC = () => {
           <p className="text-xs text-gray-500 mt-1">
             Esta chave será exibida ao cliente quando ele escolher pagar com Pix.
           </p>
+        </div>
+      </div>
+
+      {/* Seção de Ornamentação Festiva */}
+      <div className="bg-white rounded-lg shadow-sm border p-6 border-yellow-400 bg-yellow-50">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              🎄 Ornamentação Festiva <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full">Novo</span>
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Ative para exibir neve caindo, cores douradas e efeitos de natal/ano novo no aplicativo.
+            </p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              className="sr-only peer"
+              checked={settings.is_festive_mode_enabled === 'true'}
+              onChange={(e) => handleInputChange('is_festive_mode_enabled', e.target.checked ? 'true' : 'false')}
+            />
+            <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-yellow-500"></div>
+          </label>
         </div>
       </div>
 

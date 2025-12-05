@@ -7,6 +7,7 @@ import { Product, Highlight } from '../types'; // Corrected import path
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
 import { withRetry, withTimeout, TIMEOUT_MS } from '../hooks/useQuery';
+import { ChristmasHeroDecorations } from './FestiveDecorations';
 
 interface MenuProps {
   onAddToCart: (product: Product, quantity?: number, observations?: string) => void;
@@ -26,6 +27,7 @@ interface MenuProps {
   heroSubtitleBorderColor: string;
   showPreOrderBanner: boolean; // Nova prop
   isMercadoPagoReturnFlow: boolean; // Nova prop
+  isFestiveMode: boolean; // Nova prop para modo festivo
 }
 
 const categories = [
@@ -56,6 +58,7 @@ export const Menu: React.FC<MenuProps> = ({
   heroSubtitleBorderColor,
   showPreOrderBanner, // Nova prop
   isMercadoPagoReturnFlow, // Nova prop
+  isFestiveMode, // Nova prop
 }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
@@ -161,7 +164,7 @@ export const Menu: React.FC<MenuProps> = ({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Hero Section */}
       <div className="mb-4">
-        <div className="relative h-48 bg-gradient-to-r from-red-600 to-red-800 rounded-2xl overflow-hidden">
+        <div className={`relative h-48 bg-gradient-to-r from-red-600 to-red-800 rounded-2xl overflow-hidden ${isFestiveMode ? 'festive-border border-2' : ''}`}>
           <div className="absolute inset-0 bg-black bg-opacity-20"></div>
           <img
             src={heroImageUrl}
@@ -204,6 +207,9 @@ export const Menu: React.FC<MenuProps> = ({
               <span>{isStoreOpen ? 'Atendendo' : 'Fechado'}</span>
             </div>
           </div>
+
+          {/* Festive Decorations */}
+          {isFestiveMode && <ChristmasHeroDecorations />}
         </div>
       </div>
 
@@ -239,8 +245,8 @@ export const Menu: React.FC<MenuProps> = ({
               key={category}
               onClick={() => onCategoryChange(category)}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${selectedCategory === category
-                  ? 'bg-red-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                ? (isFestiveMode ? 'festive-bg-gradient text-white border border-yellow-400' : 'bg-red-600 text-white')
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               disabled={isMercadoPagoReturnFlow} // Desabilita filtros
             >

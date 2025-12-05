@@ -41,6 +41,7 @@ interface HomePageProps {
   isMercadoPagoReturnFlow: boolean; // Nova prop
   isPixReturnFlow: boolean; // Nova prop
   setIsPixReturnFlow: (isReturning: boolean) => void; // Nova prop
+  isFestiveMode: boolean; // Nova prop para modo festivo
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -76,6 +77,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   isMercadoPagoReturnFlow, // Nova prop
   isPixReturnFlow, // Nova prop
   setIsPixReturnFlow, // Nova prop
+  isFestiveMode, // Nova prop
 }) => {
   const [showCart, setShowCart] = useState(isMercadoPagoReturnFlow || isPixReturnFlow);
   const [showPromotions, setShowPromotions] = useState(false);
@@ -108,7 +110,7 @@ export const HomePage: React.FC<HomePageProps> = ({
     }
 
     const shouldShowOnLoadFromLocation = localStorage.getItem('showPromotionModalOnLoad') === 'true';
-    
+
     // Se a flag estiver presente, remove-a para não disparar novamente em um refresh
     if (shouldShowOnLoadFromLocation) {
       localStorage.removeItem('showPromotionModalOnLoad');
@@ -175,7 +177,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col"> {/* Adicionado flex flex-col */}
-      <Header 
+      <Header
         selectedCity={selectedCity}
         user={user}
         cartItemCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
@@ -187,13 +189,13 @@ export const HomePage: React.FC<HomePageProps> = ({
       />
 
       <main className="flex-grow"> {/* Adicionado flex-grow */}
-        <Menu 
-          onAddToCart={handleAddToCart} 
+        <Menu
+          onAddToCart={handleAddToCart}
           selectedCategory={menuFilter}
           onCategoryChange={setMenuFilter}
           isStoreOpen={isStoreOpen}
           canPlaceOrder={canPlaceOrder} // Passando o novo estado
-          heroImageUrl={heroImageUrl} 
+          heroImageUrl={heroImageUrl}
           // Passando as novas props
           heroTitleText={heroTitleText}
           heroTitleFontSize={heroTitleFontSize}
@@ -205,6 +207,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           heroSubtitleBorderColor={heroSubtitleBorderColor}
           showPreOrderBanner={showPreOrderBanner} // Nova prop
           isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
+          isFestiveMode={isFestiveMode} // Passando modo festivo
         />
       </main>
 
@@ -245,7 +248,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             onClose={handleClosePromotionModal}
             title={promotionModalTitle}
             onViewPromotion={handleViewPromotion}
-            onAddToCart={handleAddToCart} 
+            onAddToCart={handleAddToCart}
           />
         )
       )}
