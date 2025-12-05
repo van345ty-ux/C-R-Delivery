@@ -44,7 +44,7 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null
     console.error('fetchUserProfile: Error fetching profile:', error);
     return null;
   }
-  
+
   if (data) {
     console.log('fetchUserProfile: Profile data retrieved:', data);
     return {
@@ -61,8 +61,8 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null
   return null;
 };
 
-// Constante para o limite de inatividade (5 horas em milissegundos, conforme solicitado)
-const INACTIVITY_LIMIT_MS = 5 * 60 * 60 * 1000; 
+// Constante para o limite de inatividade (Removido limite, recarrega sempre)
+// const INACTIVITY_LIMIT_MS = 10 * 1000;
 const LAST_ACCESS_KEY = 'lastAccessTimestamp';
 
 function App() {
@@ -186,14 +186,11 @@ function App() {
     }
 
     // Lógica para forçar o recarregamento
+    // Lógica para forçar o recarregamento sempre que a aba ficar visível
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        const lastAccess = localStorage.getItem(LAST_ACCESS_KEY);
-        const now = Date.now();
-        if (lastAccess && (now - parseInt(lastAccess) > INACTIVITY_LIMIT_MS)) {
-          console.log(`App: Tab became visible after >${INACTIVITY_LIMIT_MS / 1000 / 60 / 60} hours of inactivity. Forcing reload.`);
-          window.location.reload();
-        }
+        console.log('App: Tab became visible. Forcing reload.');
+        window.location.reload();
       }
     };
 
@@ -230,7 +227,7 @@ function App() {
 
   const checkAndShowCouponNotification = useCallback(async (userId: string) => {
     console.log('checkAndShowCouponNotification called for userId:', userId);
-    
+
     const { data: couponsData, error: couponsError } = await supabase
       .from('coupons')
       .select('*') // Select all fields to perform full validity check
@@ -256,7 +253,7 @@ function App() {
 
       // Validação adicional: cupons de aniversário e fidelidade DEVEM ser específicos do usuário
       if ((coupon.type === 'birthday' || coupon.type === 'loyalty') && !coupon.user_id) {
-        return false; 
+        return false;
       }
       return isCurrentlyValid && hasUsagesLeft;
     }).length > 0;
@@ -330,7 +327,7 @@ function App() {
 
           if (todayHours && todayHours.is_open) {
             storeCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
-            
+
             // Logic for pre-order: store is open today, but not currently open, and it's between 07:00 and 17:00
             canPreOrder = !storeCurrentlyOpen && currentTime >= '07:00' && currentTime <= '17:00'; // MODIFIED HERE
 
@@ -386,7 +383,7 @@ function App() {
 
     const handleAuthChange = async (event: string, sessionFromEvent: Session | null) => {
       console.log(`handleAuthChange: Event received: ${event}, sessionFromEvent: ${sessionFromEvent ? 'active' : 'null'}`);
-      
+
       if (event === 'SIGNED_OUT') {
         console.log('handleAuthChange: SIGNED_OUT event detected. Clearing all user-related states.');
         setSession(null);
@@ -532,7 +529,7 @@ function App() {
     const city = cities.find(c => c.name === cityName);
     if (city?.active) {
       setSelectedCity(cityName);
-      
+
       // Sinaliza que o modal de promoção deve ser exibido ao carregar a HomePage
       localStorage.setItem('showPromotionModalOnLoad', 'true');
 
@@ -555,7 +552,7 @@ function App() {
           shouldShowPreOrderModal = true;
         }
       }
-      
+
       setCurrentView('home'); // Always go to home
       setShowPreOrderModal(shouldShowPreOrderModal); // Show modal based on conditions
     }
@@ -577,32 +574,32 @@ function App() {
   const handleLogout = async () => {
     console.log('handleLogout: Called.');
     setShowProfile(false); // Fecha o modal de perfil imediatamente
-  
+
     const { error } = await supabase.auth.signOut();
-  
+
     // If there's an error (like AuthSessionMissingError), it often means the session is already invalid.
     // In this case, the 'SIGNED_OUT' event might not fire.
     // We'll perform a manual cleanup on the client-side as a robust fallback.
     if (error) {
       console.error('handleLogout: Error during signOut, performing manual client-side cleanup:', error);
-      
+
       // Manually clear all user-related states
       setSession(null);
       setUser(null);
       setCart([]);
       // Don't clear selectedCity, let the user stay on the current menu
-      setCurrentView('home'); 
+      setCurrentView('home');
       setPendingCouponNotificationUserId(null);
       setShowUserCouponNotification(false);
       setIsMercadoPagoReturnFlow(false); // Clear Mercado Pago flag on manual logout
       localStorage.removeItem('isMercadoPagoReturnFlow');
       setIsPixReturnFlow(false); // Clear PIX flag on manual logout
       localStorage.removeItem('isPixReturnFlow');
-      
+
       toast.success('Você foi desconectado.'); // Still inform the user of success
       return; // Exit after manual cleanup
     }
-  
+
     // If signOut is successful, the onAuthStateChange listener will handle the state cleanup and show the success toast.
     console.log('handleLogout: signOut initiated successfully. State cleanup will be handled by onAuthStateChange.');
   };
@@ -623,7 +620,7 @@ function App() {
   const addToCart = (product: Product, quantity: number = 1, observations?: string) => {
     setCart(prevCart => {
       const existingItemIndex = prevCart.findIndex(item => item.product.id === product.id);
-  
+
       if (existingItemIndex > -1) {
         // Atualiza item existente
         const updatedCart = [...prevCart];
@@ -710,7 +707,7 @@ function App() {
       return <OrderTracking order={currentOrder} onBack={() => setCurrentView('home')} />;
     }
     return (
-      <HomePage 
+      <HomePage
         key={user?.id || 'guest'} // Adicionando key para forçar remontagem no login/logout
         selectedCity={selectedCity}
         user={user}
@@ -731,7 +728,7 @@ function App() {
         onBackToLocationSelect={() => setCurrentView('location')}
         onProfileClick={handleProfileClick} // Passando a função definida
         logoUrl={logoUrl}
-        heroImageUrl={heroImageUrl} 
+        heroImageUrl={heroImageUrl}
         isStoreOpen={isStoreOpen}
         canPlaceOrder={canPlaceOrder} // Passando o novo estado
         pendingCouponNotificationUserId={pendingCouponNotificationUserId}
@@ -760,7 +757,7 @@ function App() {
     <div className="min-h-screen bg-gray-50">
       {renderContent()}
       {showProfile && user && (
-        <UserProfile 
+        <UserProfile
           user={user}
           onClose={() => setShowProfile(false)}
           onLogout={handleLogout}

@@ -6,6 +6,7 @@ import { ProductDetailModal } from './ProductDetailModal'; // Importando o novo 
 import { Product, Highlight } from '../types'; // Corrected import path
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
+import { withRetry, withTimeout, TIMEOUT_MS } from '../hooks/useQuery';
 
 interface MenuProps {
   onAddToCart: (product: Product, quantity?: number, observations?: string) => void;
@@ -37,11 +38,11 @@ const categories = [
   'Promoções'
 ];
 
-export const Menu: React.FC<MenuProps> = ({ 
-  onAddToCart, 
-  selectedCategory, 
-  onCategoryChange, 
-  isStoreOpen, 
+export const Menu: React.FC<MenuProps> = ({
+  onAddToCart,
+  selectedCategory,
+  onCategoryChange,
+  isStoreOpen,
   canPlaceOrder, // Nova prop
   heroImageUrl,
   // Novas props
@@ -66,29 +67,47 @@ export const Menu: React.FC<MenuProps> = ({
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      
-      const { data: productsData, error: productsError } = await supabase
-        .from('products')
-        .select('*')
-        .order('name', { ascending: true });
 
-      if (productsError) {
-        console.error('Error fetching products:', productsError);
-        toast.error('Erro ao carregar produtos.');
-      } else {
+      // Fetch Products with Retry
+      try {
+        const productsData = await withRetry(() =>
+          withTimeout(
+            supabase
+              .from('products')
+              .select('*')
+              .order('name', { ascending: true })
+              .then(({ data, error }) => {
+                if (error) throw error;
+                return data;
+              }),
+            TIMEOUT_MS
+          )
+        );
         setProducts(productsData || []);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        toast.error('Erro ao carregar produtos. Verifique sua conexão.');
       }
 
-      const { data: highlightsData, error: highlightsError } = await supabase
-        .from('highlights')
-        .select('*')
-        .order('order_index', { ascending: true });
-
-      if (highlightsError) {
-        console.error('Error fetching highlights:', highlightsError);
-        toast.error('Erro ao carregar destaques.');
-      } else {
+      // Fetch Highlights with Retry
+      try {
+        const highlightsData = await withRetry(() =>
+          withTimeout(
+            supabase
+              .from('highlights')
+              .select('*')
+              .order('order_index', { ascending: true })
+              .then(({ data, error }) => {
+                if (error) throw error;
+                return data;
+              }),
+            TIMEOUT_MS
+          )
+        );
         setHighlights(highlightsData || []);
+      } catch (error) {
+        console.error('Error fetching highlights:', error);
+        // Não mostrar erro de destaque para não poluir a tela se falhar
       }
 
       setLoading(false);
@@ -108,7 +127,7 @@ export const Menu: React.FC<MenuProps> = ({
   };
 
   // Filtra todos os produtos disponíveis e que correspondem ao termo de busca
-  const allAvailableAndSearchedProducts = products.filter(product => 
+  const allAvailableAndSearchedProducts = products.filter(product =>
     product.available && product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -125,7 +144,7 @@ export const Menu: React.FC<MenuProps> = ({
   } else if (selectedCategory === 'Promoções') {
     productsToDisplayIn3ColGrid = promotions;
   } else { // Categoria específica selecionada
-    productsToDisplayIn5ColGrid = regularProducts.filter(product => 
+    productsToDisplayIn5ColGrid = regularProducts.filter(product =>
       product.category && product.category.trim().toLowerCase() === selectedCategory.trim().toLowerCase()
     );
   }
@@ -152,24 +171,24 @@ export const Menu: React.FC<MenuProps> = ({
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center p-4">
               {heroTitleText && (
-                <h2 
+                <h2
                   className="text-4xl sm:text-5xl font-extrabold mb-2 drop-shadow-lg"
-                  style={{ 
-                    fontSize: heroTitleFontSize, 
-                    color: heroTitleFontColor, 
-                    textShadow: `1px 1px 0 ${heroTitleBorderColor}, -1px -1px 0 ${heroTitleBorderColor}, 1px -1px 0 ${heroTitleBorderColor}, -1px 1px 0 ${heroTitleBorderColor}` 
+                  style={{
+                    fontSize: heroTitleFontSize,
+                    color: heroTitleFontColor,
+                    textShadow: `1px 1px 0 ${heroTitleBorderColor}, -1px -1px 0 ${heroTitleBorderColor}, 1px -1px 0 ${heroTitleBorderColor}, -1px 1px 0 ${heroTitleBorderColor}`
                   }}
                 >
                   {heroTitleText}
                 </h2>
               )}
               {heroSubtitleText && (
-                <p 
+                <p
                   className="text-lg sm:text-xl font-medium drop-shadow-md"
-                  style={{ 
-                    fontSize: heroSubtitleFontSize, 
-                    color: heroSubtitleFontColor, 
-                    textShadow: `1px 1px 0 ${heroSubtitleBorderColor}, -1px -1px 0 ${heroSubtitleBorderColor}, 1px -1px 0 ${heroSubtitleBorderColor}, -1px 1px 0 ${heroSubtitleBorderColor}` 
+                  style={{
+                    fontSize: heroSubtitleFontSize,
+                    color: heroSubtitleFontColor,
+                    textShadow: `1px 1px 0 ${heroSubtitleBorderColor}, -1px -1px 0 ${heroSubtitleBorderColor}, 1px -1px 0 ${heroSubtitleBorderColor}, -1px 1px 0 ${heroSubtitleBorderColor}`
                   }}
                 >
                   {heroSubtitleText}
@@ -219,11 +238,10 @@ export const Menu: React.FC<MenuProps> = ({
             <button
               key={category}
               onClick={() => onCategoryChange(category)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                selectedCategory === category
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${selectedCategory === category
                   ? 'bg-red-600 text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+                }`}
               disabled={isMercadoPagoReturnFlow} // Desabilita filtros
             >
               {category}

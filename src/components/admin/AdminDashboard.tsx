@@ -17,15 +17,20 @@ interface Order {
 
 const fetchDashboardData = async () => {
   console.log('AdminDashboard: fetchDashboardData called.'); // Adicionado log aqui
+
+  // Buscar apenas os últimos 100 pedidos para evitar timeout
   const { data: orders, error } = await supabase
     .from('orders')
     .select('id, customer_name, total, status, created_at, items, payment_method, user_id, order_number') // Seleciona order_number
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(100); // LIMITE ADICIONADO
 
   if (error) {
     console.error('Error fetching dashboard data:', error);
     throw new Error('Could not fetch dashboard data: ' + error.message); // Adicionado mensagem de erro
   }
+
+  console.log(`AdminDashboard: ${orders?.length || 0} pedidos carregados`);
   return orders || [];
 };
 
@@ -143,12 +148,11 @@ export const AdminDashboard: React.FC = () => {
                     <p className="font-medium text-gray-900">R$ {order.total.toFixed(2)}</p>
                     <p className="text-sm text-gray-600">{new Date(order.created_at).toLocaleTimeString('pt-BR')}</p>
                   </div>
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                    order.status === 'Entregue' ? 'bg-green-100 text-green-800' :
-                    order.status === 'Saiu para entrega' ? 'bg-blue-100 text-blue-800' :
-                    order.status === 'Em preparação' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${order.status === 'Entregue' ? 'bg-green-100 text-green-800' :
+                      order.status === 'Saiu para entrega' ? 'bg-blue-100 text-blue-800' :
+                        order.status === 'Em preparação' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                    }`}>
                     {order.status}
                   </span>
                 </div>

@@ -24,7 +24,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
   const [activeTab, setActiveTab] = useState(() => {
     return localStorage.getItem('adminActiveTab') || 'dashboard';
   });
-  
+
   const [customerLoginNotificationUser, setCustomerLoginNotificationUser] = useState<string | null>(null);
   const [pendingBonificationCount, setPendingBonificationCount] = useState(0);
 
@@ -57,6 +57,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
   };
 
   useEffect(() => {
+    console.log('🔵 AdminPanel: useEffect INICIADO'); // LOG EXTRA
     let loginChannel: RealtimeChannel | null = null;
     let bonificationChannel: RealtimeChannel | null = null;
 
@@ -66,8 +67,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
       console.log('AdminPanel: setupRealtime called. Admin ID:', adminId); // Log de depuração
 
       if (adminId) {
+        console.log('🟢 AdminPanel: Criando subscription para login_notifications'); // LOG EXTRA
+
+        // Criar channel com nome único baseado no timestamp para evitar conflitos
+        const channelName = `login_notifications_${Date.now()}`;
+
         loginChannel = supabase
-          .channel('login_notifications_channel')
+          .channel(channelName)
           .on(
             'postgres_changes',
             {
@@ -76,16 +82,29 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
               table: 'login_notifications',
             },
             (payload) => {
+              console.log('🎉 AdminPanel: PAYLOAD RECEBIDO:', payload); // LOG EXTRA
               const newLogin = payload.new as { user_id: string; user_name: string };
               console.log('AdminPanel: New login notification received:', newLogin); // Log de depuração
+              console.log('🔍 AdminPanel: Comparando IDs - newLogin.user_id:', newLogin.user_id, 'adminId:', adminId); // LOG EXTRA
               if (newLogin.user_id !== adminId) {
+                console.log('✅ AdminPanel: Exibindo notificação para:', newLogin.user_name); // LOG EXTRA
                 setCustomerLoginNotificationUser(newLogin.user_name);
                 playNotificationSound();
+              } else {
+                console.log('⚠️ AdminPanel: Notificação ignorada (mesmo usuário)'); // LOG EXTRA
               }
             }
           )
-          .subscribe((status) => {
-            console.log('AdminPanel: Login Channel Status:', status); // Log de status da subscrição
+          .subscribe(async (status, err) => {
+            console.log('AdminPanel: Login Channel Status:', status, err ? `Error: ${err}` : ''); // Log de status da subscrição
+
+            if (status === 'SUBSCRIBED') {
+              console.log('✅ AdminPanel: Login channel SUBSCRIBED com sucesso!');
+            } else if (status === 'CHANNEL_ERROR') {
+              console.error('❌ AdminPanel: Erro na subscription:', err);
+            } else if (status === 'TIMED_OUT') {
+              console.error('⏱️ AdminPanel: Subscription timeout');
+            }
           });
 
         bonificationChannel = supabase
@@ -195,11 +214,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex items-center py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-                    activeTab === tab.id
+                  className={`relative flex items-center py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${activeTab === tab.id
                       ? 'border-red-500 text-red-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   <Icon className="w-4 h-4 mr-2" />
                   {tab.label}
@@ -218,9 +236,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
       </div>
 
       {customerLoginNotificationUser && (
-        <LoginNotification 
-          userName={customerLoginNotificationUser} 
-          onClose={handleCloseLoginNotification} 
+        <LoginNotification
+          userName={customerLoginNotificationUser}
+          onClose={handleCloseLoginNotification}
         />
       )}
     </div>

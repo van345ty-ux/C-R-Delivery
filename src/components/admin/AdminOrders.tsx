@@ -31,15 +31,19 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
   const fetchOrders = useCallback(async () => {
     console.log('AdminOrders: fetchOrders called.');
     setLoading(true);
+
+    // Buscar apenas os últimos 200 pedidos para evitar timeout
     const { data, error } = await supabase
       .from('orders')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(200); // LIMITE ADICIONADO
 
     if (error) {
       console.error('Error fetching orders:', error);
       toast.error('Erro ao buscar pedidos.');
     } else {
+      console.log(`AdminOrders: ${data?.length || 0} pedidos carregados`);
       setOrders(data || []);
     }
     setLoading(false);
@@ -239,7 +243,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
   const completedStatuses = ['Entregue', 'Cliente já fez a retirada'];
   const activeOrders = orders.filter(order => !completedStatuses.includes(order.status));
   const finishedOrders = orders.filter(order => completedStatuses.includes(order.status));
-  
+
   const activeOrdersCount = activeOrders.length;
 
   return (
@@ -352,15 +356,14 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
                           <button
                             key={step}
                             onClick={() => updateOrderStatus(order.id, step, order.user_id)}
-                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                              isStepActive && (step === 'Entregue' || step === 'Cliente já fez a retirada')
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isStepActive && (step === 'Entregue' || step === 'Cliente já fez a retirada')
                                 ? 'bg-green-600 text-white'
                                 : isStepActive
-                                ? 'bg-red-600 text-white'
-                                : isStepCompleted
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
+                                  ? 'bg-red-600 text-white'
+                                  : isStepCompleted
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}
                           >
                             {step}
                           </button>

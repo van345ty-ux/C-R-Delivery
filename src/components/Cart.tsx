@@ -3,6 +3,7 @@ import { X, Plus, Minus, CreditCard, Smartphone, DollarSign, Gift, ExternalLink,
 import { CartItem, Order, User, Coupon } from '../types';
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
+import { withRetry, withTimeout, TIMEOUT_MS } from '../hooks/useQuery';
 import { PixInstructionsModal } from './PixInstructionsModal';
 import { PixReturnConfirmationModal } from './PixReturnConfirmationModal';
 import { sendWhatsappNotification } from '../utils/whatsapp';
@@ -38,7 +39,7 @@ export const Cart: React.FC<CartProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'cash' | null>(null);
   const [address, setAddress] = useState(() => localStorage.getItem('cartAddress') || '');
   const [couponCode, setCouponCode] = useState(() => localStorage.getItem('cartCouponCode') || '');
-  const [appliedCoupon, setAppliedCoupon] = useState<{id: string; code: string; discount: number} | null>(() => {
+  const [appliedCoupon, setAppliedCoupon] = useState<{ id: string; code: string; discount: number } | null>(() => {
     const savedCoupon = localStorage.getItem('cartAppliedCoupon');
     return savedCoupon ? JSON.parse(savedCoupon) : null;
   });
@@ -60,7 +61,7 @@ export const Cart: React.FC<CartProps> = ({
   const [pixPaymentInitiated, setPixPaymentInitiated] = useState(() => JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false'));
   const [showPixReturnConfirmation, setShowPixReturnConfirmation] = useState(false);
   const [hasAcknowledgedPixReturnConfirmation, setHasAcknowledgedPixReturnConfirmation] = useState(() => JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false'));
-  
+
   // Novos estados para o troco
   const [needsChange, setNeedsChange] = useState<boolean | null>(null);
   const [changeForAmount, setChangeForAmount] = useState<string>('');
@@ -117,15 +118,32 @@ export const Cart: React.FC<CartProps> = ({
 
   useEffect(() => {
     const fetchSettings = async () => {
-      const { data, error } = await supabase.from('settings').select('key, value');
-      if (!error && data) {
-        const settingsMap = data.reduce((acc: { [key: string]: string }, { key, value }: { key: string, value: string }) => {
-          acc[key] = value;
-          return acc;
-        }, {});
-        if (!isNaN(parseFloat(settingsMap.delivery_fee))) setDeliveryFeeValue(parseFloat(settingsMap.delivery_fee));
-        setPixKeyValue(settingsMap.pix_key || '');
-        setMercadoPagoLink(settingsMap.mercado_pago_link || 'https://link.mercadopago.com.br/sushicr');
+      try {
+        const data = await withRetry(() =>
+          withTimeout(
+            supabase
+              .from('settings')
+              .select('key, value')
+              .then(({ data, error }) => {
+                if (error) throw error;
+                return data;
+              }),
+            TIMEOUT_MS
+          )
+        );
+
+        if (data) {
+          const settingsMap = data.reduce((acc: { [key: string]: string }, { key, value }: { key: string, value: string }) => {
+            acc[key] = value;
+            return acc;
+          }, {});
+          if (!isNaN(parseFloat(settingsMap.delivery_fee))) setDeliveryFeeValue(parseFloat(settingsMap.delivery_fee));
+          setPixKeyValue(settingsMap.pix_key || '');
+          setMercadoPagoLink(settingsMap.mercado_pago_link || 'https://link.mercadopago.com.br/sushicr');
+        }
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+        toast.error('Erro ao carregar configurações. Verifique sua conexão.');
       }
     };
     fetchSettings();
@@ -137,13 +155,28 @@ export const Cart: React.FC<CartProps> = ({
         setFirstAvailableCoupon(null);
         return;
       }
-      const { data: couponsData, error: couponsError } = await supabase
-        .from('coupons')
-        .select('*')
-        .or(`user_id.eq.${user.id},user_id.is.null`)
-        .eq('active', true)
-        .eq('is_pending_admin_approval', false);
-      if (couponsError) {
+      let couponsData = null;
+      try {
+        couponsData = await withRetry(() =>
+          withTimeout(
+            supabase
+              .from('coupons')
+              .select('*')
+              .or(`user_id.eq.${user.id},user_id.is.null`)
+              .eq('active', true)
+              .eq('is_pending_admin_approval', false)
+              .then(({ data, error }) => {
+                if (error) throw error;
+                return data;
+              }),
+            TIMEOUT_MS
+          )
+        );
+      } catch (error) {
+        console.error('Error fetching coupons:', error);
+      }
+
+      if (!couponsData) {
         setFirstAvailableCoupon(null);
         return;
       }
@@ -284,11 +317,30 @@ export const Cart: React.FC<CartProps> = ({
       coupon_used: appliedCoupon?.code,
       change_for: (paymentMethod === 'cash' && needsChange && parseFloat(changeForAmount) > 0) ? parseFloat(changeForAmount) : null,
     };
-    const { data: newOrder, error } = await supabase
-      .from('orders')
-      .insert(orderPayload)
-      .select('*, order_number')
-      .single();
+    // Adicionando timeout para evitar travamento na criação do pedido
+    let newOrder, error;
+
+    try {
+      const result = await Promise.race([
+        supabase
+          .from('orders')
+          .insert(orderPayload)
+          .select('*, order_number')
+          .single(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout')), 60000)
+        )
+      ]) as any;
+
+      newOrder = result.data;
+      error = result.error;
+    } catch (err) {
+      console.error('Error creating order (timeout):', err);
+      toast.error('O servidor demorou para responder. Tente novamente em alguns instantes.');
+      setIsSubmitting(false);
+      return;
+    }
+
     if (error) {
       console.error('Error creating order:', error);
       toast.error('Ocorreu um erro ao finalizar seu pedido. Tente novamente.');
@@ -324,8 +376,16 @@ export const Cart: React.FC<CartProps> = ({
       couponUsed: newOrder.coupon_used,
       changeFor: newOrder.change_for,
     };
-    
-    await sendWhatsappNotification(formattedOrder);
+
+    // Enviar notificação sem bloquear o fluxo principal por muito tempo
+    try {
+      await Promise.race([
+        sendWhatsappNotification(formattedOrder),
+        new Promise(resolve => setTimeout(resolve, 5000)) // Timeout de 5s para notificação
+      ]);
+    } catch (err) {
+      console.error('Erro ou timeout no envio do WhatsApp:', err);
+    }
 
     onOrderCreated(formattedOrder);
     onClose();
@@ -451,7 +511,7 @@ export const Cart: React.FC<CartProps> = ({
                   <p className="text-xs text-gray-600">Chave PIX:</p>
                   <p className="font-mono text-sm break-all">{pixKeyValue}</p>
                 </div>
-                <button 
+                <button
                   onClick={() => {
                     navigator.clipboard.writeText(pixKeyValue);
                     toast.success('Chave PIX copiada!');
