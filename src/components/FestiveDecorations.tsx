@@ -6,7 +6,7 @@ export const ChristmasLights: React.FC = () => {
     const lights = Array.from({ length: lightCount });
 
     return (
-        <div className="fixed top-0 left-0 w-full h-16 z-[60] pointer-events-none overflow-hidden flex justify-center items-start pt-2">
+        <div className="fixed -top-2 left-0 w-full h-16 z-[60] pointer-events-none overflow-hidden flex justify-center items-start pt-2">
             <div className="flex items-start">
                 {lights.map((_, i) => {
                     // Colors: Red, Green, Yellow, Blue (added Blue to match image)
