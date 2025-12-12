@@ -26,6 +26,7 @@ export interface Product {
   name: string;
   price: number;
   original_price?: number | null;
+  promotional_price_single?: number | null; // Novo campo para "Por apenas"
   badge_text?: string | null;
   image: string;
   description: string;

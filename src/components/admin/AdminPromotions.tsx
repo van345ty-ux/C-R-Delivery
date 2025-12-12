@@ -14,6 +14,7 @@ export const AdminPromotions: React.FC = () => {
     image: '',
     price: 0,
     original_price: 0,
+    promotional_price_single: 0,
     badge_text: '',
     available: true,
   });
@@ -50,6 +51,7 @@ export const AdminPromotions: React.FC = () => {
         image: promotion.image,
         price: promotion.price,
         original_price: promotion.original_price || 0,
+        promotional_price_single: promotion.promotional_price_single || 0,
         badge_text: promotion.badge_text || '',
         available: promotion.available,
       });
@@ -61,6 +63,7 @@ export const AdminPromotions: React.FC = () => {
         image: '',
         price: 0,
         original_price: 0,
+        promotional_price_single: 0,
         badge_text: '',
         available: true,
       });
@@ -93,7 +96,7 @@ export const AdminPromotions: React.FC = () => {
       const { data: { publicUrl } } = supabase.storage
         .from('product_images')
         .getPublicUrl(fileName);
-      
+
       imageUrl = publicUrl;
     }
 
@@ -103,6 +106,7 @@ export const AdminPromotions: React.FC = () => {
       image: imageUrl,
       price: formData.price,
       original_price: formData.original_price > 0 ? formData.original_price : null,
+      promotional_price_single: formData.promotional_price_single > 0 ? formData.promotional_price_single : null,
       badge_text: formData.badge_text || null,
       available: formData.available,
       category: 'Promoção',
@@ -120,7 +124,7 @@ export const AdminPromotions: React.FC = () => {
         .insert([payload]);
       if (error) alert('Erro ao criar promoção.');
     }
-    
+
     setIsSaving(false);
     fetchPromotions();
     handleCloseModal();
@@ -176,11 +180,10 @@ export const AdminPromotions: React.FC = () => {
                 className="w-full h-48 object-cover"
               />
               <div className="absolute top-2 right-2 flex space-x-2">
-                <span className={`px-2 py-1 rounded-full text-sm font-medium ${
-                  promotion.available
+                <span className={`px-2 py-1 rounded-full text-sm font-medium ${promotion.available
                     ? 'bg-green-100 text-green-800'
                     : 'bg-red-100 text-red-800'
-                }`}>
+                  }`}>
                   {promotion.available ? 'Ativa' : 'Inativa'}
                 </span>
               </div>
@@ -190,37 +193,44 @@ export const AdminPromotions: React.FC = () => {
               <div className="flex justify-between items-start">
                 <h3 className="font-bold text-gray-900 mb-2">{promotion.name}</h3>
                 <div className="text-right">
-                  {promotion.original_price && (
-                    <span className="text-sm text-gray-500 line-through">
-                      R$ {promotion.original_price.toFixed(2)}
+                  {promotion.promotional_price_single ? (
+                    <span className="text-lg font-bold text-green-600 block">
+                      Por apenas R$ {promotion.promotional_price_single.toFixed(2)}
                     </span>
+                  ) : (
+                    <>
+                      {promotion.original_price && (
+                        <span className="text-sm text-gray-500 line-through">
+                          R$ {promotion.original_price.toFixed(2)}
+                        </span>
+                      )}
+                      <span className="text-lg font-bold text-green-600 block">
+                        R$ {promotion.price.toFixed(2)}
+                      </span>
+                    </>
                   )}
-                  <span className="text-lg font-bold text-green-600 block">
-                    R$ {promotion.price.toFixed(2)}
-                  </span>
                 </div>
               </div>
               <p className="text-sm text-gray-600 mb-4">{promotion.description}</p>
-              
+
               <div className="flex space-x-2">
                 <button
                   onClick={() => togglePromotionStatus(promotion)}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    promotion.available
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${promotion.available
                       ? 'bg-red-100 text-red-700 hover:bg-red-200'
                       : 'bg-green-100 text-green-700 hover:bg-green-200'
-                  }`}
+                    }`}
                 >
                   {promotion.available ? 'Desativar' : 'Ativar'}
                 </button>
-                
+
                 <button
                   onClick={() => handleOpenModal(promotion)}
                   className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <Edit className="w-4 h-4" />
                 </button>
-                
+
                 <button
                   onClick={() => handleDeletePromotion(promotion.id)}
                   className="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700 transition-colors"
@@ -292,6 +302,12 @@ export const AdminPromotions: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Preço Promocional (Por:)</label>
                   <input type="number" min="0" step="0.01" value={formData.price} onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} className="w-full p-3 border rounded-lg" placeholder="Ex: 49.90" />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Por apenas (Substitui De/Por)</label>
+                <input type="number" min="0" step="0.01" value={formData.promotional_price_single} onChange={(e) => setFormData({ ...formData, promotional_price_single: parseFloat(e.target.value) || 0 })} className="w-full p-3 border rounded-lg" placeholder="Ex: 39.90" />
+                <p className="text-xs text-gray-500 mt-1">Se preenchido, os campos "De" e "Por" serão ignorados.</p>
               </div>
 
               <div>

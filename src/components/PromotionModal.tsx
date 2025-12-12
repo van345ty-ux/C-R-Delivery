@@ -36,14 +36,24 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onCl
                 <p className="text-sm text-gray-600 line-clamp-2">{promo.description}</p>
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex items-baseline gap-2">
-                    {promo.original_price && (
-                      <span className="text-sm text-gray-500 line-through">
-                        R$ {promo.original_price.toFixed(2)}
+                    {promo.promotional_price_single ? (
+                      <span className="text-lg font-bold text-red-600">
+                        Por apenas R$ {promo.promotional_price_single.toFixed(2)}
                       </span>
+                    ) : (
+                      <>
+                        {promo.original_price && promo.original_price > 0 && (
+                          <span className="text-sm text-gray-500 line-through">
+                            R$ {promo.original_price.toFixed(2)}
+                          </span>
+                        )}
+                        {promo.price > 0 && (
+                          <span className="text-lg font-bold text-red-600">
+                            R$ {promo.price.toFixed(2)}
+                          </span>
+                        )}
+                      </>
                     )}
-                    <span className="text-lg font-bold text-red-600">
-                      R$ {promo.price.toFixed(2)}
-                    </span>
                   </div>
                   <Button
                     onClick={() => onAddToCart(promo)}

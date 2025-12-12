@@ -23,14 +23,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
         "flex items-center",
         isPromotion ? "gap-1 mb-1" : "gap-1 mb-1"
       )}>
-        <img 
-          src={product.image} 
-          alt={product.name} 
+        <img
+          src={product.image}
+          alt={product.name}
           className={cn(
             "object-left rounded-md flex-shrink-0 transition-transform duration-300 relative", // Removido z-10 da base
-            isPromotion ? "w-[51%] h-[100%]" : "w-32 h-[100%]", 
+            isPromotion ? "w-[51%] h-[100%]" : "w-32 h-[100%]",
             "lg:group-hover:scale-200 lg:group-hover:z-50 lg:group-hover:shadow-lg" // Apenas em desktop, escala aumentada, z-index mais alto
-          )} 
+          )}
         />
         <div className="flex-grow">
           <h3 className={cn(
@@ -50,24 +50,37 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
         "text-gray-600 line-clamp-2 flex-grow",
         isPromotion ? "text-sm mb-2" : "text-sm mb-1"
       )}>{product.description}</p>
-      
+
       {/* Preço e botão no canto inferior direito */}
       <div className="flex items-baseline justify-between mt-auto">
         <div className="flex items-baseline gap-1">
-          {product.original_price && (
+          {product.promotional_price_single ? (
             <span className={cn(
-              "text-gray-500 line-through",
-              isPromotion ? "text-sm" : "text-sm"
+              "font-bold text-red-600",
+              isPromotion ? "text-lg" : "text-lg"
             )}>
-              R$ {product.original_price.toFixed(2)}
+              Por apenas R$ {product.promotional_price_single.toFixed(2)}
             </span>
+          ) : (
+            <>
+              {product.original_price && product.original_price > 0 && (
+                <span className={cn(
+                  "text-gray-500 line-through",
+                  isPromotion ? "text-sm" : "text-sm"
+                )}>
+                  R$ {product.original_price.toFixed(2)}
+                </span>
+              )}
+              {product.price > 0 && (
+                <span className={cn(
+                  "font-bold text-red-600",
+                  isPromotion ? "text-lg" : "text-lg"
+                )}>
+                  R$ {product.price.toFixed(2)}
+                </span>
+              )}
+            </>
           )}
-          <span className={cn(
-            "font-bold text-red-600",
-            isPromotion ? "text-lg" : "text-lg"
-          )}>
-            R$ {product.price.toFixed(2)}
-          </span>
         </div>
         {/* Chama onProductClick */}
         <Button
