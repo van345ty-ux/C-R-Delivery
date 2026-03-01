@@ -1,0 +1,190 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "functionCode": "const order = $json.message_data || {};\nconst rawPhoneNumber = $json.phone_number || '';\n\n// Adiciona 55 ao número de telefone, garantindo que não seja undefined\nconst formattedPhoneNumber = rawPhoneNumber ? `55${rawPhoneNumber}` : '';\n\n// garante que items é um array, mesmo que venha undefined\nconst items = Array.isArray(order.items) ? order.items : [];\n\nconst itemsList = items.length\n  ? items.map(item => {\n      const obs = item.observations ? ` (Obs: ${item.observations})` : '';\n      return `• ${item.quantity}x ${item.name} - R$ ${(item.price * item.quantity).toFixed(2)}${obs}`;\n    }).join('\\n')\n  : 'Nenhum item informado.';\n\n// entrega\nconst deliveryInfo =\n  order.delivery_type === 'delivery'\n    ? `\\nEndereço: ${order.address || 'Não informado'}\\nTaxa de Entrega: R$ ${order.delivery_fee || '0,00'}`\n    : 'Retirada no Local (Sem taxa)';\n\nconst message = `*🎉 Pedido Recebido - C&R Sushi 🎉*\\n\\n*Número do Pedido:* ${order.order_number || '-'}\\n*Cliente:* ${order.customer_name || '-'}\\n*Telefone:* ${rawPhoneNumber || '-'}\\n\\n*Itens do Pedido:*\\n${itemsList}\\n\\n*Detalhes da Entrega:*\\n${deliveryInfo}\\n\\n*Pagamento:* ${(order.payment_method || 'Não informado').toUpperCase()}\\n*Total:* R$ ${order.total || '0,00'}\\n\\nSeu pedido está sendo processado. Acompanhe o status pelo link do app!`;\n\nreturn [\n  {\n    json: {\n      phoneNumber: formattedPhoneNumber,\n      message,\n      orderNumber: order.order_number\n    }\n  }\n];"
+      },
+      "name": "Formatar Mensagem Novo Pedido1",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        208,
+        -368
+      ],
+      "id": "3369ef61-b8fb-44f4-8c05-e32612e6ea0c"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Responder Sucesso",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        720,
+        -272
+      ],
+      "id": "9a7ce357-8fef-421d-a6c9-694bd3658e81"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://studionailartspace.uazapi.com/send/text",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "={\n  \"Token\": \"9bf14467-a262-40cf-a314-f042d4fd9105\",\n  \"Content-Type\": \"application/json\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"={{$json.phoneNumber}}\",\n  \"text\": \"={{$json.message}}\",\n  \"linkPreview\": false\n}",
+        "options": {}
+      },
+      "name": "Enviar Mensagem (Uazapi)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        448,
+        -272
+      ],
+      "id": "8d1fe968-090a-4ec7-b9e2-cc69f5bb938d"
+    },
+    {
+      "parameters": {
+        "functionCode": "const data = $json.message_data;\nconst rawPhoneNumber = $json.phone_number || '';\n\n// Adiciona 55 ao número de telefone, garantindo que não seja undefined\nconst formattedPhoneNumber = rawPhoneNumber ? `55${rawPhoneNumber}` : '';\n\nconst status = data.new_status;\nconst orderNumber = data.order_number;\nconst customerName = data.customer_name;\nconst deliveryType = data.delivery_type;\n\n// Novos campos disponíveis no payload de status update\nconst total = data.total || '0,00';\nconst paymentMethod = data.payment_method || 'Não informado';\nconst address = data.address || 'Não informado';\nconst deliveryFee = data.delivery_fee || '0,00';\nconst items = Array.isArray(data.items) ? data.items : [];\n\nconst itemsList = items.length\n  ? items.map(item => {\n      const obs = item.observations ? ` (Obs: ${item.observations})` : '';\n      return `• ${item.quantity}x ${item.name} - R$ ${(item.price * item.quantity).toFixed(2)}${obs}`;\n    }).join('\\n')\n  : 'Nenhum item informado.';\n\nlet statusMessage = '';\n\nswitch (status) {\n  case 'Pedido recebido':\n    statusMessage = `Seu pedido *${orderNumber}* foi recebido com sucesso! Estamos aguardando a confirmação do pagamento e a aprovação do administrador.`;\n    break;\n  case 'Em preparação':\n    statusMessage = `Ótimas notícias, ${customerName}! Seu pedido *${orderNumber}* está *em preparação*! Em breve estará pronto para ${deliveryType === 'delivery' ? 'entrega' : 'retirada'}.`;\n    break;\n  case 'Pronto para entrega':\n    statusMessage = `Seu pedido *${orderNumber}* está *pronto para entrega*! O entregador está a caminho.`;\n    break;\n  case 'Saiu para entrega':\n    statusMessage = `Seu pedido *${orderNumber}* *saiu para entrega*! Fique de olho, logo ele estará com você.`;\n    break;\n  case 'Entregue':\n    statusMessage = `Seu pedido *${orderNumber}* foi *entregue* com sucesso! Esperamos que tenha gostado. Volte sempre!`;\n    break;\n  case 'Aguardando cliente retirar o pedido':\n    statusMessage = `Seu pedido *${orderNumber}* está *pronto para retirada* no local. Por favor, venha buscar o quanto antes!`;\n    break;\n  case 'Cliente já fez a retirada':\n    statusMessage = `Obrigado, ${customerName}! Seu pedido *${orderNumber}* foi *retirado*. Esperamos que tenha gostado!`;\n    break;\n  default:\n    statusMessage = `O status do seu pedido *${orderNumber}* foi atualizado para: *${status}*.`;\n}\n\nconst deliveryInfo = deliveryType === 'delivery'\n    ? `Endereço: ${address}\\nTaxa de Entrega: R$ ${deliveryFee}`\n    : 'Retirada no Local';\n\nconst message = `*🍣 Atualização de Status - C&R Sushi 🍣*\\n\\n*Pedido:* ${orderNumber}\\n*Status:* ${status}\\n\\n${statusMessage}\\n\\n*Detalhes do Pedido:*\\n${itemsList}\\n\\n*Detalhes da Entrega:*\\n${deliveryInfo}\\n\\n*Pagamento:* ${paymentMethod.toUpperCase()}\\n*Total:* R$ ${total}\\n\\nObrigado por escolher C&R Sushi!`;\n\nreturn [\n  {\n    json: {\n      phoneNumber: formattedPhoneNumber, // Número do cliente formatado\n      message: message,\n      orderNumber: orderNumber\n    }\n  }\n];"
+      },
+      "name": "Formatar Mensagem Status",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        208,
+        -192
+      ],
+      "id": "722da671-9f02-4fd2-89fd-08e8eabd87f9"
+    },
+    {
+      "parameters": {
+        "conditions": [
+          {
+            "value1": "={{$json.workflow_type}}",
+            "operation": "equal",
+            "value2": "delivery_order"
+          }
+        ]
+      },
+      "name": "IF (Novo Pedido)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -304
+      ],
+      "id": "5262db35-9984-4ba0-b0ad-888c5c939a94"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-order-notification",
+        "options": {}
+      },
+      "name": "Webhook (Recebe Pedido)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        -304
+      ],
+      "webhookId": "whatsapp-order-notification",
+      "id": "eb8f269a-018d-4457-98fa-52ed4d165451"
+    }
+  ],
+  "connections": {
+    "Formatar Mensagem Novo Pedido1": {
+      "main": [
+        [
+          {
+            "node": "Enviar Mensagem (Uazapi)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Mensagem (Uazapi)": {
+      "main": [
+        [
+          {
+            "node": "Responder Sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatar Mensagem Status": {
+      "main": [
+        [
+          {
+            "node": "Enviar Mensagem (Uazapi)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF (Novo Pedido)": {
+      "main": [
+        [
+          {
+            "node": "Formatar Mensagem Novo Pedido1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Formatar Mensagem Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook (Recebe Pedido)": {
+      "main": [
+        [
+          {
+            "node": "IF (Novo Pedido)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "IF (Novo Pedido)": {
+      "main": [
+        {
+          "index": 0,
+          "pin": [
+            {
+              "index": 0,
+              "path": "true"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "pin": [
+            {
+              "index": 0,
+              "path": "false"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "meta": {
+    "instanceId": "0336e01f55f1a3955b71800383da87a25c76025d55c76025d55c3aff2faca185fb2e3c75b"
+  }
+}
