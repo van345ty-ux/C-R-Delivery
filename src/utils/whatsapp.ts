@@ -1,6 +1,6 @@
 import { Order } from '../types';
 
-const EDGE_FUNCTION_URL = "https://15.228.227.120.sslip.io/webhook/whatsapp-order-notification";
+const EDGE_FUNCTION_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || "https://15.228.227.120.sslip.io/webhook/whatsapp-order-notification";
 
 export const sendWhatsappNotification = async (order: Order) => {
   const payload = {

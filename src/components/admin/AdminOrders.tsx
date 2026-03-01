@@ -101,7 +101,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
     'Cliente já fez a retirada'
   ];
 
-  const N8N_WEBHOOK_URL = "https://15.228.227.120.sslip.io/webhook/whatsapp-order-notification";
+  const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || "https://15.228.227.120.sslip.io/webhook/whatsapp-order-notification";
 
   const updateOrderStatus = async (orderId: string, newStatus: string, userId: string) => {
     const { error } = await supabase
