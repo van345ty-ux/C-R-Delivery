@@ -39,7 +39,40 @@ export const AdminMarketing: React.FC = () => {
     useEffect(() => {
         if (!currentCampaignId) return;
 
-        // Listen for real-time updates on fila_disparos table for the current campaign
+        let isSubscribed = true;
+
+        // Função de Polling (Busca manual no banco a cada 3 segundos)
+        // Isso resolve o problema caso o Realtime do Supabase não esteja ativado na tabela 'fila_disparos'
+        const fetchFilaStatus = async () => {
+            if (!isSubscribed) return;
+            try {
+                const { data, error } = await supabase
+                    .from('fila_disparos')
+                    .select('id, nome_cliente, status')
+                    .eq('campanha_id', currentCampaignId);
+
+                if (error) throw error;
+                if (data) {
+                    setActiveFila(data);
+
+                    const allProcessed = data.length > 0 && data.every(item => item.status !== 'pendente');
+                    if (allProcessed) {
+                        setIsSending(false);
+                        setCurrentCampaignId(null);
+                        toast.success('Disparo em massa concluído com sucesso!');
+                        isSubscribed = false; // Parar o polling
+                    }
+                }
+            } catch (err) {
+                console.error('Erro ao buscar status da fila:', err);
+            }
+        };
+
+        // Roda a primeira vez logo de cara e depois a cada 3 segundos
+        fetchFilaStatus();
+        const pollInterval = setInterval(fetchFilaStatus, 3000);
+
+        // Mantém também o Realtime ativado (caso no futuro seja configurado na dashboard)
         const channel = supabase
             .channel('fila_disparos_updates')
             .on(
@@ -51,25 +84,14 @@ export const AdminMarketing: React.FC = () => {
                     filter: `campanha_id=eq.${currentCampaignId}`,
                 },
                 (payload) => {
-                    const updatedRow = payload.new as FilaStatus;
-                    setActiveFila((prev) => {
-                        const newFila = prev.map((item) => (item.id === updatedRow.id ? { ...item, status: updatedRow.status } : item));
-
-                        // Check if all items are processed (no more 'pendente' status)
-                        const allProcessed = newFila.every(item => item.status !== 'pendente');
-                        if (allProcessed) {
-                            setIsSending(false);
-                            setCurrentCampaignId(null); // Optional: clear campaign ID to stop listening
-                            toast.success('Disparo em massa concluído!');
-                        }
-
-                        return newFila;
-                    });
+                    fetchFilaStatus(); // Em vez de montar na mão, puxamos a lista atualizada
                 }
             )
             .subscribe();
 
         return () => {
+            isSubscribed = false;
+            clearInterval(pollInterval);
             supabase.removeChannel(channel);
         };
     }, [currentCampaignId]);
@@ -204,27 +226,37 @@ export const AdminMarketing: React.FC = () => {
 
             setActiveFila(insertedFila || []);
 
-            // 5. Trigger Webhook n8n
-            const webhookUrl = import.meta.env.VITE_N8N_MARKETING_WEBHOOK_URL || 'https://achronychous-anabelle-transstellar.ngrok-free.dev/webhook-test/iniciar-campanha';
+            // 5. Trigger Webhook via Edge Function Proxy (Resolves CORS)
             try {
-                await fetch(webhookUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
+                const { error: invokeError } = await supabase.functions.invoke('whatsapp-router', {
+                    body: {
+                        project_type: 'marketing',
                         campanha_id: campanhaId,
+                        canpanha_id: campanhaId, // Adicionando com erro de digitação para compatibilidade com n8n
                         acao: 'iniciar_disparo',
                         mensagem: finalMessage
-                    })
+                    }
                 });
+
+                if (invokeError) throw invokeError;
+
                 toast.success('Disparo humanizado iniciado com sucesso!');
             } catch (webhookError) {
-                console.error('Erro no webhook N8N:', webhookError);
-                toast.error('A campanha foi registada, mas não foi possível contactar o n8n. Verifique o servidor n8n.');
+                console.error('Erro no webhook via Edge Function:', webhookError);
+                toast.error('A campanha foi registada, mas não foi possível contactar o n8n via Edge Function.');
             }
 
             // Cleanup UI
             setMessageText('');
             setSelectedCustomerIds([]);
+
+            // Fallback: Se o Webhook n8n não enviar atualizações via Supabase Realtime,
+            // destravamos o botão "Processando" após 5 segundos.
+            setTimeout(() => {
+                setIsSending(false);
+                setCurrentCampaignId(null);
+            }, 5000);
+
         } catch (error: any) {
             console.error(error);
             toast.error('Ocorreu um erro ao iniciar a campanha: ' + error.message);

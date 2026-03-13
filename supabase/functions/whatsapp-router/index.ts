@@ -16,7 +16,8 @@ serve(async (req) => {
     // 2. Obter os segredos de TODOS os Webhooks do n8n
     const DELIVERY_WEBHOOK_URL = Deno.env.get('N8N_DELIVERY_WEBHOOK_URL');
     const NAIL_WEBHOOK_URL = Deno.env.get('N8N_NAIL_WEBHOOK_URL');
-    const PIZZARIA_WEBHOOK_URL = Deno.env.get('N8N_PIZZARIA_WEBHOOK_URL'); // <-- NOVO SEGREDO
+    const PIZZARIA_WEBHOOK_URL = Deno.env.get('N8N_PIZZARIA_WEBHOOK_URL');
+    const MARKETING_WEBHOOK_URL = Deno.env.get('MARKETING_WEBHOOK_URL') || Deno.env.get('N8N_MARKETING_WEBHOOK_URL');
 
     // 3. Obter o payload completo da requisição
     const requestPayload = await req.json();
@@ -36,10 +37,14 @@ serve(async (req) => {
       targetWebhookUrl = DELIVERY_WEBHOOK_URL;
     } else if (project_type === 'nail_scheduler' && NAIL_WEBHOOK_URL) {
       targetWebhookUrl = NAIL_WEBHOOK_URL;
-    } else if (project_type === 'pizzaria' && PIZZARIA_WEBHOOK_URL) { // <-- NOVA CONDIÇÃO
+    } else if (project_type === 'pizzaria' && PIZZARIA_WEBHOOK_URL) {
       targetWebhookUrl = PIZZARIA_WEBHOOK_URL;
+    } else if (project_type === 'marketing' && MARKETING_WEBHOOK_URL) {
+      targetWebhookUrl = MARKETING_WEBHOOK_URL;
     } else {
-      return new Response(JSON.stringify({ error: `Webhook URL for project_type '${project_type}' is not configured.` }), {
+      const errorMsg = `Webhook URL for project_type '${project_type}' is not configured on Supabase Secrets.`;
+      console.error(errorMsg);
+      return new Response(JSON.stringify({ error: errorMsg }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
