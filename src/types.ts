@@ -79,3 +79,20 @@ export interface Highlight {
   order_index: number;
   shadow_size: number;
 }
+
+export interface Campanha {
+  id: string;
+  texto_mensagem: string;
+  status: 'rodando' | 'concluída' | 'erro' | string;
+  criado_em: string;
+}
+
+export interface FilaDisparo {
+  id: string;
+  campanha_id: string;
+  nome_cliente: string;
+  telefone_cliente: string;
+  status: 'pendente' | 'enviado' | 'erro' | string;
+  criado_em: string;
+  enviado_em?: string | null;
+}

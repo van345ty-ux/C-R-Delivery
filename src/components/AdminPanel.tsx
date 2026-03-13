@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Package, Users, BarChart, MapPin, Tag, SlidersHorizontal, Star, Gift } from 'lucide-react';
+import { ArrowLeft, Package, Users, BarChart, MapPin, Tag, SlidersHorizontal, Star, Gift, Megaphone } from 'lucide-react';
 import { AdminOrders } from './admin/AdminOrders';
 import { AdminProducts } from './admin/AdminProducts';
 import { AdminCities } from './admin/AdminCities';
@@ -10,6 +10,7 @@ import { AdminCustomers } from './admin/AdminCustomers';
 import { AdminSettings } from './admin/AdminSettings';
 import { AdminHighlights } from './admin/AdminHighlights';
 import { AdminBonificationCoupons } from './admin/AdminBonificationCoupons';
+import { AdminMarketing } from './admin/AdminMarketing';
 import { LoginNotification } from './LoginNotification';
 import { supabase } from '../integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
@@ -156,6 +157,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
     { id: 'bonification_coupons', label: 'Bonificações', icon: Gift, notificationCount: pendingBonificationCount },
     { id: 'coupons', label: 'Cupons', icon: Tag },
     { id: 'promotions', label: 'Promoções', icon: Tag },
+    { id: 'marketing', label: 'Marketing', icon: Megaphone },
     { id: 'customers', label: 'Clientes', icon: Users },
     { id: 'settings', label: 'Configurações', icon: SlidersHorizontal }
   ];
@@ -178,6 +180,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
         return <AdminCoupons />;
       case 'promotions':
         return <AdminPromotions />;
+      case 'marketing':
+        return <AdminMarketing />;
       case 'customers':
         return <AdminCustomers />;
       case 'settings':
@@ -215,8 +219,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`relative flex items-center py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${activeTab === tab.id
-                      ? 'border-red-500 text-red-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-red-500 text-red-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                 >
                   <Icon className="w-4 h-4 mr-2" />
