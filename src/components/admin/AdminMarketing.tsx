@@ -250,13 +250,6 @@ export const AdminMarketing: React.FC = () => {
             setMessageText('');
             setSelectedCustomerIds([]);
 
-            // Fallback: Se o Webhook n8n não enviar atualizações via Supabase Realtime,
-            // destravamos o botão "Processando" após 5 segundos.
-            setTimeout(() => {
-                setIsSending(false);
-                setCurrentCampaignId(null);
-            }, 5000);
-
         } catch (error: any) {
             console.error(error);
             toast.error('Ocorreu um erro ao iniciar a campanha: ' + error.message);
