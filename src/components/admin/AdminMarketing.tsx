@@ -22,7 +22,6 @@ export const AdminMarketing: React.FC = () => {
 
     // States of the form
     const [messageText, setMessageText] = useState('');
-    const [includeOptOut, setIncludeOptOut] = useState(true);
     const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
     const [manualName, setManualName] = useState('');
     const [manualPhone, setManualPhone] = useState('');
@@ -187,10 +186,8 @@ export const AdminMarketing: React.FC = () => {
         setIsSending(true);
 
         try {
-            // 1. Prepare finalized text
-            const finalMessage = includeOptOut
-                ? `${messageText}\n\nSe não desejar mais receber as nossas promoções, basta responder SAIR.`
-                : messageText;
+            // 1. Prepare finalized text (Opt-out is handled by n8n)
+            const finalMessage = messageText;
 
             // 2. Insert Campaign
             const { data: campanha, error: campanhaError } = await supabase
@@ -292,20 +289,6 @@ export const AdminMarketing: React.FC = () => {
                             className="w-full h-32 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
                             disabled={isSending}
                         ></textarea>
-
-                        <div className="mt-3 flex items-center">
-                            <input
-                                type="checkbox"
-                                id="opt-out"
-                                checked={includeOptOut}
-                                onChange={(e) => setIncludeOptOut(e.target.checked)}
-                                className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
-                                disabled={isSending}
-                            />
-                            <label htmlFor="opt-out" className="ml-2 text-sm text-gray-700">
-                                Adicionar mensagem de Opt-out no final (Evita banimentos)
-                            </label>
-                        </div>
                     </div>
 
                     <div className="bg-white rounded-lg shadow-sm border p-6">
