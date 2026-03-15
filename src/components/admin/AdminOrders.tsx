@@ -101,7 +101,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
     'Cliente já fez a retirada'
   ];
 
-  const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || "https://15.228.227.120.sslip.io/webhook/whatsapp-order-notification";
+
 
   const updateOrderStatus = async (orderId: string, newStatus: string, userId: string) => {
     const { error } = await supabase
@@ -138,11 +138,12 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
           }
         };
 
-        fetch(N8N_WEBHOOK_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(n8nPayload),
-        }).catch(err => console.error('Erro ao notificar n8n:', err));
+        // Usa o whatsapp-router via Edge Function (evita erros de SSL/CORS)
+        supabase.functions.invoke('whatsapp-router', {
+          body: n8nPayload,
+        }).then(({ error }) => {
+          if (error) console.error('Erro ao notificar n8n:', error);
+        });
       }
 
       if (newStatus === 'Entregue' || newStatus === 'Cliente já fez a retirada') {
