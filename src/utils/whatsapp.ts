@@ -1,6 +1,5 @@
 import { Order } from '../types';
-
-const EDGE_FUNCTION_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || "https://15.228.227.120.sslip.io/webhook/whatsapp-order-notification";
+import { supabase } from '../integrations/supabase/client';
 
 export const sendWhatsappNotification = async (order: Order) => {
   const payload = {
@@ -22,31 +21,26 @@ export const sendWhatsappNotification = async (order: Order) => {
         price: item.product.price,
         observations: item.observations,
       })),
-      change_for: order.changeFor, // Adicionado campo de troco
+      change_for: order.changeFor,
     }
   };
 
   try {
-    const response = await fetch(EDGE_FUNCTION_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
+    // Agora usa o whatsapp-router (Edge Function) como proxy para evitar erros SSL/CORS
+    const { error } = await supabase.functions.invoke('whatsapp-router', {
+      body: payload,
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error('WhatsApp Router Error:', data.error || 'Unknown error');
+    if (error) {
+      console.error('Erro ao notificar n8n via Edge Function:', error);
       return false;
     }
 
-    console.log('WhatsApp notification successfully routed to n8n:', data);
+    console.log('Notificação WhatsApp encaminhada com sucesso pelo roteador.');
     return true;
 
   } catch (error) {
-    console.error('Error invoking WhatsApp router Edge Function:', error);
+    console.error('Erro ao notificar n8n:', error);
     return false;
   }
 };
