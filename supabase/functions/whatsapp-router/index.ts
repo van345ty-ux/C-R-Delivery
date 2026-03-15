@@ -13,11 +13,9 @@ serve(async (req) => {
   }
 
   try {
-    // 2. Obter os segredos de TODOS os Webhooks do n8n
-    const DELIVERY_WEBHOOK_URL = Deno.env.get('N8N_DELIVERY_WEBHOOK_URL');
-    const NAIL_WEBHOOK_URL = Deno.env.get('N8N_NAIL_WEBHOOK_URL');
-    const PIZZARIA_WEBHOOK_URL = Deno.env.get('N8N_PIZZARIA_WEBHOOK_URL');
-    const MARKETING_WEBHOOK_URL = Deno.env.get('MARKETING_WEBHOOK_URL') || Deno.env.get('N8N_MARKETING_WEBHOOK_URL');
+    // 2. Configurações
+    // Cadastre aqui o nome da sua instância da Evolution (Evo)
+    const EVO_INSTANCE_NAME = 'C7R';
 
     // 3. Obter o payload completo da requisição
     const requestPayload = await req.json();
@@ -30,42 +28,45 @@ serve(async (req) => {
       });
     }
 
+    // 4. Determinar qual a URL de Destino baseada no project_type
     let targetWebhookUrl = '';
 
-    // 4. Lógica de Roteamento ATUALIZADA
-    if (project_type === 'delivery' && DELIVERY_WEBHOOK_URL) {
-      targetWebhookUrl = DELIVERY_WEBHOOK_URL;
-    } else if (project_type === 'nail_scheduler' && NAIL_WEBHOOK_URL) {
-      targetWebhookUrl = NAIL_WEBHOOK_URL;
-    } else if (project_type === 'pizzaria' && PIZZARIA_WEBHOOK_URL) {
-      targetWebhookUrl = PIZZARIA_WEBHOOK_URL;
-    } else if (project_type === 'marketing' && MARKETING_WEBHOOK_URL) {
-      targetWebhookUrl = MARKETING_WEBHOOK_URL;
+    if (project_type === 'delivery') {
+      targetWebhookUrl = Deno.env.get('N8N_DELIVERY_WEBHOOK_URL') || 'https://n8n-n8n.ojzczb.easypanel.host/webhook/whatsapp-order-notification';
+    } else if (project_type === 'marketing') {
+      targetWebhookUrl = Deno.env.get('N8N_MARKETING_WEBHOOK_URL') || 'https://achronychous-anabelle-transstellar.ngrok-free.dev/webhook/iniciar-campanha';
     } else {
-      const errorMsg = `Webhook URL for project_type '${project_type}' is not configured on Supabase Secrets.`;
+      const errorMsg = `Tipo de projeto não suportado: ${project_type}`;
       console.error(errorMsg);
       return new Response(JSON.stringify({ error: errorMsg }), {
-        status: 500,
+        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log(`Routing request for project_type: '${project_type}' to n8n.`);
+    // 5. Injetar a informação da instância no payload recebido
+    // Para que o n8n ou a api final saiba qual instância usar
+    const payloadToSend = {
+      ...requestPayload,
+      evo_instance: EVO_INSTANCE_NAME
+    };
 
-    // 5. Encaminhar o payload (sem alterações nesta parte)
+    console.log(`Routing request for project_type: '${project_type}' to: ${targetWebhookUrl} with instance: '${EVO_INSTANCE_NAME}'`);
+
+    // 6. Encaminhar o payload
     const n8nResponse = await fetch(targetWebhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(requestPayload),
+      body: JSON.stringify(payloadToSend),
     });
 
-    // 6. Retornar o status do n8n (sem alterações nesta parte)
+    // 6. Retornar o status da requisição
     if (!n8nResponse.ok) {
       const errorText = await n8nResponse.text();
       console.error('n8n Webhook failed:', n8nResponse.status, errorText);
-      return new Response(JSON.stringify({ error: `n8n Webhook failed with status ${n8nResponse.status}` }), {
+      return new Response(JSON.stringify({ error: `n8n Webhook failed com status ${n8nResponse.status}` }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
