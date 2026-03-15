@@ -32,7 +32,7 @@ serve(async (req) => {
     let targetWebhookUrl = '';
 
     if (project_type === 'delivery') {
-      targetWebhookUrl = Deno.env.get('N8N_DELIVERY_WEBHOOK_URL') || 'https://n8n-n8n.ojzczb.easypanel.host/webhook/whatsapp-order-notification';
+      targetWebhookUrl = Deno.env.get('N8N_DELIVERY_WEBHOOK_URL') || 'https://15.228.227.120.sslip.io/webhook/whatsapp-order-notification';
     } else if (project_type === 'marketing') {
       targetWebhookUrl = Deno.env.get('N8N_MARKETING_WEBHOOK_URL') || 'https://achronychous-anabelle-transstellar.ngrok-free.dev/webhook/iniciar-campanha';
     } else {
