@@ -228,6 +228,7 @@ export const AdminMarketing: React.FC = () => {
                 const { error: invokeError } = await supabase.functions.invoke('whatsapp-router', {
                     body: {
                         project_type: 'marketing',
+                        loja: 'cr_sushi',
                         campanha_id: campanhaId,
                         canpanha_id: campanhaId, // Adicionando com erro de digitação para compatibilidade com n8n
                         acao: 'iniciar_disparo',

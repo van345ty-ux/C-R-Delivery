@@ -5,6 +5,7 @@ export const sendWhatsappNotification = async (order: Order) => {
   const payload = {
     project_type: 'delivery',
     workflow_type: 'delivery_order',
+    loja: 'cr_sushi',
     phone_number: order.customerPhone,
     message_data: {
       order_number: `C&R${order.orderNumber.toString().padStart(2, '0')}`,
