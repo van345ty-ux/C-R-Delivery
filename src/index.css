@@ -47,6 +47,39 @@
   .animate-pulse-text {
     animation: pulseText 1.5s ease-in-out infinite;
   }
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+}
+
+  /* Animação especial para Ovos de Sushi */
+  .animate-pulse-ovos {
+    animation: pulseWhiteRed 2s infinite ease-in-out;
+  }
+
+@keyframes pulseWhiteRed {
+  0% {
+    background-color: white;
+    color: #dc2626;
+    border-color: #fee2e2;
+  }
+  50% {
+    background-color: #dc2626;
+    color: white;
+    border-color: #dc2626;
+  }
+  100% {
+    background-color: white;
+    color: #dc2626;
+    border-color: #fee2e2;
+  }
 }
 
 @keyframes fadeIn {

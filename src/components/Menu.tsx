@@ -31,6 +31,7 @@ interface MenuProps {
 }
 
 const categories = [
+  'Ovos de Sushi',
   'Todos',
   'Combinados',
   'Temaki',
@@ -239,20 +240,46 @@ export const Menu: React.FC<MenuProps> = ({
         </div>
 
         {/* Category Filters */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => onCategoryChange(category)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${selectedCategory === category
-                ? (isFestiveMode ? 'festive-bg-gradient text-white border border-yellow-400' : 'bg-red-600 text-white')
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              disabled={isMercadoPagoReturnFlow} // Desabilita filtros
-            >
-              {category}
-            </button>
-          ))}
+        <div className="flex gap-2 overflow-x-auto pb-4 items-center no-scrollbar">
+          {categories.map((category) => {
+            const isOvos = category === 'Ovos de Sushi';
+            const isTodos = category === 'Todos';
+            const isActive = selectedCategory === category;
+
+            let btnClass = "";
+
+            if (isOvos) {
+              // Estilo especial para Ovos de Sushi: maior, pulsando e destacado
+              btnClass = `px-7 py-4 rounded-full text-lg font-bold whitespace-nowrap transition-all duration-300 transform hover:scale-110 shadow-lg flex items-center gap-2 animate-pulse-ovos ${isActive
+                  ? 'ring-4 ring-red-500/20 border-2 border-red-600'
+                  : 'border-2 border-red-100 shadow-xl'
+                }`;
+            } else if (isTodos) {
+              // Estilo para Todos: branco quando selecionado
+              btnClass = `px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${isActive
+                  ? 'bg-white text-red-600 border-2 border-red-600 shadow-sm'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`;
+            } else {
+              // Estilo padrão para as demais categorias
+              btnClass = `px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${isActive
+                  ? (isFestiveMode ? 'festive-bg-gradient text-white border border-yellow-400' : 'bg-red-600 text-white')
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`;
+            }
+
+            return (
+              <button
+                key={category}
+                onClick={() => onCategoryChange(category)}
+                className={`${btnClass} ${isMercadoPagoReturnFlow ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={isMercadoPagoReturnFlow}
+              >
+                {isOvos && <span className="text-xl">🍣</span>}
+                {category}
+              </button>
+            );
+          })}
         </div>
       </div>
 
