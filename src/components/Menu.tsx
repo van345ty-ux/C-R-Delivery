@@ -283,15 +283,14 @@ export const Menu: React.FC<MenuProps> = ({
         </div>
       </div>
 
-      {/* Aviso Especial Ovos de Sushi */}
-      {selectedCategory === 'Ovos de Sushi' && (
-        <div className="mb-6 bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-2xl p-5 shadow-sm transform transition-all duration-300 animate-fade-in">
-          <div className="flex items-start gap-4">
+      {/* Aviso Especial Ovos de Sushi - Sempre Visível */}
+      <div className="mb-6 bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-2xl p-5 shadow-sm transform transition-all duration-300 animate-fade-in">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
             <div className="bg-white p-3 rounded-full shrink-0 shadow-sm border border-red-100">
               <span className="text-2xl">🐰</span>
             </div>
-            <div>
-              <h3 className="text-red-800 font-extrabold text-lg flex items-center gap-2">
+            <div className="text-center sm:text-left">
+              <h3 className="text-red-800 font-extrabold text-lg flex items-center justify-center sm:justify-start gap-2">
                 Atenção: Entregas Exclusivas de Fim de Semana!
               </h3>
               <p className="text-red-700 mt-1 text-sm leading-relaxed">
@@ -303,7 +302,6 @@ export const Menu: React.FC<MenuProps> = ({
             </div>
           </div>
         </div>
-      )}
 
       {/* Highlights Section */}
       {highlights.length > 0 && (
