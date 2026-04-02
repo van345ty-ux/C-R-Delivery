@@ -283,6 +283,28 @@ export const Menu: React.FC<MenuProps> = ({
         </div>
       </div>
 
+      {/* Aviso Especial Ovos de Sushi */}
+      {selectedCategory === 'Ovos de Sushi' && (
+        <div className="mb-6 bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-2xl p-5 shadow-sm transform transition-all duration-300 animate-fade-in">
+          <div className="flex items-start gap-4">
+            <div className="bg-white p-3 rounded-full shrink-0 shadow-sm border border-red-100">
+              <span className="text-2xl">🐰</span>
+            </div>
+            <div>
+              <h3 className="text-red-800 font-extrabold text-lg flex items-center gap-2">
+                Atenção: Entregas Exclusivas de Fim de Semana!
+              </h3>
+              <p className="text-red-700 mt-1 text-sm leading-relaxed">
+                Por exigirem um preparo minucioso e artesanal exclusivo para a Páscoa, a entrega dos <strong>Ovos de Sushi</strong> ocorrerá <span className="font-bold underline">apenas no Sábado e Domingo</span>.
+              </p>
+              <p className="text-red-700 mt-2 text-sm font-medium bg-white/50 inline-block px-3 py-1.5 rounded-lg">
+                Pode adicionar ao carrinho tranquilamente! 🛒 Na hora de finalizar o seu pedido, você escolherá o dia exato e nós garantiremos a entrega. Garanta já o seu! ✨
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Highlights Section */}
       {highlights.length > 0 && (
         <div className="mb-8">

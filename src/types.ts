@@ -55,6 +55,7 @@ export interface Order {
   createdAt: string;
   couponUsed?: string;
   changeFor?: number | null; // Adicionado campo para o troco
+  sushi_egg_delivery_day?: string | null; // Dia de entrega dos Ovos de Sushi
 }
 
 export interface City {

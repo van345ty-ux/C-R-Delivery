@@ -66,6 +66,12 @@ export const Cart: React.FC<CartProps> = ({
   const [needsChange, setNeedsChange] = useState<boolean | null>(null);
   const [changeForAmount, setChangeForAmount] = useState<string>('');
 
+  // Estado para dia de entrega dos Ovos de Sushi
+  const [sushiEggDeliveryDay, setSushiEggDeliveryDay] = useState<'Sábado' | 'Domingo' | null>(null);
+
+  // Detecta se há itens da categoria Ovos de Sushi no carrinho
+  const hasOvosDesSushi = items.some(item => item.product.category === 'Ovos de Sushi');
+
   const isAwaitingPixPayment = paymentMethod === 'pix' && pixPaymentInitiated && !hasAcknowledgedPixReturnConfirmation;
 
   useEffect(() => {
@@ -281,6 +287,10 @@ export const Cart: React.FC<CartProps> = ({
       toast.error('Por favor, insira um valor para o troco que seja maior que o total do pedido.');
       return;
     }
+    if (hasOvosDesSushi && !sushiEggDeliveryDay) {
+      toast.error('🍣 Escolha o dia de entrega dos Ovos de Sushi: Sábado ou Domingo.');
+      return;
+    }
     if (paymentMethod === 'pix' && isAwaitingPixPayment) {
       toast.error('Vá até o seu banco, pague o valor do pedido e volte para finalizar.');
       return;
@@ -316,6 +326,7 @@ export const Cart: React.FC<CartProps> = ({
       customer_phone: user.phone,
       coupon_used: appliedCoupon?.code,
       change_for: (paymentMethod === 'cash' && needsChange && parseFloat(changeForAmount) > 0) ? parseFloat(changeForAmount) : null,
+      sushi_egg_delivery_day: hasOvosDesSushi ? sushiEggDeliveryDay : null,
     };
     // Adicionando timeout para evitar travamento na criação do pedido
     let newOrder, error;
@@ -375,6 +386,7 @@ export const Cart: React.FC<CartProps> = ({
       createdAt: newOrder.created_at,
       couponUsed: newOrder.coupon_used,
       changeFor: newOrder.change_for,
+      sushi_egg_delivery_day: newOrder.sushi_egg_delivery_day,
     };
 
     // Enviar notificação sem bloquear o fluxo principal por muito tempo
@@ -479,6 +491,47 @@ export const Cart: React.FC<CartProps> = ({
             </>
           )}
         </div>
+
+        {/* Seleção de Dia – Ovos de Sushi (aparece apenas quando há itens desta categoria) */}
+        {hasOvosDesSushi && (
+          <div className="border-t pt-4">
+            <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xl">🍣</span>
+                <h3 className="font-bold text-red-700 text-sm">Ovos de Sushi – Entrega Especial</h3>
+              </div>
+              <p className="text-xs text-red-600 mb-3">Estes itens são entregues apenas aos fins de semana. Escolha o dia que prefere receber:</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSushiEggDeliveryDay('Sábado')}
+                  className={`flex-1 py-3 rounded-xl text-sm font-bold border-2 transition-all duration-200 ${
+                    sushiEggDeliveryDay === 'Sábado'
+                      ? 'bg-red-600 text-white border-red-600 shadow-md scale-105'
+                      : 'bg-white text-gray-700 border-gray-300 hover:border-red-400 hover:bg-red-50'
+                  }`}
+                >
+                  📅 Sábado
+                </button>
+                <button
+                  onClick={() => setSushiEggDeliveryDay('Domingo')}
+                  className={`flex-1 py-3 rounded-xl text-sm font-bold border-2 transition-all duration-200 ${
+                    sushiEggDeliveryDay === 'Domingo'
+                      ? 'bg-red-600 text-white border-red-600 shadow-md scale-105'
+                      : 'bg-white text-gray-700 border-gray-300 hover:border-red-400 hover:bg-red-50'
+                  }`}
+                >
+                  📅 Domingo
+                </button>
+              </div>
+              {!sushiEggDeliveryDay && (
+                <p className="text-xs text-red-500 mt-2 font-medium">⚠️ Obrigatório: selecione o dia de entrega para continuar.</p>
+              )}
+              {sushiEggDeliveryDay && (
+                <p className="text-xs text-green-600 mt-2 font-medium">✅ Você receberá seus Ovos de Sushi no <strong>{sushiEggDeliveryDay}</strong>.</p>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="border-t pt-4">
           <h3 className="font-medium mb-3">Tipo de Entrega</h3>

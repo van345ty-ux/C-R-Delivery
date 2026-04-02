@@ -18,6 +18,7 @@ interface Order {
   status: string;
   created_at: string;
   change_for?: number | null; // Adicionado campo para o troco
+  sushi_egg_delivery_day?: string | null; // Dia de entrega dos Ovos de Sushi
 }
 
 interface AdminOrdersProps {
@@ -372,6 +373,12 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
                           </p>
                           {order.address && (<p className="text-sm text-gray-600"><strong>Endereço:</strong> {order.address}</p>)}
                           <p className="text-sm text-gray-600"><strong>Pedido às:</strong> {new Date(order.created_at).toLocaleTimeString('pt-BR')}</p>
+                          {order.sushi_egg_delivery_day && (
+                            <div className="mt-2 inline-flex items-center gap-1.5 bg-orange-100 border border-orange-300 text-orange-800 px-3 py-1.5 rounded-lg">
+                              <span className="text-base">📅</span>
+                              <span className="text-sm font-bold">Entrega Ovos de Sushi: {order.sushi_egg_delivery_day}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

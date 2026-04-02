@@ -7,6 +7,7 @@ import { Footer } from './Footer'; // Importando o novo componente Footer
 import { User, CartItem, Product, Order } from '../types'; // Corrected import path
 import { supabase } from '../integrations/supabase/client';
 import { PreOrderModal } from './PreOrderModal'; // Importando o novo modal
+import { EasterPopup } from './EasterPopup'; // Importando o novo popup de Páscoa
 
 interface HomePageProps {
   selectedCity: string;
@@ -85,6 +86,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [promotions, setPromotions] = useState<Product[]>([]);
   const [promotionModalTitle, setPromotionModalTitle] = useState('Promoções do Dia');
   const [menuFilter, setMenuFilter] = useState('Todos');
+  const [showEasterPopup, setShowEasterPopup] = useState(false);
 
   useEffect(() => {
     const PROMOTION_MODAL_COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 horas
@@ -119,8 +121,14 @@ export const HomePage: React.FC<HomePageProps> = ({
     const lastShownTimestamp = parseInt(localStorage.getItem(LAST_SHOWN_KEY) || '0');
     const isCooldownActive = (Date.now() - lastShownTimestamp) < PROMOTION_MODAL_COOLDOWN_MS;
 
-    // A condição para mostrar é: (veio da tela de cidades) OU (o cooldown de 2h expirou)
-    if (shouldShowOnLoadFromLocation || !isCooldownActive) {
+    const LAST_EASTER_SHOWN_KEY = 'easterPopupLastShown';
+    const lastEasterShownTimestamp = parseInt(localStorage.getItem(LAST_EASTER_SHOWN_KEY) || '0');
+    const isEasterCooldownActive = (Date.now() - lastEasterShownTimestamp) < PROMOTION_MODAL_COOLDOWN_MS;
+
+    if (shouldShowOnLoadFromLocation || !isEasterCooldownActive) {
+      setShowEasterPopup(true);
+      localStorage.setItem(LAST_EASTER_SHOWN_KEY, Date.now().toString());
+    } else if (shouldShowOnLoadFromLocation || !isCooldownActive) {
       const fetchAndShowPromotions = async () => {
         const { data: promotionsData, error } = await supabase
           .from('products')
@@ -142,6 +150,13 @@ export const HomePage: React.FC<HomePageProps> = ({
       };
 
       fetchAndShowPromotions();
+    } else {
+       // Buscar promoções em background caso easter cooldown esteja ativo mas queira mostrar promos depois
+       const fetchBgPromos = async () => {
+         const { data: promos } = await supabase.from('products').select('*').eq('category', 'Promoção').eq('available', true);
+         if (promos) setPromotions(promos);
+       };
+       fetchBgPromos();
     }
   }, [isMercadoPagoReturnFlow, isPixReturnFlow, showPreOrderModal]);
 
@@ -236,11 +251,23 @@ export const HomePage: React.FC<HomePageProps> = ({
       {showPreOrderModal ? (
         <PreOrderModal onClose={() => {
           setShowPreOrderModal(false);
-          // Após fechar o modal de pré-pedido, verifica se o modal de promoção deve abrir
-          if (promotions.length > 0) {
+          if (showEasterPopup) {
+            // Already handled by component below
+          } else if (promotions.length > 0) {
             setShowPromotions(true);
           }
         }} />
+      ) : showEasterPopup ? (
+        <EasterPopup
+          onClose={() => {
+            setShowEasterPopup(false);
+            if (promotions.length > 0) setShowPromotions(true);
+          }}
+          onGoToMenu={() => {
+            setShowEasterPopup(false);
+            setMenuFilter('Ovos de Sushi');
+          }}
+        />
       ) : (
         showPromotions && promotions.length > 0 && (
           <PromotionModal
