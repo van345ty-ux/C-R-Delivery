@@ -12,6 +12,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { User, Coupon, Product, CartItem, Order, City, OperatingHour } from './types'; // Importando tipos de types.ts
 import { SnowEffect } from './components/SnowEffect';
 import { ChristmasLights } from './components/FestiveDecorations';
+import { EasterBunnyPeek } from './components/EasterBunnyPeek';
 
 const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null> => {
   console.log('fetchUserProfile: Attempting to fetch profile for user ID:', supabaseUser.id);
@@ -765,6 +766,7 @@ function App() {
           <ChristmasLights />
         </>
       )}
+      <EasterBunnyPeek />
       {renderContent()}
       {showProfile && user && (
         <UserProfile
