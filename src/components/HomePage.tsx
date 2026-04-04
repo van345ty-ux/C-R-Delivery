@@ -171,19 +171,16 @@ export const HomePage: React.FC<HomePageProps> = ({
   };
 
   const handleViewPromotion = () => {
-    setMenuFilter('Promoções');
-    setShowPromotions(false);
-    // Esta ação (Ver no Cardápio) não acionará a notificação de cupom, conforme solicitado.
+    localStorage.setItem('pendingMenuFilter', 'Promoções');
+    window.location.reload();
   };
 
-  const handleClosePromotionModal = (source?: 'full_menu' | 'x_button') => { // Recebe a origem
-    console.log('HomePage - handleClosePromotionModal called, source:', source, 'pendingCouponNotificationUserId prop:', pendingCouponNotificationUserId);
-    setShowPromotions(false);
-    // Apenas mostra a notificação de cupom se o modal foi fechado pelo botão "Ver Cardápio Completo"
-    if (source === 'full_menu' && pendingCouponNotificationUserId) {
-      setShowUserCouponNotification(true);
-      setPendingCouponNotificationUserId(null);
-      console.log('HomePage - Setting setShowUserCouponNotification to true and clearing pendingCouponNotificationUserId');
+  const handleClosePromotionModal = (source?: 'full_menu' | 'x_button') => {
+    if (source === 'full_menu') {
+      // Força refresh ao ir para o cardápio completo
+      window.location.reload();
+    } else {
+      setShowPromotions(false);
     }
   };
 
