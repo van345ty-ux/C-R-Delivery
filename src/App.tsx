@@ -13,6 +13,7 @@ import { User, Coupon, Product, CartItem, Order, City, OperatingHour } from './t
 import { SnowEffect } from './components/SnowEffect';
 import { ChristmasLights } from './components/FestiveDecorations';
 import { EasterBunnyPeek } from './components/EasterBunnyPeek';
+import { UpdatePrompt } from './components/UpdatePrompt';
 
 const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null> => {
   console.log('fetchUserProfile: Attempting to fetch profile for user ID:', supabaseUser.id);
@@ -756,6 +757,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Popup de atualização — aparece uma vez por sessão para garantir versão atual */}
+      <UpdatePrompt />
       {isFestiveMode && (
         <>
           <SnowEffect />
