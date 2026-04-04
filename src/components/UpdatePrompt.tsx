@@ -22,10 +22,6 @@ export const UpdatePrompt = () => {
     window.location.reload();
   };
 
-  const handleDismiss = () => {
-    setVisible(false);
-  };
-
   if (!visible) return null;
 
   return (
@@ -34,7 +30,6 @@ export const UpdatePrompt = () => {
       <div
         className="fixed inset-0 z-[599]"
         style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}
-        onClick={handleDismiss}
       />
 
       {/* Card centralizado por cima de tudo */}
@@ -75,7 +70,7 @@ export const UpdatePrompt = () => {
               <button
                 onClick={handleRefresh}
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all mb-2"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all"
                 style={{
                   background: loading
                     ? 'rgba(230,57,70,0.5)'
@@ -86,13 +81,6 @@ export const UpdatePrompt = () => {
               >
                 <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
                 {loading ? 'Atualizando...' : '🔄 Atualizar o cardápio'}
-              </button>
-
-              <button
-                onClick={handleDismiss}
-                className="text-gray-500 text-xs hover:text-gray-300 transition-colors py-1"
-              >
-                Estou na versão atual, fechar
               </button>
             </div>
           </div>
