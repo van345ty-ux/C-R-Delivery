@@ -757,8 +757,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Popup de atualização — aparece uma vez por sessão para garantir versão atual */}
-      <UpdatePrompt />
+      {/* Popup de atualização — aparece apenas no cardápio, uma vez por sessão */}
+      {currentView === 'home' && <UpdatePrompt />}
       {isFestiveMode && (
         <>
           <SnowEffect />
