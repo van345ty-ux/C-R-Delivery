@@ -85,7 +85,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [cartAnimation, setCartAnimation] = useState(false);
   const [promotions, setPromotions] = useState<Product[]>([]);
   const [promotionModalTitle, setPromotionModalTitle] = useState('Promoções do Dia');
-  const [menuFilter, setMenuFilter] = useState('Todos');
+  const [menuFilter, setMenuFilter] = useState(localStorage.getItem('pendingMenuFilter') || 'Todos');
   const [showEasterPopup, setShowEasterPopup] = useState(false);
 
   useEffect(() => {
@@ -116,6 +116,10 @@ export const HomePage: React.FC<HomePageProps> = ({
     // Se a flag estiver presente, remove-a para não disparar novamente em um refresh
     if (shouldShowOnLoadFromLocation) {
       localStorage.removeItem('showPromotionModalOnLoad');
+    }
+
+    if (localStorage.getItem('pendingMenuFilter')) {
+      localStorage.removeItem('pendingMenuFilter');
     }
 
     const lastShownTimestamp = parseInt(localStorage.getItem(LAST_SHOWN_KEY) || '0');
@@ -265,7 +269,8 @@ export const HomePage: React.FC<HomePageProps> = ({
           }}
           onGoToMenu={() => {
             setShowEasterPopup(false);
-            setMenuFilter('Ovos de Sushi');
+            localStorage.setItem('pendingMenuFilter', 'Ovos de Sushi');
+            window.location.reload();
           }}
         />
       ) : (
