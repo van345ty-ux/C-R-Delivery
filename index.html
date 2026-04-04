@@ -9,13 +9,28 @@
     <meta http-equiv="Expires" content="0" />
     <script>
       (function() {
-        // Versão de Emergência para forçar o navegador a recarregar o novo código
-        var BOOTSTRAP_VERSION = '202604041311'; 
-        var saved = localStorage.getItem('app_bootstrap_v');
+        // Versão de Controle - ATUALIZE ESTE NÚMERO EM CADA DEPLOY para forçar refresh
+        var BOOTSTRAP_VERSION = '20260404_1332';
+        var STORAGE_KEY = 'app_bootstrap_v';
+        var saved = localStorage.getItem(STORAGE_KEY);
+        
         if (saved !== BOOTSTRAP_VERSION) {
-          localStorage.setItem('app_bootstrap_v', BOOTSTRAP_VERSION);
-          console.log('Bootstrap: Atualizando para ' + BOOTSTRAP_VERSION);
-          window.location.reload(true);
+          // Nova versão detectada!
+          localStorage.setItem(STORAGE_KEY, BOOTSTRAP_VERSION);
+          console.log('Bootstrap: Nova versão detectada, forçando atualização...');
+          
+          // Verifica se ja estamos em um URL com cache-bust para evitar loop infinito
+          var url = window.location.href;
+          if (url.indexOf('?_cb=') === -1 && url.indexOf('&_cb=') === -1) {
+            // Redireciona com parâmetro único - isso força o navegador a ignorar todo cache
+            var sep = url.indexOf('?') !== -1 ? '&' : '?';
+            window.location.replace(url + sep + '_cb=' + BOOTSTRAP_VERSION);
+          }
+        } else if (window.location.search.indexOf('_cb=') !== -1) {
+          // Versão OK e temos parâmetro de cache-bust na URL - limpa a URL
+          var cleanUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, document.title, cleanUrl);
+          console.log('Bootstrap: App atualizado com sucesso!');
         }
       })();
     </script>
