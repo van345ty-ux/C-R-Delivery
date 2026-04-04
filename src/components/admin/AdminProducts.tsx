@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, CheckCircle } from 'lucide-react';
 import { Product } from '../../types'; // Corrected import path
 import { supabase } from '../../integrations/supabase/client';
 
@@ -139,21 +139,46 @@ export const AdminProducts: React.FC = () => {
     fetchProducts();
   };
 
+  const handleActivateAll = async () => {
+    if (confirm('Tem certeza que deseja ativar todos os produtos que estão invisíveis no cardápio?')) {
+      const { error } = await supabase
+        .from('products')
+        .update({ available: true })
+        .eq('available', false);
+      
+      if (error) {
+        alert('Erro ao ativar todos os produtos.');
+        console.error('Error activating all products:', error);
+      } else {
+        fetchProducts();
+      }
+    }
+  };
+
   if (loading) {
     return <div>Carregando produtos...</div>;
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-900">Gestão de Produtos</h1>
-        <button
-          onClick={() => handleOpenModal()}
-          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Produto
-        </button>
+        <div className="flex space-x-3">
+          <button
+            onClick={handleActivateAll}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center"
+          >
+            <CheckCircle className="w-4 h-4 mr-2" />
+            Ativar todos os produtos
+          </button>
+          <button
+            onClick={() => handleOpenModal()}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Produto
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

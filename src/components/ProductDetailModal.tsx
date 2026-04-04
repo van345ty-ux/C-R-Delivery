@@ -3,6 +3,7 @@ import { X, Plus, Minus } from 'lucide-react';
 import { Product } from '../types'; // Corrected import path
 import { Button } from './ui/button';
 import toast from 'react-hot-toast';
+import { cn } from '../utils/cn';
 
 interface ProductDetailModalProps {
   product: Product;
@@ -117,8 +118,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             </div>
             <Button
               onClick={handleAddToCartClick}
-              disabled={!canPlaceOrder || isMercadoPagoReturnFlow} // Desabilita se não pode fazer pedido ou se estiver no fluxo de retorno do Mercado Pago
-              className="bg-red-600 hover:bg-red-700 text-white px-2 py-3 rounded-lg shadow-md flex items-center text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!canPlaceOrder || isMercadoPagoReturnFlow || !(['Ovos de Sushi', 'Bebidas'].includes(product.category))} // Desabilita se não pode fazer pedido ou se estiver no fluxo de retorno do Mercado Pago ou se a categoria for restrita
+              className={cn(
+                "bg-red-600 hover:bg-red-700 text-white px-2 py-3 rounded-lg shadow-md flex items-center text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed",
+                !(['Ovos de Sushi', 'Bebidas'].includes(product.category)) && "opacity-20 hover:bg-red-600 cursor-not-allowed"
+              )}
             >
               <Plus className="h-5 w-5 mr-2" />
               Adicionar ao Carrinho

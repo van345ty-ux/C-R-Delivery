@@ -85,9 +85,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
         {/* Chama onProductClick */}
         <Button
           onClick={() => onProductClick(product)}
-          className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-md flex-shrink-0 h-8 w-8 flex items-center justify-center"
+          className={cn(
+            "bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-md flex-shrink-0 h-8 w-8 flex items-center justify-center",
+            !(['Ovos de Sushi', 'Bebidas'].includes(product.category)) && "opacity-20 hover:bg-red-600 cursor-not-allowed"
+          )}
           size="icon"
-          disabled={isMercadoPagoReturnFlow} // Desabilita o botão se estiver no fluxo de retorno do Mercado Pago
+          disabled={isMercadoPagoReturnFlow || !(['Ovos de Sushi', 'Bebidas'].includes(product.category))} 
         >
           <Plus className="h-5 w-5" />
         </Button>
