@@ -7,6 +7,18 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
+    <script>
+      (function() {
+        // Versão de Emergência para forçar o navegador a recarregar o novo código
+        var BOOTSTRAP_VERSION = '202604041311'; 
+        var saved = localStorage.getItem('app_bootstrap_v');
+        if (saved !== BOOTSTRAP_VERSION) {
+          localStorage.setItem('app_bootstrap_v', BOOTSTRAP_VERSION);
+          console.log('Bootstrap: Atualizando para ' + BOOTSTRAP_VERSION);
+          window.location.reload(true);
+        }
+      })();
+    </script>
     <title>C&amp;R Sushi - App de Delivery Completo</title>
     <meta name="google" content="notranslate" />
   </head>
