@@ -180,37 +180,13 @@ function App() {
     }
   }, [isPixReturnFlow]);
 
-  // EFEITO REFORÇADO: Atualiza o timestamp de último acesso e força o recarregamento se necessário
+  // EFEITO REFORÇADO: Atualiza o timestamp de último acesso
   useEffect(() => {
     // Atualiza o timestamp sempre que o app estiver ativo e não carregando
     if (typeof window !== 'undefined' && !isLoading) {
       localStorage.setItem(LAST_ACCESS_KEY, Date.now().toString());
       console.log('App: Updated last access timestamp.');
     }
-
-    // Lógica para forçar o recarregamento
-    // Lógica para forçar o recarregamento sempre que a aba ficar visível
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log('App: Tab became visible. Forcing reload.');
-        window.location.reload();
-      }
-    };
-
-    const handlePageShow = (event: PageTransitionEvent) => {
-      if (event.persisted) {
-        console.log('App: Page restored from BFCache/Suspension. Forcing reload.');
-        window.location.reload();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('pageshow', handlePageShow);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('pageshow', handlePageShow);
-    };
   }, [isLoading]); // Depende de isLoading para garantir que só rode após o carregamento inicial
 
   // Debugging logs for App state
