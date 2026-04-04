@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
-const APP_VERSION = '20260404_1332'; // Versão atual — atualize a cada deploy!
+const APP_VERSION = '20260404_1349'; // Versão atual — atualize a cada deploy!
 
 // Forçar desregistro de qualquer Service Worker antigo (Zombie PWA)
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {

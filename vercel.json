@@ -1,13 +1,27 @@
 {
-  "cleanUrls": true,
-  "trailingSlash": false,
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/).*)",
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "s-maxage=0, max-age=0, must-revalidate"
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Vercel-CDN-Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Pragma",
+          "value": "no-cache"
+        },
+        {
+          "key": "Expires",
+          "value": "0"
         }
       ]
     },
