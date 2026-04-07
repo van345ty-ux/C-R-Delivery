@@ -178,33 +178,11 @@ function App() {
     }
   }, [isPixReturnFlow]);
 
-  // Atualiza o timestamp e força recarga quando o cliente volta para a aba
+  // Apenas atualiza o timestamp, sem reload
   useEffect(() => {
     if (typeof window !== 'undefined' && !isLoading) {
       localStorage.setItem(LAST_ACCESS_KEY, Date.now().toString());
     }
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log('App: Aba visível novamente — recarregando para garantir versão atual.');
-        window.location.reload();
-      }
-    };
-
-    const handlePageShow = (event: PageTransitionEvent) => {
-      if (event.persisted) {
-        console.log('App: Página restaurada do cache do navegador — recarregando.');
-        window.location.reload();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('pageshow', handlePageShow);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('pageshow', handlePageShow);
-    };
   }, [isLoading]);
 
 

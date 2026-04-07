@@ -175,17 +175,12 @@ export const HomePage: React.FC<HomePageProps> = ({
   };
 
   const handleViewPromotion = () => {
-    localStorage.setItem('pendingMenuFilter', 'Promoções');
-    window.location.reload();
+    setMenuFilter('Promoções'); // ✅ Apenas muda o estado
+    setShowPromotions(false);
   };
 
   const handleClosePromotionModal = (source?: 'full_menu' | 'x_button') => {
-    if (source === 'full_menu') {
-      // Força refresh ao ir para o cardápio completo
-      window.location.reload();
-    } else {
-      setShowPromotions(false);
-    }
+    setShowPromotions(false); // ✅ Apenas fecha o modal
   };
 
   const handleCloseCart = () => {
