@@ -2,317 +2,877 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer utilities {
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-in-out;
-  }
+/* Premium Fonts Import */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-  .animate-slide-down {
-    animation: slideDown 2s ease-in-out forwards;
+/* ============================================
+   PREMIUM THEME SYSTEM - CSS VARIABLES
+   ============================================ */
+
+:root {
+  /* Light Theme Colors - Red, Black & White */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F8F8F8;
+  --bg-tertiary: #F0F0F0;
+  --bg-elevated: #FFFFFF;
+  
+  --text-primary: #0A0A0A;
+  --text-secondary: #4A4A4A;
+  --text-tertiary: #6B6B6B;
+  --text-inverse: #FFFFFF;
+  
+  --accent-primary: #DC2626;
+  --accent-secondary: #B91C1C;
+  --accent-hover: #EF4444;
+  --accent-light: #FEE2E2;
+  
+  --border-primary: #E5E5E5;
+  --border-secondary: #D4D4D4;
+  --border-accent: #DC2626;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  
+  --overlay-light: rgba(0, 0, 0, 0.5);
+  --overlay-dark: rgba(0, 0, 0, 0.7);
+  
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  
+  /* Typography */
+  --font-display: 'Playfair Display', serif;
+  --font-body: 'Inter', sans-serif;
+  
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+  
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+  
+  /* Spacing */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  
+  /* Border Radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-full: 9999px;
+  
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Theme - Red, Black & White */
+[data-theme="dark"] {
+  --bg-primary: #0A0A0A;
+  --bg-secondary: #1A1A1A;
+  --bg-tertiary: #2A2A2A;
+  --bg-elevated: #1F1F1F;
+  
+  --text-primary: #FFFFFF;
+  --text-secondary: #D4D4D4;
+  --text-tertiary: #A3A3A3;
+  --text-inverse: #0A0A0A;
+  
+  --accent-primary: #EF4444;
+  --accent-secondary: #DC2626;
+  --accent-hover: #F87171;
+  --accent-light: #3A1A1A;
+  
+  --border-primary: #2A2A2A;
+  --border-secondary: #3A3A3A;
+  --border-accent: #EF4444;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.5);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  
+  --overlay-light: rgba(0, 0, 0, 0.6);
+  --overlay-dark: rgba(0, 0, 0, 0.8);
+  
+  --glass-bg: rgba(0, 0, 0, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: var(--leading-normal);
+  transition: background-color var(--transition-base), color var(--transition-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+/* Force hide scrollbar on body */
+body::-webkit-scrollbar {
+  width: 0 !important;
+  display: none !important;
+}
+
+/* Smooth theme transitions for all elements */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
+  color: var(--text-primary);
+}
+
+h1 {
+  font-size: var(--text-5xl);
+}
+
+h2 {
+  font-size: var(--text-4xl);
+}
+
+h3 {
+  font-size: var(--text-3xl);
+}
+
+h4 {
+  font-size: var(--text-2xl);
+}
+
+h5 {
+  font-size: var(--text-xl);
+}
+
+h6 {
+  font-size: var(--text-lg);
+}
+
+p {
+  font-family: var(--font-body);
+  color: var(--text-secondary);
+  line-height: var(--leading-relaxed);
+  margin-bottom: 1rem;
+}
+
+a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+input,
+textarea,
+select {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ============================================
+   PREMIUM SCROLLBAR
+   ============================================ */
+
+/* Simple scrollbar hiding that doesn't break scroll */
+::-webkit-scrollbar {
+  width: 0px !important;
+  background: transparent !important;
+  display: none !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background: transparent !important;
+  display: none !important;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent !important;
+  display: none !important;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: none !important;
+}
+
+/* IE */
+body {
+  -ms-overflow-style: none !important;
+}
+
+/* Exception: Show scrollbar for admin navigation */
+.scrollbar-visible::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+  display: block !important;
+  background: #f1f1f1 !important;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background: #DC2626 !important;
+  border-radius: 4px !important;
+  display: block !important;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: #B91C1C !important;
+}
+
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: #f1f1f1 !important;
+  display: block !important;
+}
+
+.scrollbar-visible {
+  scrollbar-width: thin !important;
+  scrollbar-color: #DC2626 #f1f1f1 !important;
+}
+
+/* Hide body overflow when cart is open */
+html.cart-open,
+body.cart-open {
+  overflow: hidden !important;
+  height: 100vh !important;
+}
+
+html.cart-open::-webkit-scrollbar,
+body.cart-open::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+}
+
+/* Fix for mobile cart width */
+@media (max-width: 768px) {
+  .fixed.inset-y-0.right-0.max-w-md {
+    max-width: 100vw !important;
+    width: 100vw !important;
+    right: 0 !important;
+    left: auto !important;
+  }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+@layer utilities {
+  /* Premium Animations */
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-in-out;
   }
 
   .animate-scale-in {
-    animation: scaleIn 0.3s ease-in-out;
+    animation: scaleIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* Login Notification Animations (para admin) */
+  .animate-slide-up {
+    animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Store Status Animation */
+  .animate-pulse-fade {
+    animation: pulseFade 1s ease-in-out infinite;
+  }
+
+  /* Green Dot Pulse Animation */
+  .animate-green-pulse {
+    animation: greenPulse 1.5s ease-in-out infinite;
+  }
+
+  /* Ovos de Sushi Animation */
+  .animate-pulse-ovos {
+    animation: pulseGold 2s infinite ease-in-out;
+  }
+
+  /* Admin Notification Animations */
   .animate-login-notification {
     animation: fadeInUp 0.5s ease-out forwards, fadeOut 0.5s ease-in 14.5s forwards;
   }
 
-  /* Nova: Animação para Notificação de Cupom (controlada por JS) */
   .animate-coupon-notification-display {
     animation: fadeInUp 0.5s ease-out forwards;
-    /* Apenas fade-in, o JS controla o tempo de exibição */
+  }
+
+  /* Text Utilities */
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
-  /* Promotion Badge Animation */
-  .animate-pulse-fade {
-    animation: pulseFade 0.5s ease-in-out infinite;
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
-  /* Nova: Animação de Pulo Suave para o MapPin */
-  .animate-bounce-subtle {
-    animation: bounceSubtle 1.5s infinite;
-  }
-
-  /* Nova: Animação de Pulso para o texto da Black Friday */
-  .animate-pulse-text {
-    animation: pulseText 1.5s ease-in-out infinite;
-  }
-  /* Hide scrollbar for Chrome, Safari and Opera */
+  /* Hide scrollbar */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
 
-  /* Hide scrollbar for IE, Edge and Firefox */
   .no-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Premium Card Hover */
+  .premium-card-hover {
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+  }
+
+  .premium-card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+  }
+
+  /* Glassmorphism */
+  .glass-effect {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Gradient Text */
+  .gradient-text {
+    background: linear-gradient(135deg, #DC2626, #B91C1C);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Skeleton Loader */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--bg-secondary) 25%,
+      var(--bg-tertiary) 50%,
+      var(--bg-secondary) 75%
+    );
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
   }
 }
 
-  /* Animação especial para Ovos de Sushi */
-  .animate-pulse-ovos {
-    animation: pulseWhiteRed 2s infinite ease-in-out;
-  }
-
-@keyframes pulseWhiteRed {
-  0% {
-    background-color: white;
-    color: #dc2626;
-    border-color: #fee2e2;
-  }
-  50% {
-    background-color: #dc2626;
-    color: white;
-    border-color: #dc2626;
-  }
-  100% {
-    background-color: white;
-    color: #dc2626;
-    border-color: #fee2e2;
-  }
-}
+/* ============================================
+   KEYFRAME ANIMATIONS
+   ============================================ */
 
 @keyframes fadeIn {
   from {
     opacity: 0;
   }
-
   to {
     opacity: 1;
   }
 }
 
-@keyframes slideDown {
-  0% {
-    transform: translateY(-100%);
-    opacity: 0;
-  }
-
-  10% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-
-  90% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-
-  100% {
-    transform: translateY(-100%);
-    opacity: 0;
-  }
-}
-
 @keyframes scaleIn {
   from {
-    transform: scale(0.9);
+    transform: scale(0.95);
     opacity: 0;
   }
-
   to {
     transform: scale(1);
     opacity: 1;
   }
 }
 
-/* Keyframes for fadeInUp (usado por ambas as notificações) */
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulseFade {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes greenPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes pulseGold {
+  0% {
+    background-color: white;
+    color: var(--accent-primary);
+    border-color: var(--accent-light);
+  }
+  50% {
+    background-color: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+  }
+  100% {
+    background-color: white;
+    color: var(--accent-primary);
+    border-color: var(--accent-light);
+  }
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
     transform: translateY(20px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-/* Keyframes for fadeOut (usado apenas pela notificação de login do admin) */
 @keyframes fadeOut {
   from {
     opacity: 1;
     transform: translateY(0);
   }
-
   to {
     opacity: 0;
     transform: translateY(-20px);
   }
 }
 
-@keyframes snowfall {
+@keyframes loading {
   0% {
-    transform: translateY(-10px) translateX(0);
+    background-position: 200% 0;
   }
-
   100% {
-    transform: translateY(100vh) translateX(20px);
+    background-position: -200% 0;
   }
 }
 
-.animate-snowfall {
-  animation-name: snowfall;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-}
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
 
-/* Festive Theme Utilities */
-.festive-border {
-  border-color: #FFD700 !important;
-  /* Gold */
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-}
-
-.festive-text-gold {
-  color: #FFD700 !important;
-}
-
-.festive-bg-gradient {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #FFD700 100%);
-}
-
-.festive-card-hover:hover {
-  border-color: #FFD700;
-  box-shadow: 0 10px 15px -3px rgba(255, 215, 0, 0.1), 0 4px 6px -2px rgba(255, 215, 0, 0.05);
-}
-
-/* Festive Animations */
-@keyframes blink-1 {
-
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1.1);
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
-
-  50% {
-    opacity: 0.4;
-    transform: scale(0.9);
+  
+  /* Keep theme transitions instant for reduced motion */
+  body {
+    transition: none !important;
   }
 }
 
-@keyframes blink-2 {
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
 
-  0%,
-  100% {
-    opacity: 0.4;
-    transform: scale(0.9);
+/* ============================================
+   PREMIUM COMPONENT STYLES
+   ============================================ */
+
+/* Premium Button Base */
+.btn-premium {
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  padding: 0.75rem 2rem;
+  border-radius: var(--radius-lg);
+  border: none;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: #FFFFFF;
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-base);
+  cursor: pointer;
+}
+
+.btn-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-premium:active {
+  transform: translateY(0);
+}
+
+/* Premium Card Base */
+.card-premium {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-base);
+}
+
+.card-premium:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--border-accent);
+}
+
+/* Premium Input Base */
+.input-premium {
+  font-family: var(--font-body);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+}
+
+.input-premium:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+/* Premium Modal Backdrop */
+.modal-backdrop-premium {
+  background: var(--overlay-dark);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ============================================
+   SEIGAIHA PATTERN (Japanese Waves)
+   ============================================ */
+
+/* Seigaiha wave pattern background */
+.seigaiha-pattern {
+  position: relative;
+  overflow: hidden;
+}
+
+.seigaiha-pattern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='seigaiha' x='0' y='0' width='100' height='100' patternUnits='userSpaceOnUse'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='0.5' opacity='0.15'%3E%3Cpath d='M 0 50 Q 12.5 37.5 25 50 T 50 50' /%3E%3Cpath d='M 0 50 Q 12.5 62.5 25 50 T 50 50' transform='translate(0 10)' /%3E%3Cpath d='M 25 50 Q 37.5 37.5 50 50 T 75 50' /%3E%3Cpath d='M 25 50 Q 37.5 62.5 50 50 T 75 50' transform='translate(0 10)' /%3E%3Cpath d='M 50 50 Q 62.5 37.5 75 50 T 100 50' /%3E%3Cpath d='M 50 50 Q 62.5 62.5 75 50 T 100 50' transform='translate(0 10)' /%3E%3Cpath d='M 75 50 Q 87.5 37.5 100 50 T 125 50' /%3E%3Cpath d='M 75 50 Q 87.5 62.5 100 50 T 125 50' transform='translate(0 10)' /%3E%3Cpath d='M 0 75 Q 12.5 62.5 25 75 T 50 75' /%3E%3Cpath d='M 0 75 Q 12.5 87.5 25 75 T 50 75' transform='translate(0 10)' /%3E%3Cpath d='M 25 75 Q 37.5 62.5 50 75 T 75 75' /%3E%3Cpath d='M 25 75 Q 37.5 87.5 50 75 T 75 75' transform='translate(0 10)' /%3E%3Cpath d='M 50 75 Q 62.5 62.5 75 75 T 100 75' /%3E%3Cpath d='M 50 75 Q 62.5 87.5 75 75 T 100 75' transform='translate(0 10)' /%3E%3Cpath d='M 75 75 Q 87.5 62.5 100 75 T 125 75' /%3E%3Cpath d='M 75 75 Q 87.5 87.5 100 75 T 125 75' transform='translate(0 10)' /%3E%3C/g%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100' height='100' fill='url(%23seigaiha)' /%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 100px 100px;
+  opacity: 0.1;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Dark theme variant with adjusted opacity */
+[data-theme="dark"] .seigaiha-pattern::before {
+  opacity: 0.08;
+}
+
+/* Ensure content stays above the pattern */
+.seigaiha-pattern > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================
+   LOCATION SELECT RESPONSIVE STYLES
+   ============================================ */
+
+/* Mobile Styles (320px - 640px) */
+@media (max-width: 640px) {
+  /* LocationSelect Card */
+  .seigaiha-pattern {
+    padding: 1.5rem !important;
+    max-width: 100% !important;
   }
 
-  50% {
-    opacity: 1;
-    transform: scale(1.1);
+  /* Logo Section */
+  .seigaiha-pattern img[alt="C&R Sushi Logo"] {
+    width: 6rem !important;
+    height: 6rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* Title */
+  .seigaiha-pattern h1 {
+    font-size: 2rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  /* Subtitle */
+  .seigaiha-pattern h1 + p {
+    font-size: 0.875rem !important;
+  }
+
+  /* City Selection Title */
+  .seigaiha-pattern h2 {
+    font-size: 1.25rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  /* City Buttons */
+  .seigaiha-pattern button {
+    padding: 0.875rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  /* Button Icons */
+  .seigaiha-pattern button svg {
+    width: 1rem !important;
+    height: 1rem !important;
+    margin-right: 0.5rem !important;
+  }
+
+  /* Decorative Elements - Reduce size */
+  .seigaiha-pattern .absolute.bottom-4.left-4 svg,
+  .seigaiha-pattern .absolute.bottom-4.right-4 svg {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  /* Adjust decorative element positioning */
+  .seigaiha-pattern .absolute.bottom-4.left-4,
+  .seigaiha-pattern .absolute.bottom-4.right-4 {
+    bottom: 0.5rem !important;
+  }
+
+  .seigaiha-pattern .absolute.bottom-4.left-4 {
+    left: 0.5rem !important;
+  }
+
+  .seigaiha-pattern .absolute.bottom-4.right-4 {
+    right: 0.5rem !important;
+  }
+
+  /* Alert Modal */
+  .modal-backdrop-premium > div {
+    padding: 1.5rem !important;
+    max-width: calc(100% - 2rem) !important;
+  }
+
+  .modal-backdrop-premium h3 {
+    font-size: 1.5rem !important;
+  }
+
+  .modal-backdrop-premium svg {
+    width: 3rem !important;
+    height: 3rem !important;
   }
 }
 
-.animate-blink-odd {
-  animation: blink-1 1.5s infinite alternate;
-}
-
-.animate-blink-even {
-  animation: blink-2 1.5s infinite alternate;
-}
-
-@keyframes swing {
-  0% {
-    transform: rotate(-5deg);
+/* Tablet Styles (641px - 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
+  /* LocationSelect Card */
+  .seigaiha-pattern {
+    padding: 2rem !important;
   }
 
-  100% {
-    transform: rotate(5deg);
-  }
-}
-
-.animate-swing {
-  animation: swing 2s infinite alternate ease-in-out;
-}
-
-@keyframes bounce-slight {
-
-  0%,
-  100% {
-    transform: translateY(0);
+  /* Logo Section */
+  .seigaiha-pattern img[alt="C&R Sushi Logo"] {
+    width: 7rem !important;
+    height: 7rem !important;
+    margin-bottom: 1.25rem !important;
   }
 
-  50% {
-    transform: translateY(-5px);
-  }
-}
-
-.animate-bounce-slight {
-  animation: bounce-slight 3s infinite ease-in-out;
-}
-
-/* Keyframes for Promotion Badge */
-@keyframes pulseFade {
-
-  0%,
-  100% {
-    opacity: 1;
+  /* Title */
+  .seigaiha-pattern h1 {
+    font-size: 2.5rem !important;
+    margin-bottom: 0.625rem !important;
   }
 
-  50% {
-    opacity: 0;
-    /* Alterado para 0 para que o pino desapareça completamente */
+  /* Subtitle */
+  .seigaiha-pattern h1 + p {
+    font-size: 1rem !important;
+  }
+
+  /* City Selection Title */
+  .seigaiha-pattern h2 {
+    font-size: 1.5rem !important;
+    margin-bottom: 1.75rem !important;
+  }
+
+  /* City Buttons */
+  .seigaiha-pattern button {
+    padding: 1rem 1.25rem !important;
+  }
+
+  /* Decorative Elements - Slightly smaller */
+  .seigaiha-pattern .absolute.bottom-4.left-4 svg,
+  .seigaiha-pattern .absolute.bottom-4.right-4 svg {
+    width: 40px !important;
+    height: 40px !important;
   }
 }
 
-/* Keyframes para o pulo suave */
-@keyframes bounceSubtle {
-
-  0%,
-  100% {
-    transform: translateY(0);
+/* Desktop Styles (1025px+) - Default styles apply */
+@media (min-width: 1025px) {
+  /* Ensure default styles are maintained */
+  .seigaiha-pattern {
+    padding: 2.5rem !important;
   }
 
-  50% {
-    transform: translateY(-3px);
-    /* Pulo de 3px */
-  }
-}
-
-/* Keyframes para o texto pulsante */
-@keyframes pulseText {
-
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
+  .seigaiha-pattern img[alt="C&R Sushi Logo"] {
+    width: 8rem !important;
+    height: 8rem !important;
   }
 
-  50% {
-    opacity: 0.8;
-    transform: scale(1.02);
+  .seigaiha-pattern h1 {
+    font-size: 3rem !important;
   }
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
+/* Extra Small Mobile (320px - 375px) - Additional adjustments */
+@media (max-width: 375px) {
+  .seigaiha-pattern {
+    padding: 1rem !important;
+  }
+
+  .seigaiha-pattern img[alt="C&R Sushi Logo"] {
+    width: 5rem !important;
+    height: 5rem !important;
+  }
+
+  .seigaiha-pattern h1 {
+    font-size: 1.75rem !important;
+  }
+
+  .seigaiha-pattern h1 + p {
+    font-size: 0.75rem !important;
+  }
+
+  /* Hide decorative elements on very small screens */
+  .seigaiha-pattern .absolute.bottom-4.left-4,
+  .seigaiha-pattern .absolute.bottom-4.right-4 {
+    display: none !important;
+  }
 }
 
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
+/* Landscape Mobile Optimization */
+@media (max-height: 600px) and (orientation: landscape) {
+  .seigaiha-pattern {
+    padding: 1rem !important;
+  }
 
-::-webkit-scrollbar-thumb {
-  background: #dc2626;
-  border-radius: 3px;
-}
+  .seigaiha-pattern img[alt="C&R Sushi Logo"] {
+    width: 4rem !important;
+    height: 4rem !important;
+    margin-bottom: 0.5rem !important;
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #b91c1c;
+  .seigaiha-pattern h1 {
+    font-size: 1.5rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  .seigaiha-pattern h1 + p {
+    font-size: 0.75rem !important;
+  }
+
+  .seigaiha-pattern h2 {
+    font-size: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .seigaiha-pattern .mb-10 {
+    margin-bottom: 1rem !important;
+  }
+
+  .seigaiha-pattern button {
+    padding: 0.625rem 0.875rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  /* Hide decorative elements in landscape */
+  .seigaiha-pattern .absolute.bottom-4.left-4,
+  .seigaiha-pattern .absolute.bottom-4.right-4 {
+    display: none !important;
+  }
 }

@@ -27,18 +27,25 @@ export const AdminProducts: React.FC = () => {
 
   const fetchProducts = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('name', { ascending: true });
+    
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('name', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching products:', error);
-      alert('Erro ao buscar produtos.');
-    } else {
-      setProducts(data || []);
+      if (error) {
+        console.error('Error fetching products:', error);
+        alert('Erro ao buscar produtos.');
+      } else {
+        setProducts(data || []);
+      }
+    } catch (err: any) {
+      console.error('AdminProducts: Error fetching products:', err);
+      alert('Erro ao carregar produtos.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleOpenModal = (product?: Product) => {

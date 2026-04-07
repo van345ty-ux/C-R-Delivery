@@ -6,13 +6,11 @@ import { UserAuth } from './components/UserAuth';
 import { OrderTracking } from './components/OrderTracking';
 import { UserProfile } from './components/UserProfile';
 import { UserCouponNotification } from './components/UserCouponNotification';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { supabase } from './integrations/supabase/client';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import toast, { Toaster } from 'react-hot-toast';
 import { User, Coupon, Product, CartItem, Order, City, OperatingHour } from './types'; // Importando tipos de types.ts
-import { SnowEffect } from './components/SnowEffect';
-import { ChristmasLights } from './components/FestiveDecorations';
-import { EasterBunnyPeek } from './components/EasterBunnyPeek';
 
 const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null> => {
   console.log('fetchUserProfile: Attempting to fetch profile for user ID:', supabaseUser.id);
@@ -209,6 +207,7 @@ function App() {
     };
   }, [isLoading]);
 
+
   // Debugging logs for App state
   useEffect(() => {
     console.log('App State - pendingCouponNotificationUserId:', pendingCouponNotificationUserId);
@@ -379,9 +378,10 @@ function App() {
   // Effect for Supabase Auth Session and User Profile
   useEffect(() => {
     let authSubscription: ReturnType<typeof supabase.auth.onAuthStateChange>['data']['subscription'];
+    let lastProcessedUserId: string | null = null;
 
-    const handleAuthChange = async (event: string, sessionFromEvent: Session | null) => {
-      console.log(`handleAuthChange: Event received: ${event}, sessionFromEvent: ${sessionFromEvent ? 'active' : 'null'}`);
+    const handleAuthChange = async (event: string) => {
+      console.log(`handleAuthChange: Event received: ${event}, lastProcessedUserId: ${lastProcessedUserId}`);
 
       if (event === 'SIGNED_OUT') {
         console.log('handleAuthChange: SIGNED_OUT event detected. Clearing all user-related states.');
@@ -389,93 +389,66 @@ function App() {
         setUser(null);
         setCart([]);
         setSelectedCity('');
-        setCurrentView('location'); // Reset to location on logout
+        setCurrentView('location');
         setPendingCouponNotificationUserId(null);
         setShowUserCouponNotification(false);
         setAuthLoading(false);
-        setIsMercadoPagoReturnFlow(false); // Clear Mercado Pago flag on logout
+        setIsMercadoPagoReturnFlow(false);
         localStorage.removeItem('isMercadoPagoReturnFlow');
-        setIsPixReturnFlow(false); // Clear PIX flag on logout
+        setIsPixReturnFlow(false);
         localStorage.removeItem('isPixReturnFlow');
         toast.success('Você foi desconectado.');
-        return; // IMPORTANT: Exit immediately after handling SIGNED_OUT
-      }
-
-      // For other events (SIGNED_IN, USER_UPDATED, etc.), get the latest session
-      const { data: { session: latestSession }, error: sessionError } = await supabase.auth.getSession();
-      console.log(`handleAuthChange: Latest session from getSession() after event: ${latestSession ? 'active' : 'null'}`);
-
-      if (sessionError) {
-        console.error('handleAuthChange: Erro ao buscar a sessão mais recente em onAuthStateChange:', sessionError);
-        // Trata qualquer erro de sessão como um sinal para limpar o estado do usuário
-        setSession(null);
-        setUser(null);
-        setCart([]);
-        setSelectedCity('');
-        setCurrentView('location'); // Reset to location on session error
-        setPendingCouponNotificationUserId(null);
-        setShowUserCouponNotification(false);
-        setAuthLoading(false);
-        setIsMercadoPagoReturnFlow(false); // Clear Mercado Pago flag on session error
-        localStorage.removeItem('isMercadoPagoReturnFlow');
-        setIsPixReturnFlow(false); // Clear PIX flag on session error
-        localStorage.removeItem('isPixReturnFlow');
-        toast.error('Erro na sessão. Por favor, faça login novamente.');
+        lastProcessedUserId = null;
         return;
       }
 
+      // Ignora TOKEN_REFRESHED - não precisa fazer nada
+      if (event === 'TOKEN_REFRESHED') {
+        console.log('handleAuthChange: Token refreshed, ignoring');
+        return;
+      }
+
+      // Ignora SIGNED_IN duplicados ANTES de buscar sessão (mais eficiente)
+      if (event === 'SIGNED_IN' && lastProcessedUserId !== null) {
+        console.log(`handleAuthChange: SIGNED_IN ignored, user already processed (${lastProcessedUserId})`);
+        return;
+      }
+
+      // Busca a sessão atual
+      const { data: { session: latestSession }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        console.error('handleAuthChange: Erro ao buscar sessão:', sessionError);
+        setAuthLoading(false);
+        return;
+      }
+
+      console.log(`handleAuthChange: Processing event for user: ${latestSession?.user?.id}`);
+      
       setSession(latestSession);
 
       if (latestSession?.user) {
-        console.log('handleAuthChange: User is active. Fetching profile.');
         const profile = await fetchUserProfile(latestSession.user);
         setUser(profile);
+        lastProcessedUserId = latestSession.user.id;
+        console.log(`handleAuthChange: User processed and saved: ${lastProcessedUserId}`);
 
-        if (profile) {
-          console.log('handleAuthChange: Profile fetched/created successfully.');
-          if (event === 'SIGNED_IN' && profile.role === 'customer') {
-            const userName = latestSession.user.user_metadata.full_name || latestSession.user.email;
-            if (userName) {
-              const { error } = await supabase.from('login_notifications').insert({
-                user_id: latestSession.user.id,
-                user_name: userName,
-              });
-              if (error) {
-                console.error('handleAuthChange: Error creating login notification:', error);
-              } else {
-                console.log('handleAuthChange: Login notification created.');
-              }
-            }
-            checkAndShowCouponNotification(latestSession.user.id);
+        if (profile && event === 'SIGNED_IN' && profile.role === 'customer') {
+          const userName = latestSession.user.user_metadata.full_name || latestSession.user.email;
+          if (userName) {
+            await supabase.from('login_notifications').insert({
+              user_id: latestSession.user.id,
+              user_name: userName,
+            });
           }
-        } else {
-          console.log('handleAuthChange: Profile could not be fetched/created, treating as no valid user.');
-          setSession(null);
-          setUser(null);
-          setCart([]);
-          setSelectedCity('');
-          setCurrentView('location'); // Reset to location if profile fails
-          setPendingCouponNotificationUserId(null);
-          setShowUserCouponNotification(false);
-          setIsMercadoPagoReturnFlow(false); // Clear Mercado Pago flag if profile fails
-          localStorage.removeItem('isMercadoPagoReturnFlow');
-          setIsPixReturnFlow(false); // Clear PIX flag if profile fails
-          localStorage.removeItem('isPixReturnFlow');
-          toast.error('Não foi possível carregar seu perfil. Por favor, tente fazer login novamente.');
+          checkAndShowCouponNotification(latestSession.user.id);
         }
-      } else { // No user in latestSession, and not a SIGNED_OUT event (already handled above)
-        console.log('handleAuthChange: No active user session found (after getSession). Clearing user-related states.');
+      } else {
         setUser(null);
-        // Do not clear cart or city on session expiration, allow guest checkout
-        setPendingCouponNotificationUserId(null);
-        setShowUserCouponNotification(false);
-        setIsMercadoPagoReturnFlow(false); // Clear Mercado Pago flag if no user session
-        localStorage.removeItem('isMercadoPagoReturnFlow');
-        setIsPixReturnFlow(false); // Clear PIX flag if no user session
-        localStorage.removeItem('isPixReturnFlow');
+        lastProcessedUserId = null;
       }
+      
       setAuthLoading(false);
-      console.log('handleAuthChange: Auth change processing finished.');
     };
 
     // Busca a sessão inicial e então configura o listener
@@ -483,8 +456,8 @@ function App() {
       console.log('initializeAuth: Starting initial auth check.');
       setAuthLoading(true);
       try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        await handleAuthChange('INITIAL_LOAD', initialSession); // Processa a sessão inicial
+        await supabase.auth.getSession();
+        await handleAuthChange('INITIAL_LOAD'); // Processa a sessão inicial
       } catch (error) {
         console.error('initializeAuth: Erro ao buscar a sessão inicial:', error);
         // Mesmo que haja um erro, precisamos parar o carregamento
@@ -683,7 +656,11 @@ function App() {
   const heroSubtitleFontSize = appSettings.hero_subtitle_font_size || '20px';
   const heroSubtitleFontColor = appSettings.hero_subtitle_font_color || '#ffffff';
   const heroSubtitleBorderColor = appSettings.hero_subtitle_border_color || '#000000';
-  const isFestiveMode = appSettings.is_festive_mode_enabled === 'true';
+  
+  const heroTextBackgroundEnabled = appSettings.hero_text_background_enabled !== 'false'; // Nova configuração
+
+  // Nova configuração para colunas do menu mobile
+  const menuMobileColumns = appSettings.menu_mobile_columns || '1';
 
   const renderContent = () => {
     if (currentView === 'location') {
@@ -692,7 +669,7 @@ function App() {
     if (currentView === 'admin') {
       // Only render AdminPanel if user is an admin, otherwise redirect to home
       if (user?.role === 'admin') {
-        return <AdminPanel key={currentView + (user?.id || '')} onBack={() => setCurrentView('home')} onUserUpdate={refetchUser} />;
+        return <AdminPanel onBack={() => setCurrentView('home')} onUserUpdate={refetchUser} />;
       } else {
         // If somehow currentView is 'admin' but user is not admin, redirect to home
         setCurrentView('home');
@@ -743,43 +720,39 @@ function App() {
         heroSubtitleFontSize={heroSubtitleFontSize}
         heroSubtitleFontColor={heroSubtitleFontColor}
         heroSubtitleBorderColor={heroSubtitleBorderColor}
+        heroTextBackgroundEnabled={heroTextBackgroundEnabled} // Nova prop
         showPreOrderModal={showPreOrderModal} // Nova prop
         setShowPreOrderModal={setShowPreOrderModal} // Nova prop
         showPreOrderBanner={showPreOrderBanner} // Nova prop
         isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
         isPixReturnFlow={isPixReturnFlow} // Passando a nova prop
         setIsPixReturnFlow={setIsPixReturnFlow} // Passando a nova prop
-        isFestiveMode={isFestiveMode} // Passando modo festivo
+        menuMobileColumns={menuMobileColumns} // Nova prop para controlar colunas no mobile
       />
     );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {isFestiveMode && (
-        <>
-          <SnowEffect />
-          <ChristmasLights />
-        </>
-      )}
-      <EasterBunnyPeek />
-      {renderContent()}
-      {showProfile && user && (
-        <UserProfile
-          user={user}
-          onClose={() => setShowProfile(false)}
-          onLogout={handleLogout}
-          onViewOrder={handleViewOrder}
-          onUserUpdate={refetchUser}
-          onAdminAccess={handleAdminAccess} // Passando a função de acesso ao painel
-        />
-      )}
-      <Toaster />
-      <audio id="login-sound" src="/assets/login-sound.mp3" preload="auto" />
-      {showUserCouponNotification && (
-        <UserCouponNotification onClose={() => setShowUserCouponNotification(false)} />
-      )}
-    </div>
+    <ThemeProvider>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        {renderContent()}
+        {showProfile && user && (
+          <UserProfile
+            user={user}
+            onClose={() => setShowProfile(false)}
+            onLogout={handleLogout}
+            onViewOrder={handleViewOrder}
+            onUserUpdate={refetchUser}
+            onAdminAccess={handleAdminAccess} // Passando a função de acesso ao painel
+          />
+        )}
+        <Toaster />
+        <audio id="login-sound" src="/assets/login-sound.mp3" preload="auto" />
+        {showUserCouponNotification && (
+          <UserCouponNotification onClose={() => setShowUserCouponNotification(false)} />
+        )}
+      </div>
+    </ThemeProvider>
   );
 }
 

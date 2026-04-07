@@ -211,7 +211,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
 
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4">
-          <nav className="flex space-x-8 overflow-x-auto">
+          <nav className="flex space-x-8 overflow-x-auto scrollbar-visible pb-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (

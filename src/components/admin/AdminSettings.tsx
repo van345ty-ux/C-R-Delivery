@@ -29,7 +29,14 @@ export const AdminSettings: React.FC = () => {
     hero_subtitle_font_size: '20px',
     hero_subtitle_font_color: '#ffffff',
     hero_subtitle_border_color: '#000000',
+    hero_text_background_enabled: 'true', // Nova configuração para habilitar/desabilitar fundo do texto
     is_festive_mode_enabled: 'false',
+    menu_mobile_columns: '1', // Nova configuração: '1' ou '2' colunas no mobile
+    // Configurações de Tema
+    default_theme: 'light',
+    allow_theme_toggle: 'true',
+    accent_color_light: '#D4AF37',
+    accent_color_dark: '#F4D03F',
   });
   const [operatingHours, setOperatingHours] = useState<OperatingHour[]>([]);
   const [loading, setLoading] = useState(true);
@@ -283,6 +290,24 @@ export const AdminSettings: React.FC = () => {
               Esta cor será usada para criar um efeito de sombra/borda ao redor do texto.
             </p>
           </div>
+          
+          {/* Nova configuração para habilitar/desabilitar fundo do texto */}
+          <div className="mt-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={settings.hero_text_background_enabled === 'true'}
+                onChange={(e) => handleInputChange('hero_text_background_enabled', e.target.checked ? 'true' : 'false')}
+                className="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500"
+              />
+              <div>
+                <span className="text-sm font-medium text-gray-700">Habilitar fundo do texto</span>
+                <p className="text-xs text-gray-500">
+                  Quando ativado, exibe um fundo escuro semi-transparente atrás do texto do banner
+                </p>
+              </div>
+            </label>
+          </div>
         </div>
 
         {/* Novas configurações para o Subtítulo do Hero */}
@@ -401,6 +426,196 @@ export const AdminSettings: React.FC = () => {
             />
             <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-yellow-500"></div>
           </label>
+        </div>
+      </div>
+
+      {/* Nova seção para Tema e Aparência */}
+      <div className="bg-white rounded-lg shadow-sm border p-6 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
+        <div className="flex items-center gap-2 mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">🎨 Tema e Aparência</h2>
+          <span className="text-xs bg-purple-200 text-purple-800 px-2 py-0.5 rounded-full font-medium">Premium</span>
+        </div>
+        <p className="text-sm text-gray-600 mb-6">
+          Configure o tema padrão e as cores de destaque do aplicativo.
+        </p>
+
+        <div className="space-y-6">
+          {/* Tema Padrão */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Tema Padrão
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                onClick={() => handleInputChange('default_theme', 'light')}
+                className={`p-4 border-2 rounded-lg transition-all ${
+                  settings.default_theme === 'light'
+                    ? 'border-purple-600 bg-purple-50 text-purple-700'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                }`}
+              >
+                <div className="text-center">
+                  <div className="text-2xl mb-2">☀️</div>
+                  <div className="font-semibold text-sm">Claro</div>
+                </div>
+              </button>
+              <button
+                onClick={() => handleInputChange('default_theme', 'dark')}
+                className={`p-4 border-2 rounded-lg transition-all ${
+                  settings.default_theme === 'dark'
+                    ? 'border-purple-600 bg-purple-50 text-purple-700'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                }`}
+              >
+                <div className="text-center">
+                  <div className="text-2xl mb-2">🌙</div>
+                  <div className="font-semibold text-sm">Escuro</div>
+                </div>
+              </button>
+              <button
+                onClick={() => handleInputChange('default_theme', 'system')}
+                className={`p-4 border-2 rounded-lg transition-all ${
+                  settings.default_theme === 'system'
+                    ? 'border-purple-600 bg-purple-50 text-purple-700'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                }`}
+              >
+                <div className="text-center">
+                  <div className="text-2xl mb-2">💻</div>
+                  <div className="font-semibold text-sm">Sistema</div>
+                </div>
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Define o tema inicial do aplicativo. "Sistema" usa a preferência do dispositivo do usuário.
+            </p>
+          </div>
+
+          {/* Permitir Alternância de Tema */}
+          <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+            <div>
+              <h3 className="font-medium text-gray-900">Permitir Alternância de Tema</h3>
+              <p className="text-sm text-gray-600 mt-1">
+                Permite que usuários alternem entre tema claro e escuro
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={settings.allow_theme_toggle === 'true'}
+                onChange={(e) => handleInputChange('allow_theme_toggle', e.target.checked ? 'true' : 'false')}
+              />
+              <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-purple-600"></div>
+            </label>
+          </div>
+
+          {/* Cores de Acento */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Cor de Acento (Tema Claro)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={settings.accent_color_light || '#D4AF37'}
+                  onChange={(e) => handleInputChange('accent_color_light', e.target.value)}
+                  className="w-12 h-12 p-0 border-2 border-gray-300 rounded-lg cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={settings.accent_color_light || '#D4AF37'}
+                  onChange={(e) => handleInputChange('accent_color_light', e.target.value)}
+                  className="flex-1 p-3 border rounded-lg"
+                  placeholder="#D4AF37"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Cor principal usada em botões e destaques no tema claro
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Cor de Acento (Tema Escuro)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={settings.accent_color_dark || '#F4D03F'}
+                  onChange={(e) => handleInputChange('accent_color_dark', e.target.value)}
+                  className="w-12 h-12 p-0 border-2 border-gray-300 rounded-lg cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={settings.accent_color_dark || '#F4D03F'}
+                  onChange={(e) => handleInputChange('accent_color_dark', e.target.value)}
+                  className="flex-1 p-3 border rounded-lg"
+                  placeholder="#F4D03F"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Cor principal usada em botões e destaques no tema escuro
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Nova seção para Layout do Cardápio */}
+      <div className="bg-white rounded-lg shadow-sm border p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Layout do Cardápio Mobile</h2>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-3">
+            Estilo de Exibição no Mobile
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <button
+              onClick={() => handleInputChange('menu_mobile_columns', '1')}
+              className={`p-4 border-2 rounded-lg transition-all ${
+                settings.menu_mobile_columns === '1'
+                  ? 'border-red-600 bg-red-50 text-red-700'
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+              }`}
+            >
+              <div className="text-center">
+                <div className="text-2xl mb-2">📱</div>
+                <div className="font-semibold">1 Coluna Vertical</div>
+                <div className="text-xs mt-1">Imagem grande em cima, detalhes embaixo</div>
+              </div>
+            </button>
+            <button
+              onClick={() => handleInputChange('menu_mobile_columns', '2')}
+              className={`p-4 border-2 rounded-lg transition-all ${
+                settings.menu_mobile_columns === '2'
+                  ? 'border-red-600 bg-red-50 text-red-700'
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+              }`}
+            >
+              <div className="text-center">
+                <div className="text-2xl mb-2">📱📱</div>
+                <div className="font-semibold">2 Colunas Compactas</div>
+                <div className="text-xs mt-1">Mais produtos visíveis por linha</div>
+              </div>
+            </button>
+            <button
+              onClick={() => handleInputChange('menu_mobile_columns', 'horizontal')}
+              className={`p-4 border-2 rounded-lg transition-all ${
+                settings.menu_mobile_columns === 'horizontal'
+                  ? 'border-red-600 bg-red-50 text-red-700'
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+              }`}
+            >
+              <div className="text-center">
+                <div className="text-2xl mb-2">↔️</div>
+                <div className="font-semibold">Layout Horizontal</div>
+                <div className="text-xs mt-1">Imagem pequena à esquerda, detalhes ao lado</div>
+              </div>
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-3">
+            Esta configuração afeta apenas dispositivos móveis (telas menores que 640px). Em tablets e desktops, o layout se ajusta automaticamente.
+          </p>
         </div>
       </div>
 

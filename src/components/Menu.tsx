@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
-import { ProductCard } from './ProductCard';
+import { ProductCard, ProductCardSkeleton } from './ProductCard';
 import { HighlightCard } from './HighlightCard';
 import { ProductDetailModal } from './ProductDetailModal'; // Importando o novo modal
 import { Product, Highlight } from '../types'; // Corrected import path
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
-import { withRetry, withTimeout, TIMEOUT_MS } from '../hooks/useQuery';
-import { ChristmasHeroDecorations } from './FestiveDecorations';
 
 interface MenuProps {
   onAddToCart: (product: Product, quantity?: number, observations?: string) => void;
@@ -25,13 +23,13 @@ interface MenuProps {
   heroSubtitleFontSize: string;
   heroSubtitleFontColor: string;
   heroSubtitleBorderColor: string;
+  heroTextBackgroundEnabled: boolean; // Nova prop
   showPreOrderBanner: boolean; // Nova prop
   isMercadoPagoReturnFlow: boolean; // Nova prop
-  isFestiveMode: boolean; // Nova prop para modo festivo
+  menuMobileColumns: string; // Nova prop para controlar colunas no mobile
 }
 
 const categories = [
-  'Ovos de Sushi',
   'Todos',
   'Combinados',
   'Temaki',
@@ -57,9 +55,10 @@ export const Menu: React.FC<MenuProps> = ({
   heroSubtitleFontSize,
   heroSubtitleFontColor,
   heroSubtitleBorderColor,
+  heroTextBackgroundEnabled, // Nova prop
   showPreOrderBanner, // Nova prop
   isMercadoPagoReturnFlow, // Nova prop
-  isFestiveMode, // Nova prop
+  menuMobileColumns, // Nova prop para controlar colunas no mobile
 }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
@@ -70,57 +69,56 @@ export const Menu: React.FC<MenuProps> = ({
 
   useEffect(() => {
     const fetchData = async () => {
+      console.log('Menu: Starting fetchData...');
       setLoading(true);
 
-      // Fetch Products with Retry
+      // Fetch Products
       try {
-        const productsData = await withRetry(() =>
-          withTimeout(
-            supabase
-              .from('products')
-              .select('*')
-              .order('name', { ascending: true })
-              .then(({ data, error }) => {
-                if (error) throw error;
-                return data;
-              }),
-            TIMEOUT_MS
-          )
-        );
-        setProducts(productsData || []);
+        console.log('Menu: Fetching products...');
+        const { data: productsData, error: productsError } = await supabase
+          .from('products')
+          .select('*')
+          .order('name', { ascending: true });
+
+        if (productsError) {
+          console.error('Menu: Error fetching products:', productsError);
+          toast.error('Erro ao carregar produtos.');
+        } else {
+          console.log(`Menu: Products fetched successfully, count: ${productsData?.length || 0}`);
+          setProducts(productsData || []);
+        }
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Menu: Exception fetching products:', error);
         toast.error('Erro ao carregar produtos. Verifique sua conexão.');
       }
 
-      // Fetch Highlights with Retry
+      // Fetch Highlights
       try {
-        const highlightsData = await withRetry(() =>
-          withTimeout(
-            supabase
-              .from('highlights')
-              .select('*')
-              .order('order_index', { ascending: true })
-              .then(({ data, error }) => {
-                if (error) throw error;
-                return data;
-              }),
-            TIMEOUT_MS
-          )
-        );
-        setHighlights(highlightsData || []);
+        console.log('Menu: Fetching highlights...');
+        const { data: highlightsData, error: highlightsError } = await supabase
+          .from('highlights')
+          .select('*')
+          .order('order_index', { ascending: true });
+
+        if (highlightsError) {
+          console.error('Menu: Error fetching highlights:', highlightsError);
+        } else {
+          console.log(`Menu: Highlights fetched successfully, count: ${highlightsData?.length || 0}`);
+          setHighlights(highlightsData || []);
+        }
       } catch (error) {
-        console.error('Error fetching highlights:', error);
-        // Não mostrar erro de destaque para não poluir a tela se falhar
+        console.error('Menu: Exception fetching highlights:', error);
       }
 
       setLoading(false);
+      console.log('Menu: fetchData completed');
     };
 
     fetchData();
   }, []);
 
   // Handler para abrir o modal de detalhes do produto
+  // Prevents adding items when user is in Mercado Pago return flow
   const handleProductClick = (product: Product) => {
     if (isMercadoPagoReturnFlow) {
       toast.error('Finalize seu pedido atual antes de adicionar novos itens.');
@@ -135,13 +133,16 @@ export const Menu: React.FC<MenuProps> = ({
     product.available && product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Separa promoções e produtos regulares
+  // Separa promoções (categoria "Promoção") de produtos regulares
   const promotions = allAvailableAndSearchedProducts.filter(product => product.category === 'Promoção');
   const regularProducts = allAvailableAndSearchedProducts.filter(product => product.category !== 'Promoção');
 
   let productsToDisplayIn3ColGrid: Product[] = [];
   let productsToDisplayIn5ColGrid: Product[] = [];
 
+  // Distribui produtos nos grids apropriados baseado na categoria selecionada
+  // Grid de 3 colunas: usado para promoções (cards maiores)
+  // Grid de 4 colunas: usado para produtos regulares
   if (selectedCategory === 'Todos') {
     productsToDisplayIn3ColGrid = promotions;
     productsToDisplayIn5ColGrid = regularProducts;
@@ -155,32 +156,65 @@ export const Menu: React.FC<MenuProps> = ({
 
   if (loading) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500 text-lg">Carregando cardápio...</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Hero Section Skeleton */}
+        <div className="mb-4">
+          <div className="relative h-[250px] md:h-[350px] rounded-2xl overflow-hidden bg-gray-200 animate-pulse" />
+        </div>
+
+        {/* Search and Filters Skeleton */}
+        <div className="mb-4">
+          <div className="h-12 bg-gray-200 rounded-lg animate-pulse mb-4" />
+          <div className="flex gap-2 overflow-x-auto pb-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-10 w-24 bg-gray-200 rounded-full animate-pulse" />
+            ))}
+          </div>
+        </div>
+
+        {/* Products Grid Skeleton */}
+        <div className="mb-8">
+          <div className="h-6 w-48 bg-gray-200 rounded animate-pulse mb-4" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6" role="status" aria-live="polite" aria-label="Carregando produtos">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
+  console.log(`Menu: Rendering - Total products: ${products.length}, Available: ${allAvailableAndSearchedProducts.length}, Promotions: ${productsToDisplayIn3ColGrid.length}, Regular: ${productsToDisplayIn5ColGrid.length}, Category: ${selectedCategory}`);
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      {/* Hero Section */}
-      <div className="mb-4">
-        <div className={`relative h-48 bg-gradient-to-r from-red-600 to-red-800 rounded-2xl overflow-hidden ${isFestiveMode ? 'festive-border border-2' : ''}`}>
-          <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+    <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 py-8">
+      {/* Hero Section - Premium Design with Gradient Overlay and Glassmorphism */}
+      <div className="mb-8">
+        <div className="relative h-[300px] md:h-[400px] rounded-2xl overflow-hidden shadow-xl">
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60"></div>
           <img
             src={heroImageUrl}
             alt="Sushi Hero"
+            loading="lazy"
+            width="1920"
+            height="400"
             className="w-full h-full object-cover"
           />
+          {/* Glassmorphism Text Container */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center p-4">
+            <div 
+              className={`text-center p-6 md:p-8 rounded-2xl max-w-2xl mx-4 animate-fade-in ${heroTextBackgroundEnabled ? 'glass-effect' : ''}`}
+            >
               {heroTitleText && (
                 <h2
-                  className="text-4xl sm:text-5xl font-extrabold mb-2 drop-shadow-lg"
+                  className="text-3xl sm:text-5xl font-bold mb-3 drop-shadow-lg"
                   style={{
                     fontSize: heroTitleFontSize,
                     color: heroTitleFontColor,
-                    textShadow: `1px 1px 0 ${heroTitleBorderColor}, -1px -1px 0 ${heroTitleBorderColor}, 1px -1px 0 ${heroTitleBorderColor}, -1px 1px 0 ${heroTitleBorderColor}`
+                    textShadow: `1px 1px 0 ${heroTitleBorderColor}, -1px -1px 0 ${heroTitleBorderColor}, 1px -1px 0 ${heroTitleBorderColor}, -1px 1px 0 ${heroTitleBorderColor}`,
+                    fontFamily: 'var(--font-display)'
                   }}
                 >
                   {heroTitleText}
@@ -188,7 +222,7 @@ export const Menu: React.FC<MenuProps> = ({
               )}
               {heroSubtitleText && (
                 <p
-                  className="text-lg sm:text-xl font-medium drop-shadow-md"
+                  className="text-lg sm:text-2xl font-medium drop-shadow-md"
                   style={{
                     fontSize: heroSubtitleFontSize,
                     color: heroSubtitleFontColor,
@@ -201,16 +235,27 @@ export const Menu: React.FC<MenuProps> = ({
             </div>
           </div>
 
-          {/* Store Status - Moved inside Hero Section and positioned absolutely */}
-          <div className="absolute top-[10px] left-[9px] z-10">
-            <div className={`inline-flex items-center font-medium px-4 py-2 rounded-full text-sm shadow-sm ${isStoreOpen ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-              <div className={`w-2.5 h-2.5 rounded-full mr-2 ${isStoreOpen ? 'bg-green-500 animate-pulse-fade' : 'bg-red-500'}`}></div>
+          {/* Store Status - Premium Badge with Glassmorphism */}
+          <div className="absolute top-4 left-4 z-10">
+            <div 
+              className="inline-flex items-center font-semibold px-5 py-2.5 rounded-full text-sm"
+              style={{
+                backgroundColor: isStoreOpen ? '#D1FAE5' : '#0A0A0A',
+                color: isStoreOpen ? '#065F46' : '#FFFFFF',
+                border: isStoreOpen ? 'none' : '2px solid #FFFFFF',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)'
+              }}
+            >
+              <div 
+                className={`w-2.5 h-2.5 rounded-full mr-2 ${isStoreOpen ? 'animate-green-pulse' : ''}`}
+                style={{
+                  backgroundColor: isStoreOpen ? '#10B981' : '#FFFFFF'
+                }}
+              ></div>
               <span>{isStoreOpen ? 'Atendendo' : 'Fechado'}</span>
             </div>
           </div>
-
-          {/* Festive Decorations */}
-          {isFestiveMode && <ChristmasHeroDecorations />}
         </div>
       </div>
 
@@ -223,48 +268,47 @@ export const Menu: React.FC<MenuProps> = ({
         </div>
       )}
 
-      {/* Search and Filters */}
-      <div className="mb-4">
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+      {/* Search and Filters - Premium Styling */}
+      <div className="mb-8">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-4 top-4 h-5 w-5 text-gray-400" aria-hidden="true" />
             <input
               type="text"
               placeholder="Buscar produtos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              disabled={isMercadoPagoReturnFlow} // Desabilita busca
+              className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 placeholder:text-gray-400 transition-all duration-300 bg-white shadow-sm hover:shadow-md"
+              style={{
+                backgroundColor: 'var(--bg-elevated)',
+                borderColor: 'var(--border-primary)',
+                color: 'var(--text-primary)'
+              }}
+              disabled={isMercadoPagoReturnFlow}
+              aria-label="Buscar produtos no cardápio"
             />
           </div>
         </div>
 
-        {/* Category Filters */}
-        <div className="flex gap-2 overflow-x-auto pb-4 items-center no-scrollbar">
+        {/* Category Filters - Premium Button Styling with Smooth Transitions */}
+        <div className="flex gap-3 overflow-x-auto pb-4 items-center no-scrollbar scroll-smooth" role="tablist" aria-label="Categorias de produtos">
           {categories.map((category) => {
             const isOvos = category === 'Ovos de Sushi';
-            const isTodos = category === 'Todos';
             const isActive = selectedCategory === category;
 
             let btnClass = "";
 
             if (isOvos) {
               // Estilo especial para Ovos de Sushi: maior, pulsando e destacado
-              btnClass = `px-7 py-4 rounded-full text-lg font-bold whitespace-nowrap transition-all duration-300 transform hover:scale-110 shadow-lg flex items-center gap-2 animate-pulse-ovos ${isActive
+              btnClass = `px-6 py-4 rounded-full text-base font-bold whitespace-nowrap transition-all duration-300 transform hover:scale-110 shadow-lg flex items-center gap-2 animate-pulse-ovos ${isActive
                   ? 'ring-4 ring-red-500/20 border-2 border-red-600'
                   : 'border-2 border-red-100 shadow-xl'
                 }`;
-            } else if (isTodos) {
-              // Estilo para Todos: branco quando selecionado
-              btnClass = `px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${isActive
-                  ? 'bg-white text-red-600 border-2 border-red-600 shadow-sm'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`;
             } else {
-              // Estilo padrão para as demais categorias
-              btnClass = `px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ${isActive
-                  ? (isFestiveMode ? 'festive-bg-gradient text-white border border-yellow-400' : 'bg-red-600 text-white')
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              // Premium styling for other categories with enhanced transitions
+              btnClass = `px-5 py-3 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 shadow-sm hover:shadow-md ${isActive
+                  ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg scale-105'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                 }`;
             }
 
@@ -272,10 +316,17 @@ export const Menu: React.FC<MenuProps> = ({
               <button
                 key={category}
                 onClick={() => onCategoryChange(category)}
-                className={`${btnClass} ${isMercadoPagoReturnFlow ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`${btnClass} ${isMercadoPagoReturnFlow ? 'opacity-50 cursor-not-allowed' : ''} focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2`}
+                style={{
+                  backgroundColor: !isOvos && isActive ? 'var(--accent-primary)' : undefined,
+                  color: !isOvos && isActive ? 'var(--text-inverse)' : undefined
+                }}
                 disabled={isMercadoPagoReturnFlow}
+                role="tab"
+                aria-selected={isActive}
+                aria-label={`Filtrar por categoria ${category}`}
               >
-                {isOvos && <span className="text-xl">🍣</span>}
+                {isOvos && <span className="text-xl" aria-hidden="true">🍣</span>}
                 {category}
               </button>
             );
@@ -283,31 +334,11 @@ export const Menu: React.FC<MenuProps> = ({
         </div>
       </div>
 
-      {/* Aviso Especial Ovos de Sushi - Sempre Visível */}
-      <div className="mb-6 bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-2xl p-5 shadow-sm transform transition-all duration-300 animate-fade-in">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-            <div className="bg-white p-3 rounded-full shrink-0 shadow-sm border border-red-100">
-              <span className="text-2xl">🐰</span>
-            </div>
-            <div className="text-center sm:text-left">
-              <h3 className="text-red-800 font-extrabold text-lg flex items-center justify-center sm:justify-start gap-2">
-                Atenção: Entregas Exclusivas de Fim de Semana!
-              </h3>
-              <p className="text-red-700 mt-1 text-sm leading-relaxed">
-                Por exigirem um preparo minucioso e artesanal exclusivo para a Páscoa, a entrega dos <strong>Ovos de Sushi</strong> ocorrerá <span className="font-bold underline">apenas no Sábado e Domingo</span>.
-              </p>
-              <p className="text-red-700 mt-2 text-sm font-medium bg-white/50 inline-block px-3 py-1.5 rounded-lg">
-                Pode adicionar ao carrinho tranquilamente! 🛒 Na hora de finalizar o seu pedido, você escolherá o dia exato e nós garantiremos a entrega. Garanta já o seu! ✨
-              </p>
-            </div>
-          </div>
-        </div>
-
-      {/* Highlights Section */}
+      {/* Highlights Section - Premium Styling */}
       {highlights.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Destaques</h3>
-          <div className="flex overflow-x-auto space-x-4 pb-2">
+        <div className="mb-10">
+          <h3 className="text-2xl font-bold mb-6" style={{ fontFamily: 'var(--font-display)', color: '#0A0A0A' }}>Destaques</h3>
+          <div className="flex overflow-x-auto space-x-6 pb-4 no-scrollbar">
             {highlights.map((highlight) => (
               <HighlightCard
                 key={highlight.id}
@@ -322,36 +353,40 @@ export const Menu: React.FC<MenuProps> = ({
         </div>
       )}
 
-      {/* Promotions Grid (3 cards on desktop) */}
+      {/* Promotions Grid (3 cards on desktop) - Premium Spacing */}
       {productsToDisplayIn3ColGrid.length > 0 && (
-        <div className="mb-8">
-          {selectedCategory === 'Todos' && <h3 className="text-xl font-bold text-gray-900 mb-2">Promoções/Recomendações</h3>}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+        <div className="mb-10">
+          {selectedCategory === 'Todos' && <h3 className="text-2xl font-bold mb-6" style={{ fontFamily: 'var(--font-display)', color: '#0A0A0A' }}>Promoções/Recomendações</h3>}
+          <div className={`grid ${menuMobileColumns === '2' ? 'grid-cols-2' : 'grid-cols-1'} sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8`}>
             {productsToDisplayIn3ColGrid.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
-                onProductClick={handleProductClick} // Passa o novo handler
+                onProductClick={handleProductClick}
                 isPromotion={true}
-                isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
+                isMercadoPagoReturnFlow={isMercadoPagoReturnFlow}
+                isCompactMode={menuMobileColumns === '2'} // Ativa modo compacto em 2 colunas
+                isHorizontalMode={menuMobileColumns === 'horizontal'} // Ativa layout horizontal
               />
             ))}
           </div>
         </div>
       )}
 
-      {/* Regular Products Grid (5 cards on desktop) */}
+      {/* Regular Products Grid (4 cards on desktop) - Premium Spacing */}
       {productsToDisplayIn5ColGrid.length > 0 && (
-        <div className="mb-8">
-          {selectedCategory === 'Todos' && <h3 className="text-xl font-bold text-gray-900 mb-2">Cardápio</h3>}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-4">
+        <div className="mb-10">
+          {selectedCategory === 'Todos' && <h3 className="text-2xl font-bold mb-6" style={{ fontFamily: 'var(--font-display)', color: '#0A0A0A' }}>Cardápio</h3>}
+          <div className={`grid ${menuMobileColumns === '2' ? 'grid-cols-2' : 'grid-cols-1'} sm:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8`}>
             {productsToDisplayIn5ColGrid.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
-                onProductClick={handleProductClick} // Passa o novo handler
+                onProductClick={handleProductClick}
                 isPromotion={false}
-                isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
+                isMercadoPagoReturnFlow={isMercadoPagoReturnFlow}
+                isCompactMode={menuMobileColumns === '2'} // Ativa modo compacto em 2 colunas
+                isHorizontalMode={menuMobileColumns === 'horizontal'} // Ativa layout horizontal
               />
             ))}
           </div>
@@ -360,14 +395,14 @@ export const Menu: React.FC<MenuProps> = ({
 
       {/* Handle no products found */}
       {productsToDisplayIn3ColGrid.length === 0 && productsToDisplayIn5ColGrid.length === 0 && (
-        <div className="text-center py-12">
+        <div className="text-center py-12" role="status" aria-live="polite">
           {selectedCategory === 'Promoções' ? (
             <>
-              <p className="text-gray-500 text-lg mb-2">Nenhuma promoção ativa no momento.</p>
-              <p className="text-gray-500 text-sm">Crie uma promoção no painel de admin para que ela apareça aqui.</p>
+              <p className="text-gray-600 text-base mb-2">Nenhuma promoção ativa no momento.</p>
+              <p className="text-gray-600 text-sm">Crie uma promoção no painel de admin para que ela apareça aqui.</p>
             </>
           ) : (
-            <p className="text-gray-500 text-lg">Nenhum produto encontrado</p>
+            <p className="text-gray-600 text-base">Nenhum produto encontrado</p>
           )}
         </div>
       )}

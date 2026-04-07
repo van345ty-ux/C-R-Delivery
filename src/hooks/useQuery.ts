@@ -64,18 +64,5 @@ export function useQuery<T>(
     executeQuery();
   }, [executeQuery]);
 
-  // Detecta quando o usuário volta para a aba
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden && error) {
-        console.log('useQuery: Aba ficou ativa novamente, recarregando dados...');
-        executeQuery();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [error, executeQuery]);
-
   return { data, loading, error, refetch: executeQuery };
 }

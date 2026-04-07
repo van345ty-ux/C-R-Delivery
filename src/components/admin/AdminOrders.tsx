@@ -33,21 +33,26 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
     console.log('AdminOrders: fetchOrders called.');
     setLoading(true);
 
-    // Buscar apenas os últimos 200 pedidos para evitar timeout
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(200); // LIMITE ADICIONADO
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200);
 
-    if (error) {
-      console.error('Error fetching orders:', error);
-      toast.error('Erro ao buscar pedidos.');
-    } else {
-      console.log(`AdminOrders: ${data?.length || 0} pedidos carregados`);
-      setOrders(data || []);
+      if (error) {
+        console.error('Error fetching orders:', error);
+        toast.error('Erro ao buscar pedidos.');
+      } else {
+        console.log(`AdminOrders: ${data?.length || 0} pedidos carregados`);
+        setOrders(data || []);
+      }
+    } catch (err: any) {
+      console.error('AdminOrders: Error fetching orders:', err);
+      toast.error('Erro ao carregar pedidos.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {

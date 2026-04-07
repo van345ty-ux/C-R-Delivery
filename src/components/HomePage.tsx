@@ -36,13 +36,14 @@ interface HomePageProps {
   heroSubtitleFontSize: string;
   heroSubtitleFontColor: string;
   heroSubtitleBorderColor: string;
+  heroTextBackgroundEnabled: boolean; // Nova prop
   showPreOrderModal: boolean; // Nova prop
   setShowPreOrderModal: (show: boolean) => void; // Nova prop
   showPreOrderBanner: boolean; // Nova prop
   isMercadoPagoReturnFlow: boolean; // Nova prop
   isPixReturnFlow: boolean; // Nova prop
   setIsPixReturnFlow: (isReturning: boolean) => void; // Nova prop
-  isFestiveMode: boolean; // Nova prop para modo festivo
+  menuMobileColumns: string; // Nova prop para controlar colunas no mobile
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -72,13 +73,14 @@ export const HomePage: React.FC<HomePageProps> = ({
   heroSubtitleFontSize,
   heroSubtitleFontColor,
   heroSubtitleBorderColor,
+  heroTextBackgroundEnabled, // Nova prop
   showPreOrderModal, // Nova prop
   setShowPreOrderModal, // Nova prop
   showPreOrderBanner, // Nova prop
   isMercadoPagoReturnFlow, // Nova prop
   isPixReturnFlow, // Nova prop
   setIsPixReturnFlow, // Nova prop
-  isFestiveMode, // Nova prop
+  menuMobileColumns, // Nova prop para controlar colunas no mobile
 }) => {
   const [showCart, setShowCart] = useState(isMercadoPagoReturnFlow || isPixReturnFlow);
   const [showPromotions, setShowPromotions] = useState(false);
@@ -125,14 +127,16 @@ export const HomePage: React.FC<HomePageProps> = ({
     const lastShownTimestamp = parseInt(localStorage.getItem(LAST_SHOWN_KEY) || '0');
     const isCooldownActive = (Date.now() - lastShownTimestamp) < PROMOTION_MODAL_COOLDOWN_MS;
 
-    const LAST_EASTER_SHOWN_KEY = 'easterPopupLastShown';
-    const lastEasterShownTimestamp = parseInt(localStorage.getItem(LAST_EASTER_SHOWN_KEY) || '0');
-    const isEasterCooldownActive = (Date.now() - lastEasterShownTimestamp) < PROMOTION_MODAL_COOLDOWN_MS;
+    // Easter popup desabilitado
+    // const LAST_EASTER_SHOWN_KEY = 'easterPopupLastShown';
+    // const lastEasterShownTimestamp = parseInt(localStorage.getItem(LAST_EASTER_SHOWN_KEY) || '0');
+    // const isEasterCooldownActive = (Date.now() - lastEasterShownTimestamp) < PROMOTION_MODAL_COOLDOWN_MS;
 
-    if (shouldShowOnLoadFromLocation || !isEasterCooldownActive) {
-      setShowEasterPopup(true);
-      localStorage.setItem(LAST_EASTER_SHOWN_KEY, Date.now().toString());
-    } else if (shouldShowOnLoadFromLocation || !isCooldownActive) {
+    // if (shouldShowOnLoadFromLocation || !isEasterCooldownActive) {
+    //   setShowEasterPopup(true);
+    //   localStorage.setItem(LAST_EASTER_SHOWN_KEY, Date.now().toString());
+    // } else 
+    if (shouldShowOnLoadFromLocation || !isCooldownActive) {
       const fetchAndShowPromotions = async () => {
         const { data: promotionsData, error } = await supabase
           .from('products')
@@ -221,9 +225,10 @@ export const HomePage: React.FC<HomePageProps> = ({
           heroSubtitleFontSize={heroSubtitleFontSize}
           heroSubtitleFontColor={heroSubtitleFontColor}
           heroSubtitleBorderColor={heroSubtitleBorderColor}
+          heroTextBackgroundEnabled={heroTextBackgroundEnabled} // Nova prop
           showPreOrderBanner={showPreOrderBanner} // Nova prop
           isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
-          isFestiveMode={isFestiveMode} // Passando modo festivo
+          menuMobileColumns={menuMobileColumns} // Nova prop para controlar colunas no mobile
         />
       </main>
 
@@ -266,8 +271,8 @@ export const HomePage: React.FC<HomePageProps> = ({
           }}
           onGoToMenu={() => {
             setShowEasterPopup(false);
-            localStorage.setItem('pendingMenuFilter', 'Ovos de Sushi');
-            window.location.reload();
+            setMenuFilter('Todos'); // Mudado de 'Ovos de Sushi' para 'Todos'
+
           }}
         />
       ) : (
