@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
-const APP_VERSION = '20260404_1349'; // Versão atual — atualize a cada deploy!
+const APP_VERSION = '20260517_theme_fix'; // Versão atual — atualize a cada deploy!
 
 // Forçar desregistro de qualquer Service Worker antigo (Zombie PWA)
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
@@ -22,8 +22,9 @@ if (typeof window !== 'undefined') {
   const versionParam = urlParams.get('v');
 
   if (savedVersion !== APP_VERSION) {
-    // Nova versão detectada! Força recarga bypassando o cache
+    // Nova versão detectada! Limpar preferência de tema para deixar o DB decidir
     console.log(`Main: Versão ${APP_VERSION} detectada. Forçando atualização...`);
+    localStorage.removeItem('app-theme'); // ← limpa tema antigo para DB vencer
     localStorage.setItem('app_version', APP_VERSION);
     
     // Limpar Cache Storage para garantir novos assets

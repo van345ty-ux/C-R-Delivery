@@ -42,6 +42,19 @@
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(255, 255, 255, 0.3);
   
+  /* Promotion Card specific styles */
+  --promo-card-bg: var(--accent-light);
+  --promo-badge-bg: var(--accent-primary);
+  --promo-badge-text: #FFFFFF;
+  --promo-name-text: var(--text-primary);
+  --promo-button-border: none;
+  --promo-left-border: #DC2626;
+  --promo-price-bg: transparent;
+  --promo-price-text: inherit;
+  --promo-price-padding: 0;
+  --promo-price-radius: 0;
+  --promo-old-price-color: var(--text-tertiary);
+  
   /* Typography */
   --font-display: 'Playfair Display', serif;
   --font-body: 'Inter', sans-serif;
@@ -119,6 +132,19 @@
   
   --glass-bg: rgba(0, 0, 0, 0.4);
   --glass-border: rgba(255, 255, 255, 0.1);
+  
+  /* Promotion Card specific styles for Dark Mode */
+  --promo-card-bg: #000000; /* Fundo interno preto */
+  --promo-badge-bg: #FFFFFF; /* Fundo branco */
+  --promo-badge-text: var(--accent-secondary); /* Texto vermelho */
+  --promo-name-text: #FFFFFF; /* Nome branco */
+  --promo-button-border: 1px solid rgba(255, 255, 255, 0.4); /* Leve borda branca no botão */
+  --promo-left-border: var(--accent-primary); /* Borda esquerda vermelha */
+  --promo-price-bg: #FFFFFF; /* Fundo branco em volta do preço */
+  --promo-price-text: #DC2626; /* Preço em vermelho */
+  --promo-price-padding: 2px 8px;
+  --promo-price-radius: 9999px;
+  --promo-old-price-color: #FFFFFF; /* Preço antigo branco */
 }
 
 /* ============================================
@@ -137,10 +163,10 @@ html {
 
 body {
   font-family: var(--font-body);
-  background-color: var(--bg-primary);
+  background-color: #F9F9F9;
   color: var(--text-primary);
   line-height: var(--leading-normal);
-  transition: background-color var(--transition-base), color var(--transition-base);
+  transition: color var(--transition-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-y: scroll;

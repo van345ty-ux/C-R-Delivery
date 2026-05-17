@@ -88,14 +88,14 @@ export const Header: React.FC<HeaderProps> = ({
                 }`}
               >
                 <MapPin className="w-3 h-3 mr-1 flex-shrink-0" style={{ color: 'var(--accent-primary)' }} />
-                <span className="truncate font-bold" style={{ color: '#0A0A0A' }}>{selectedCity}</span>
+                <span className="truncate font-bold" style={{ color: 'var(--text-primary)' }}>{selectedCity}</span>
               </div>
             </div>
           </div>
 
           {/* User Info & Actions */}
           <div className="flex items-center gap-1 flex-shrink-0 ml-auto pl-4">
-            {/* Theme Toggle - Only show if allowed by admin */}
+            {/* Theme Toggle - only when admin allows it */}
             {allowThemeToggle && <ThemeToggle />}
             
             {user ? (

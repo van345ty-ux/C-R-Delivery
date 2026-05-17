@@ -22,8 +22,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
           isPromotion ? "p-4" : "p-3"
         )}
         style={{
-          backgroundColor: isPromotion ? 'var(--accent-light)' : 'var(--bg-elevated)',
-          borderLeft: '4px solid #DC2626',
+          backgroundColor: isPromotion ? 'var(--promo-card-bg)' : 'var(--bg-elevated)',
+          borderLeft: `4px solid ${isPromotion ? 'var(--promo-left-border)' : '#DC2626'}`,
           borderRadius: '24px',
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)'
         }}
@@ -35,8 +35,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
             className="absolute top-2 right-2 font-bold backdrop-blur-md animate-scale-in text-xs px-2 py-0.5 z-10"
             style={{
               borderRadius: 'var(--radius-full)',
-              color: '#FFFFFF',
-              background: 'var(--accent-primary)',
+              color: isPromotion ? 'var(--promo-badge-text)' : '#FFFFFF',
+              background: isPromotion ? 'var(--promo-badge-bg)' : 'var(--accent-primary)',
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -80,11 +80,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
           {/* Nome do produto */}
           <h3 
             className={cn(
-              "font-semibold text-sm line-clamp-2 mb-2",
+              "font-semibold text-sm line-clamp-2 mb-0.5",
               isPromotion ? "mt-5" : "mt-2"
             )}
             style={{ 
-              color: 'var(--text-primary)',
+              color: isPromotion ? 'var(--promo-name-text)' : 'var(--text-primary)',
               fontFamily: 'var(--font-body)'
             }}
           >
@@ -95,7 +95,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
           <p 
             className={cn(
               "text-xs line-clamp-2 flex-grow",
-              isPromotion ? "mb-4" : "mb-3"
+              isPromotion ? "mb-2" : "mb-0"
             )}
             style={{ color: 'var(--text-secondary)' }}
           >
@@ -107,8 +107,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
             <div className="flex flex-col">
               {product.promotional_price_single ? (
                 <span 
-                  className="font-bold gradient-text text-sm"
-                  style={{ fontFamily: 'var(--font-display)' }}
+                  className={cn("font-bold text-xl leading-none", !isPromotion && "gradient-text")}
+                  style={{ 
+                    fontFamily: 'var(--font-display)', 
+                    letterSpacing: '-0.5px',
+                    ...(isPromotion ? {
+                      color: 'var(--promo-price-text)',
+                      backgroundColor: 'var(--promo-price-bg)',
+                      padding: 'var(--promo-price-padding)',
+                      borderRadius: 'var(--promo-price-radius)'
+                    } : {})
+                  }}
                 >
                   R$ {product.promotional_price_single.toFixed(2)}
                 </span>
@@ -116,16 +125,25 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
                 <>
                   {product.original_price && product.original_price > 0 && (
                     <span 
-                      className="line-through text-xs"
-                      style={{ color: 'var(--text-tertiary)' }}
+                      className="line-through text-xs mb-0"
+                      style={{ color: isPromotion ? 'var(--promo-old-price-color)' : 'var(--text-tertiary)' }}
                     >
                       R$ {product.original_price.toFixed(2)}
                     </span>
                   )}
                   {product.price > 0 && (
                     <span 
-                      className="font-bold gradient-text text-sm"
-                      style={{ fontFamily: 'var(--font-display)' }}
+                      className={cn("font-bold text-xl leading-none", !isPromotion && "gradient-text")}
+                      style={{ 
+                        fontFamily: 'var(--font-display)', 
+                        letterSpacing: '-0.5px',
+                        ...(isPromotion ? {
+                          color: 'var(--promo-price-text)',
+                          backgroundColor: 'var(--promo-price-bg)',
+                          padding: 'var(--promo-price-padding)',
+                          borderRadius: 'var(--promo-price-radius)'
+                        } : {})
+                      }}
                     >
                       R$ {product.price.toFixed(2)}
                     </span>
@@ -151,7 +169,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
                 color: 'var(--text-inverse)',
                 borderRadius: 'var(--radius-full)',
                 boxShadow: 'var(--shadow-md)',
-                border: 'none'
+                border: isPromotion ? 'var(--promo-button-border)' : 'none'
               }}
               aria-label={`Adicionar ${product.name} ao carrinho`}
             >
@@ -172,10 +190,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
         isCompactMode ? "p-2" : "p-0"
       )}
       style={{
-        backgroundColor: isPromotion ? 'var(--accent-light)' : 'var(--bg-elevated)',
+        backgroundColor: isPromotion ? 'var(--promo-card-bg)' : 'var(--bg-elevated)',
         border: `1px solid ${isPromotion ? 'var(--border-accent)' : 'var(--border-primary)'}`,
-        borderLeft: '4px solid var(--accent-primary)',
-        borderRight: '4px solid var(--accent-primary)',
+        borderLeft: `4px solid ${isPromotion ? 'var(--promo-left-border)' : 'var(--accent-primary)'}`,
+        borderRight: `4px solid ${isPromotion ? 'var(--promo-left-border)' : 'var(--accent-primary)'}`,
         borderRadius: 'var(--radius-xl)',
         boxShadow: 'var(--shadow-md)'
       }}
@@ -208,8 +226,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
             )}
             style={{
               borderRadius: 'var(--radius-full)',
-              color: '#FFFFFF',
-              background: 'var(--accent-primary)',
+              color: isPromotion ? 'var(--promo-badge-text)' : '#FFFFFF',
+              background: isPromotion ? 'var(--promo-badge-bg)' : 'var(--accent-primary)',
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -229,11 +247,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
         {/* Product name */}
         <h3 
           className={cn(
-            "font-semibold mb-2 line-clamp-2",
+            "font-semibold mb-0 line-clamp-2",
             isCompactMode ? "text-sm" : "text-base"
           )}
           style={{ 
-            color: 'var(--text-primary)',
+            color: isPromotion ? 'var(--promo-name-text)' : 'var(--text-primary)',
             fontFamily: 'var(--font-body)'
           }}
 
@@ -244,7 +262,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
         {/* Description */}
         {!isCompactMode && (
           <p 
-            className="text-sm line-clamp-2 flex-grow mb-4"
+            className="text-sm line-clamp-2 flex-grow mb-1"
             style={{ color: 'var(--text-secondary)' }}
           >
             {product.description}
@@ -260,10 +278,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
             {product.promotional_price_single ? (
               <span 
                 className={cn(
-                  "font-bold gradient-text",
-                  isCompactMode ? "text-sm" : "text-lg"
+                  "font-bold leading-none",
+                  !isPromotion && "gradient-text",
+                  isCompactMode ? "text-xl" : "text-3xl"
                 )}
-                style={{ fontFamily: 'var(--font-display)' }}
+                style={{ 
+                  fontFamily: 'var(--font-display)', 
+                  letterSpacing: '-0.5px',
+                  ...(isPromotion ? {
+                    color: 'var(--promo-price-text)',
+                    backgroundColor: 'var(--promo-price-bg)',
+                    padding: 'var(--promo-price-padding)',
+                    borderRadius: 'var(--promo-price-radius)'
+                  } : {})
+                }}
               >
                 R$ {product.promotional_price_single.toFixed(2)}
               </span>
@@ -272,10 +300,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
                 {product.original_price && product.original_price > 0 && (
                   <span 
                     className={cn(
-                      "line-through",
-                      isCompactMode ? "text-xs" : "text-sm"
+                      "line-through mb-0",
+                      isCompactMode ? "text-[10px]" : "text-xs"
                     )}
-                    style={{ color: 'var(--text-tertiary)' }}
+                    style={{ color: isPromotion ? 'var(--promo-old-price-color)' : 'var(--text-tertiary)' }}
                   >
                     R$ {product.original_price.toFixed(2)}
                   </span>
@@ -283,10 +311,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
                 {product.price > 0 && (
                   <span 
                     className={cn(
-                      "font-bold gradient-text",
-                      isCompactMode ? "text-sm" : "text-lg"
+                      "font-bold leading-none",
+                      !isPromotion && "gradient-text",
+                      isCompactMode ? "text-xl" : "text-3xl"
                     )}
-                    style={{ fontFamily: 'var(--font-display)' }}
+                    style={{ 
+                      fontFamily: 'var(--font-display)', 
+                      letterSpacing: '-0.5px',
+                      ...(isPromotion ? {
+                        color: 'var(--promo-price-text)',
+                        backgroundColor: 'var(--promo-price-bg)',
+                        padding: 'var(--promo-price-padding)',
+                        borderRadius: 'var(--promo-price-radius)'
+                      } : {})
+                    }}
                   >
                     R$ {product.price.toFixed(2)}
                   </span>
@@ -313,7 +351,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
               color: 'var(--text-inverse)',
               borderRadius: 'var(--radius-full)',
               boxShadow: 'var(--shadow-md)',
-              border: 'none'
+              border: isPromotion ? 'var(--promo-button-border)' : 'none'
             }}
             aria-label={`Adicionar ${product.name} ao carrinho`}
           >
