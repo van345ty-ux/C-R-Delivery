@@ -11,6 +11,7 @@ import { supabase } from './integrations/supabase/client';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import toast, { Toaster } from 'react-hot-toast';
 import { User, Coupon, Product, CartItem, Order, City, OperatingHour } from './types'; // Importando tipos de types.ts
+import { CookieBanner } from './components/CookieBanner';
 
 const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null> => {
   console.log('fetchUserProfile: Attempting to fetch profile for user ID:', supabaseUser.id);
@@ -729,6 +730,7 @@ function App() {
         {showUserCouponNotification && (
           <UserCouponNotification onClose={() => setShowUserCouponNotification(false)} />
         )}
+        <CookieBanner />
       </div>
     </ThemeProvider>
   );
