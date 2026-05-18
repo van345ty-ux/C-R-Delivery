@@ -28,9 +28,9 @@ serve(async (req) => {
       let targetWebhookUrl = '';
 
       if (project_type === 'delivery') {
-        targetWebhookUrl = Deno.env.get('N8N_DELIVERY_WEBHOOK_URL') || 'https://achronychous-anabelle-transstellar.ngrok-free.dev/webhook/whatsapp-order-notification-cr';
+        targetWebhookUrl = Deno.env.get('N8N_DELIVERY_WEBHOOK_URL') || '';
       } else if (project_type === 'marketing') {
-        targetWebhookUrl = Deno.env.get('N8N_MARKETING_WEBHOOK_URL') || 'https://achronychous-anabelle-transstellar.ngrok-free.dev/webhook/iniciar-campanha';
+        targetWebhookUrl = Deno.env.get('MARKETING_WEBHOOK_URL') || '';
       } else {
         const errorMsg = `Tipo de projeto não suportado: ${project_type}`;
         console.error(errorMsg);
