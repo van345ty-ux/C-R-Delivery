@@ -180,11 +180,11 @@ export const TermsOfUse: React.FC<TermsOfUseProps> = ({ onClose }) => {
             <div className="flex flex-col gap-2 text-sm">
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 flex-shrink-0" style={{ color: '#DC2626' }} />
-                <span>WhatsApp: <strong>(XX) XXXXX-XXXX</strong></span>
+                <span>WhatsApp: <strong>(73) 99974-3274</strong></span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 flex-shrink-0" style={{ color: '#DC2626' }} />
-                <span>E-mail: <strong>contato@crsushi.com.br</strong></span>
+                <span>E-mail: <strong>djatila.azevedo@gmail.com</strong></span>
               </div>
             </div>
           </TermSection>
