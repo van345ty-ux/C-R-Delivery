@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Rice base (nigiri) -->
+  <ellipse cx="32" cy="44" rx="22" ry="12" fill="#FFFFFF" stroke="#E0D5C0" stroke-width="1.5"/>
+  <!-- Rice texture lines -->
+  <ellipse cx="32" cy="44" rx="16" ry="8" fill="none" stroke="#E0D5C0" stroke-width="0.8" opacity="0.6"/>
+  <!-- Salmon/fish topping -->
+  <path d="M12 32 Q18 22 32 20 Q46 22 52 32 Q46 38 32 40 Q18 38 12 32Z" fill="#CC2936"/>
+  <!-- Highlight on topping -->
+  <path d="M20 26 Q28 22 38 24 Q30 23 22 27Z" fill="#E85563" opacity="0.6"/>
+  <!-- Nori seaweed band -->
+  <rect x="16" y="36" width="32" height="6" rx="2" fill="#1a1a1a" opacity="0.85"/>
+  <!-- Sesame seeds on rice -->
+  <circle cx="26" cy="46" r="1.2" fill="#D4AF37" opacity="0.8"/>
+  <circle cx="32" cy="48" r="1.2" fill="#D4AF37" opacity="0.8"/>
+  <circle cx="38" cy="46" r="1.2" fill="#D4AF37" opacity="0.8"/>
+</svg>

@@ -191,15 +191,17 @@ export const AdminSettings: React.FC = () => {
                   value={day.open_time?.substring(0, 5) || '18:00'}
                   onChange={(e) => handleOperatingHoursChange(day.day_of_week, 'open_time', e.target.value)}
                   disabled={!day.is_open}
-                  className="w-full p-2 border rounded-lg text-sm disabled:opacity-50"
+                  className="w-full p-2 border rounded-lg text-sm disabled:opacity-50 !text-black !bg-white"
+                  style={{ color: 'black', colorScheme: 'light' }}
                 />
-                <span>às</span>
+                <span className="text-gray-700">às</span>
                 <input
                   type="time"
                   value={day.close_time?.substring(0, 5) || '23:00'}
                   onChange={(e) => handleOperatingHoursChange(day.day_of_week, 'close_time', e.target.value)}
                   disabled={!day.is_open}
-                  className="w-full p-2 border rounded-lg text-sm disabled:opacity-50"
+                  className="w-full p-2 border rounded-lg text-sm disabled:opacity-50 !text-black !bg-white"
+                  style={{ color: 'black', colorScheme: 'light' }}
                 />
               </div>
               <div className="text-right">
@@ -251,7 +253,7 @@ export const AdminSettings: React.FC = () => {
             type="url"
             value={settings.hero_image_url}
             onChange={(e) => handleInputChange('hero_image_url', e.target.value)}
-            className="w-full max-w-md p-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent mt-2"
+            className="w-full max-w-md p-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent mt-2 text-gray-900 bg-white"
             placeholder="Ou insira uma URL de imagem (ex: https://exemplo.com/hero.jpg)"
             disabled={!!selectedHeroFile}
           />
@@ -265,18 +267,18 @@ export const AdminSettings: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Título Principal do Cardápio</h3>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Texto do Título</label>
-            <input type="text" value={settings.hero_title_text} onChange={(e) => handleInputChange('hero_title_text', e.target.value)} className="w-full p-3 border rounded-lg" placeholder="Ex: C&R Sushi" />
+            <input type="text" value={settings.hero_title_text} onChange={(e) => handleInputChange('hero_title_text', e.target.value)} className="w-full p-3 border rounded-lg text-gray-900 bg-white" placeholder="Ex: C&R Sushi" />
           </div>
           <div className="grid grid-cols-2 gap-4 mt-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tamanho da Fonte (ex: 48px)</label>
-              <input type="text" value={settings.hero_title_font_size} onChange={(e) => handleInputChange('hero_title_font_size', e.target.value)} className="w-full p-3 border rounded-lg" placeholder="Ex: 48px" />
+              <input type="text" value={settings.hero_title_font_size} onChange={(e) => handleInputChange('hero_title_font_size', e.target.value)} className="w-full p-3 border rounded-lg text-gray-900 bg-white" placeholder="Ex: 48px" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Cor da Fonte</label>
               <div className="flex items-center gap-2">
                 <input type="color" value={settings.hero_title_font_color} onChange={(e) => handleInputChange('hero_title_font_color', e.target.value)} className="w-10 h-10 p-0 border-none rounded-lg cursor-pointer" />
-                <input type="text" value={settings.hero_title_font_color} onChange={(e) => handleInputChange('hero_title_font_color', e.target.value)} className="flex-1 p-3 border rounded-lg" placeholder="#ffffff" />
+                <input type="text" value={settings.hero_title_font_color} onChange={(e) => handleInputChange('hero_title_font_color', e.target.value)} className="flex-1 p-3 border rounded-lg text-gray-900 bg-white" placeholder="#ffffff" />
               </div>
             </div>
           </div>
@@ -284,7 +286,7 @@ export const AdminSettings: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Cor da Sombra do Texto (Borda)</label>
             <div className="flex items-center gap-2">
               <input type="color" value={settings.hero_title_border_color} onChange={(e) => handleInputChange('hero_title_border_color', e.target.value)} className="w-10 h-10 p-0 border-none rounded-lg cursor-pointer" />
-              <input type="text" value={settings.hero_title_border_color} onChange={(e) => handleInputChange('hero_title_border_color', e.target.value)} className="flex-1 p-3 border rounded-lg" placeholder="#000000" />
+              <input type="text" value={settings.hero_title_border_color} onChange={(e) => handleInputChange('hero_title_border_color', e.target.value)} className="flex-1 p-3 border rounded-lg text-gray-900 bg-white" placeholder="#000000" />
             </div>
             <p className="text-xs text-gray-500 mt-1">
               Esta cor será usada para criar um efeito de sombra/borda ao redor do texto.
@@ -315,18 +317,18 @@ export const AdminSettings: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Subtítulo do Cardápio</h3>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Texto do Subtítulo</label>
-            <input type="text" value={settings.hero_subtitle_text} onChange={(e) => handleInputChange('hero_subtitle_text', e.target.value)} className="w-full p-3 border rounded-lg" placeholder="Ex: A Experiência Japonesa Autêntica na Sua Casa" />
+            <input type="text" value={settings.hero_subtitle_text} onChange={(e) => handleInputChange('hero_subtitle_text', e.target.value)} className="w-full p-3 border rounded-lg text-gray-900 bg-white" placeholder="Ex: A Experiência Japonesa Autêntica na Sua Casa" />
           </div>
           <div className="grid grid-cols-2 gap-4 mt-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tamanho da Fonte (ex: 20px)</label>
-              <input type="text" value={settings.hero_subtitle_font_size} onChange={(e) => handleInputChange('hero_subtitle_font_size', e.target.value)} className="w-full p-3 border rounded-lg" placeholder="Ex: 20px" />
+              <input type="text" value={settings.hero_subtitle_font_size} onChange={(e) => handleInputChange('hero_subtitle_font_size', e.target.value)} className="w-full p-3 border rounded-lg text-gray-900 bg-white" placeholder="Ex: 20px" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Cor da Fonte</label>
               <div className="flex items-center gap-2">
                 <input type="color" value={settings.hero_subtitle_font_color} onChange={(e) => handleInputChange('hero_subtitle_font_color', e.target.value)} className="w-10 h-10 p-0 border-none rounded-lg cursor-pointer" />
-                <input type="text" value={settings.hero_subtitle_font_color} onChange={(e) => handleInputChange('hero_subtitle_font_color', e.target.value)} className="flex-1 p-3 border rounded-lg" placeholder="#ffffff" />
+                <input type="text" value={settings.hero_subtitle_font_color} onChange={(e) => handleInputChange('hero_subtitle_font_color', e.target.value)} className="flex-1 p-3 border rounded-lg text-gray-900 bg-white" placeholder="#ffffff" />
               </div>
             </div>
           </div>
@@ -334,7 +336,7 @@ export const AdminSettings: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Cor da Sombra do Texto (Borda)</label>
             <div className="flex items-center gap-2">
               <input type="color" value={settings.hero_subtitle_border_color} onChange={(e) => handleInputChange('hero_subtitle_border_color', e.target.value)} className="w-10 h-10 p-0 border-none rounded-lg cursor-pointer" />
-              <input type="text" value={settings.hero_subtitle_border_color} onChange={(e) => handleInputChange('hero_subtitle_border_color', e.target.value)} className="flex-1 p-3 border rounded-lg" placeholder="#000000" />
+              <input type="text" value={settings.hero_subtitle_border_color} onChange={(e) => handleInputChange('hero_subtitle_border_color', e.target.value)} className="flex-1 p-3 border rounded-lg text-gray-900 bg-white" placeholder="#000000" />
             </div>
             <p className="text-xs text-gray-500 mt-1">
               Esta cor será usada para criar um efeito de sombra/borda ao redor do texto.
@@ -354,7 +356,7 @@ export const AdminSettings: React.FC = () => {
             type="text"
             value={settings.promotion_modal_title}
             onChange={(e) => handleInputChange('promotion_modal_title', e.target.value)}
-            className="w-full max-w-md p-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-full max-w-md p-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
             placeholder="Ex: Promoções do Dia, Dicas do Chef..."
           />
           <p className="text-xs text-gray-500 mt-1">
@@ -376,8 +378,9 @@ export const AdminSettings: React.FC = () => {
             min="0"
             value={settings.delivery_fee}
             onChange={(e) => handleInputChange('delivery_fee', e.target.value)}
-            className="w-full max-w-xs p-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-full max-w-xs p-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
             placeholder="Ex: 3.00"
+            style={{ colorScheme: 'light' }}
           />
           <p className="text-xs text-gray-500 mt-1">
             Este valor será cobrado para todos os pedidos do tipo "Delivery".
@@ -397,7 +400,7 @@ export const AdminSettings: React.FC = () => {
             type="text"
             value={settings.pix_key}
             onChange={(e) => handleInputChange('pix_key', e.target.value)}
-            className="w-full max-w-md p-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-full max-w-md p-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
             placeholder="Ex: seuemail@email.com ou 000.000.000-00"
           />
           <p className="text-xs text-gray-500 mt-1">
@@ -527,7 +530,7 @@ export const AdminSettings: React.FC = () => {
                   type="text"
                   value={settings.accent_color_light || '#D4AF37'}
                   onChange={(e) => handleInputChange('accent_color_light', e.target.value)}
-                  className="flex-1 p-3 border rounded-lg"
+                  className="flex-1 p-3 border rounded-lg text-gray-900 bg-white"
                   placeholder="#D4AF37"
                 />
               </div>
@@ -550,7 +553,7 @@ export const AdminSettings: React.FC = () => {
                   type="text"
                   value={settings.accent_color_dark || '#F4D03F'}
                   onChange={(e) => handleInputChange('accent_color_dark', e.target.value)}
-                  className="flex-1 p-3 border rounded-lg"
+                  className="flex-1 p-3 border rounded-lg text-gray-900 bg-white"
                   placeholder="#F4D03F"
                 />
               </div>
