@@ -101,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
             {user ? (
               <button
                 onClick={onProfileClick}
-                className={`text-left rounded-xl transition-all duration-300 hover:scale-105 mt-1 p-1.5 translate-y-2`}
+                className={`text-left rounded-xl transition-all duration-300 hover:scale-105 mt-1 p-1`}
                 style={{ 
                   backgroundColor: 'var(--bg-secondary)',
                   border: '2px solid var(--border-primary)',
@@ -125,7 +125,7 @@ export const Header: React.FC<HeaderProps> = ({
                     </div>
                   </div>
                   <p 
-                    className={`text-[10px] mt-1 transition-all duration-300 ${
+                    className={`text-[10px] mt-1 mb-0 transition-all duration-300 ${
                       isScrolled ? 'hidden' : 'block'
                     }`}
                     style={{ color: 'var(--text-tertiary)' }}
