@@ -65,6 +65,15 @@ export const Cart: React.FC<CartProps> = ({
   // Novos estados para o troco
   const [needsChange, setNeedsChange] = useState<boolean | null>(null);
   const [changeForAmount, setChangeForAmount] = useState<string>('');
+  const cashOptionsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (paymentMethod === 'cash') {
+      setTimeout(() => {
+        cashOptionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    }
+  }, [paymentMethod]);
 
   // Estado para dia de entrega dos Ovos de Sushi
   const [sushiEggDeliveryDay, setSushiEggDeliveryDay] = useState<'Sábado' | 'Domingo' | null>(null);
@@ -880,7 +889,7 @@ export const Cart: React.FC<CartProps> = ({
         </div>
 
         {paymentMethod === 'cash' && (
-          <div className="border-t pt-4" style={{ borderColor: 'var(--border-primary)' }}>
+          <div ref={cashOptionsRef} className="border-t pt-4" style={{ borderColor: 'var(--border-primary)' }}>
             <h3 
               className="font-medium mb-2"
               style={{ color: 'var(--text-primary)' }}
