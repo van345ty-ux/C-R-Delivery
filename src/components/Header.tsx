@@ -101,8 +101,8 @@ export const Header: React.FC<HeaderProps> = ({
             {user ? (
               <button
                 onClick={onProfileClick}
-                className={`flex items-center space-x-2 text-left rounded-xl transition-all duration-300 hover:scale-105 ${
-                  isScrolled ? 'p-2' : 'p-3'
+                className={`flex items-center space-x-2 text-left rounded-xl transition-all duration-300 hover:scale-105 mt-1 ${
+                  isScrolled ? 'py-1 px-2.5' : 'py-2 px-3'
                 }`}
                 style={{ 
                   backgroundColor: 'var(--bg-secondary)',
@@ -111,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
                 }}
               >
                 <div className="text-sm">
-                  <p className="font-semibold whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>{user.name}</p>
+                  <p className="font-semibold whitespace-nowrap pt-1" style={{ color: 'var(--text-primary)' }}>{user.name}</p>
                   <div 
                     className={`flex items-center transition-all duration-300 ${
                       isScrolled ? 'hidden' : 'flex'
