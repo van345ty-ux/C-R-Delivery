@@ -423,7 +423,7 @@ export const AdminSettings: React.FC = () => {
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              className="sr-only peer"
+              className="sr-only peer text-gray-900 bg-white"
               checked={settings.is_festive_mode_enabled === 'true'}
               onChange={(e) => handleInputChange('is_festive_mode_enabled', e.target.checked ? 'true' : 'false')}
             />
@@ -505,7 +505,7 @@ export const AdminSettings: React.FC = () => {
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
-                className="sr-only peer"
+                className="sr-only peer text-gray-900 bg-white"
                 checked={settings.allow_theme_toggle === 'true'}
                 onChange={(e) => handleInputChange('allow_theme_toggle', e.target.checked ? 'true' : 'false')}
               />

@@ -1,9 +1,8 @@
-import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
-const APP_VERSION = '20260517_theme_fix'; // Versão atual — atualize a cada deploy!
+const APP_VERSION = '20260519_loading_fix'; // Versão atual — atualize a cada deploy!
 
 // Forçar desregistro de qualquer Service Worker antigo (Zombie PWA)
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
@@ -46,7 +45,5 @@ if (typeof window !== 'undefined') {
 }
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>
+  <App />
 );

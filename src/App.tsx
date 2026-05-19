@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { LocationSelect } from './components/LocationSelect';
 import { HomePage } from './components/HomePage';
 import { AdminPanel } from './components/AdminPanel';
@@ -13,42 +13,57 @@ import toast, { Toaster } from 'react-hot-toast';
 import { User, Coupon, Product, CartItem, Order, City, OperatingHour } from './types'; // Importando tipos de types.ts
 import { CookieBanner } from './components/CookieBanner';
 
+// Usa fetch nativo para evitar travamento do SDK do Supabase
 const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null> => {
-  console.log('fetchUserProfile: Attempting to fetch profile for user ID:', supabaseUser.id);
-  let { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', supabaseUser.id)
-    .single();
+  console.log('fetchUserProfile: Fetching profile for user ID:', supabaseUser.id);
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+  const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-  if (error && error.code === 'PGRST116') {
-    console.log('fetchUserProfile: Profile not found, attempting to create it.');
-    // Profile not found, create it
-    const { data: newProfile, error: insertError } = await supabase
-      .from('profiles')
-      .insert({
-        id: supabaseUser.id,
-        full_name: supabaseUser.user_metadata.full_name,
-        phone: supabaseUser.user_metadata.phone,
-        birth_date: supabaseUser.user_metadata.birth_date,
-        role: 'customer',
-      })
-      .select()
-      .single();
+  const getAuthToken = async () => {
+    try {
+      const stored = localStorage.getItem(`sb-${SUPABASE_URL.split('.')[0].replace('https://', '')}-auth-token`);
+      if (stored) return JSON.parse(stored)?.access_token;
+    } catch { /* ignore */ }
+    return SUPABASE_KEY;
+  };
 
-    if (insertError) {
-      console.error('fetchUserProfile: Error creating profile on-the-fly:', insertError);
-      return null; // Retorna null se a criação do perfil falhar
+  const token = await getAuthToken();
+  const headers: Record<string, string> = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${token || SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+  };
+
+  try {
+    // Busca o perfil
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/profiles?id=eq.${supabaseUser.id}&select=*&limit=1`,
+      { headers }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const profiles = await res.json();
+    let data = profiles?.[0] || null;
+
+    if (!data) {
+      // Perfil não existe, cria
+      console.log('fetchUserProfile: Profile not found, creating...');
+      const createRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
+        method: 'POST',
+        headers: { ...headers, 'Prefer': 'return=representation' },
+        body: JSON.stringify({
+          id: supabaseUser.id,
+          full_name: supabaseUser.user_metadata?.full_name,
+          phone: supabaseUser.user_metadata?.phone,
+          birth_date: supabaseUser.user_metadata?.birth_date,
+          role: 'customer',
+        }),
+      });
+      if (!createRes.ok) { console.error('fetchUserProfile: Failed to create profile'); return null; }
+      const created = await createRes.json();
+      data = Array.isArray(created) ? created[0] : created;
     }
-    console.log('fetchUserProfile: Profile created successfully.');
-    data = newProfile;
-  } else if (error) {
-    console.error('fetchUserProfile: Error fetching profile:', error);
-    return null;
-  }
 
-  if (data) {
-    console.log('fetchUserProfile: Profile data retrieved:', data);
+    if (!data) return null;
     return {
       id: data.id,
       name: data.full_name,
@@ -58,9 +73,10 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null
       purchaseCount: data.purchase_count || 0,
       role: data.role || 'customer',
     };
+  } catch (err) {
+    console.error('fetchUserProfile: Error:', err);
+    return null;
   }
-  console.log('fetchUserProfile: No profile data found or created, returning null.');
-  return null;
 };
 
 // Constante para o limite de inatividade (Removido limite, recarrega sempre)
@@ -115,11 +131,20 @@ function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
+
+  // Verifica se há sessão salva no localStorage para evitar loading screen desnecessária
+  const hasStoredSession = (() => {
+    try {
+      const keys = Object.keys(localStorage);
+      return keys.some(k => k.includes('-auth-token') && localStorage.getItem(k));
+    } catch { return false; }
+  })();
   const [showProfile, setShowProfile] = useState(false);
   const [cities, setCities] = useState<City[]>([]);
   const [appSettings, setAppSettings] = useState<{ [key: string]: string }>({});
   const [initialAppDataLoading, setInitialAppDataLoading] = useState(true);
-  const [authLoading, setAuthLoading] = useState(true);
+  // Nunca bloqueia o carregamento inicial da UI com a autenticação (carrega em background)
+  const [authLoading, setAuthLoading] = useState(false);
   const [isStoreOpen, setIsStoreOpen] = useState(true);
   const [canPlaceOrder, setCanPlaceOrder] = useState(false); // Novo estado para controlar se pode fazer pedido (incluindo pré-pedido)
   const [showUserCouponNotification, setShowUserCouponNotification] = useState(false);
@@ -202,19 +227,20 @@ function App() {
     console.log('App State - isPixReturnFlow:', isPixReturnFlow); // Adicionado log
   }, [pendingCouponNotificationUserId, showUserCouponNotification, user, session, currentView, showPreOrderModal, showPreOrderBanner, isStoreOpen, canPlaceOrder, isMercadoPagoReturnFlow, isPixReturnFlow]);
 
-  const checkAndShowCouponNotification = useCallback(async (userId: string) => {
+  // Usando useRef para evitar que a função seja recriada e cause loop infinito no useEffect de auth
+  const checkAndShowCouponNotificationRef = useRef(async (userId: string) => {
     console.log('checkAndShowCouponNotification called for userId:', userId);
 
     const { data: couponsData, error: couponsError } = await supabase
       .from('coupons')
-      .select('*') // Select all fields to perform full validity check
+      .select('*')
       .or(`user_id.eq.${userId},user_id.is.null`)
       .eq('active', true)
       .eq('is_pending_admin_approval', false);
 
     if (couponsError) {
       console.error('Error fetching coupons for notification:', couponsError);
-      setPendingCouponNotificationUserId(null); // Clear if error
+      setPendingCouponNotificationUserId(null);
       return;
     }
 
@@ -222,13 +248,11 @@ function App() {
     const hasAvailableCoupons = (couponsData || []).filter((coupon: Coupon) => {
       const validFrom = new Date(coupon.valid_from);
       const validTo = new Date(coupon.valid_to);
-      validTo.setHours(23, 59, 59, 999); // Considerar o dia inteiro
+      validTo.setHours(23, 59, 59, 999);
 
       const isCurrentlyValid = today >= validFrom && today <= validTo;
-      // Fix: Check if usage_limit is defined before comparing
       const hasUsagesLeft = coupon.usage_limit === null || coupon.usage_limit === undefined || coupon.usage_count < coupon.usage_limit;
 
-      // Validação adicional: cupons de aniversário e fidelidade DEVEM ser específicos do usuário
       if ((coupon.type === 'birthday' || coupon.type === 'loyalty') && !coupon.user_id) {
         return false;
       }
@@ -237,116 +261,103 @@ function App() {
     console.log('hasAvailableCoupons:', hasAvailableCoupons);
 
     if (hasAvailableCoupons) {
-      setPendingCouponNotificationUserId(userId); // Define o estado pendente
+      setPendingCouponNotificationUserId(userId);
       console.log('Setting pendingCouponNotificationUserId to:', userId);
     } else {
-      setPendingCouponNotificationUserId(null); // Clear if no coupons are available
+      setPendingCouponNotificationUserId(null);
       console.log('No available coupons, clearing pendingCouponNotificationUserId');
     }
-  }, []);
+  });
+
+  const checkAndShowCouponNotification = checkAndShowCouponNotificationRef.current;
 
   // Effect for initial app data fetching (settings, cities, hours)
   useEffect(() => {
     const fetchInitialAppData = async () => {
       console.log('fetchInitialAppData: Starting initial app data fetch.');
-      setInitialAppDataLoading(true); // Inicia o carregamento de dados iniciais
+      setInitialAppDataLoading(true);
+
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const headers = {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+      };
+
+      const fetchWithTimeout = async (url: string, ms = 8000) => {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), ms);
+        try {
+          const res = await fetch(url, { headers, signal: controller.signal });
+          clearTimeout(id);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        } catch (err) {
+          clearTimeout(id);
+          throw err;
+        }
+      };
+
       try {
-        const settingsPromise = supabase.from('settings').select('key, value');
-        const citiesPromise = supabase.from('cities').select('*').order('name', { ascending: true });
-        const hoursPromise = supabase.from('operating_hours').select('*');
+        console.log('fetchInitialAppData: Fetching all initial data in parallel...');
+        const [settingsData, citiesData, hoursData] = await Promise.all([
+          fetchWithTimeout(`${SUPABASE_URL}/rest/v1/settings?select=key,value`),
+          fetchWithTimeout(`${SUPABASE_URL}/rest/v1/cities?select=*&order=name.asc`),
+          fetchWithTimeout(`${SUPABASE_URL}/rest/v1/operating_hours?select=*`)
+        ]);
 
-        const [settingsResult, citiesResult, hoursResult] = await Promise.all([settingsPromise, citiesPromise, hoursPromise]);
+        const settingsMap = (settingsData || []).reduce((acc: { [key: string]: string }, { key, value }: { key: string, value: string }) => {
+          acc[key] = value;
+          return acc;
+        }, {});
+        setAppSettings(settingsMap);
+        console.log('fetchInitialAppData: Settings loaded.', Object.keys(settingsMap).length, 'keys');
 
-        if (settingsResult.error) {
-          toast.error('Erro ao carregar configurações: ' + settingsResult.error.message);
-          console.error('fetchInitialAppData: Settings error:', settingsResult.error);
-        } else if (settingsResult.data) {
-          const settingsMap = settingsResult.data.reduce((acc: { [key: string]: string }, { key, value }: { key: string, value: string }) => {
-            acc[key] = value;
-            return acc;
-          }, {} as { [key: string]: string });
-          setAppSettings(settingsMap);
-          console.log('fetchInitialAppData: Settings loaded.');
-        }
+        setCities(citiesData || []);
+        console.log('fetchInitialAppData: Cities loaded.', citiesData?.length, 'cities');
 
-        if (citiesResult.error) {
-          toast.error('Erro ao carregar cidades: ' + citiesResult.error.message);
-          console.error('fetchInitialAppData: Cities error:', citiesResult.error);
-        } else {
-          setCities(citiesResult.data || []);
-          console.log('fetchInitialAppData: Cities loaded.');
-        }
+        const fetchedOperatingHours: OperatingHour[] = hoursData || [];
+        setOperatingHours(fetchedOperatingHours);
+        console.log('fetchInitialAppData: Hours loaded.', fetchedOperatingHours.length, 'entries');
 
-        if (hoursResult.error) {
-          toast.error('Erro ao verificar horário de funcionamento: ' + hoursResult.error.message);
-          console.error('fetchInitialAppData: Operating hours error:', hoursResult.error);
-        } else if (hoursResult.data) {
-          const fetchedOperatingHours: OperatingHour[] = hoursResult.data;
-          setOperatingHours(fetchedOperatingHours); // Store operating hours in state
+        const now = new Date();
+        const currentDay = now.getDay();
+        const currentTime = now.toTimeString().slice(0, 5);
+        const todayHours = fetchedOperatingHours.find(h => h.day_of_week === currentDay);
 
-          const now = new Date();
-          const currentDay = now.getDay();
-          const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
+        let storeCurrentlyOpen = false;
+        let canPreOrder = false;
+        let showPreOrderModalOnLoad = false;
+        let showPreOrderBannerOnLoad = false;
 
-          console.log('--- Time and Operating Hours Debug ---');
-          console.log('Current Date/Time:', now.toLocaleString());
-          console.log('Current Day of Week (0=Sunday, 6=Saturday):', currentDay);
-          console.log('Current Time (HH:MM):', currentTime);
-          console.log('Fetched Operating Hours:', fetchedOperatingHours);
+        if (todayHours && todayHours.is_open) {
+          storeCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
+          canPreOrder = !storeCurrentlyOpen && currentTime >= '07:00' && currentTime <= '17:00';
 
-          const todayHours = fetchedOperatingHours.find(h => h.day_of_week === currentDay);
-          console.log('Today\'s Operating Hours:', todayHours);
+          const todayDateString = now.toISOString().split('T')[0];
+          const lastSeenPreOrderModalDate = localStorage.getItem('preOrderModalLastSeenDate');
+          const hasSeenPreOrderModalToday = lastSeenPreOrderModalDate === todayDateString;
 
-          let storeCurrentlyOpen = false;
-          let canPreOrder = false;
-          let showPreOrderModalOnLoad = false;
-          let showPreOrderBannerOnLoad = false;
-
-          if (todayHours && todayHours.is_open) {
-            storeCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
-
-            // Logic for pre-order: store is open today, but not currently open, and it's between 07:00 and 17:00
-            canPreOrder = !storeCurrentlyOpen && currentTime >= '07:00' && currentTime <= '17:00'; // MODIFIED HERE
-
-            // Show pre-order modal if conditions met and not yet seen today
-            const todayDateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
-            const lastSeenPreOrderModalDate = localStorage.getItem('preOrderModalLastSeenDate');
-            const hasSeenPreOrderModalToday = lastSeenPreOrderModalDate === todayDateString;
-
-            if (canPreOrder && !hasSeenPreOrderModalToday) {
-              showPreOrderModalOnLoad = true;
-              localStorage.setItem('preOrderModalLastSeenDate', todayDateString); // Mark as seen for today
-            }
-
-            // Show pre-order banner if conditions met
-            if (canPreOrder) {
-              showPreOrderBannerOnLoad = true;
-            }
-
-          } else {
-            // Store is closed all day
-            storeCurrentlyOpen = false;
-            canPreOrder = false;
-            showPreOrderModalOnLoad = false;
-            showPreOrderBannerOnLoad = false;
+          if (canPreOrder && !hasSeenPreOrderModalToday) {
+            showPreOrderModalOnLoad = true;
+            localStorage.setItem('preOrderModalLastSeenDate', todayDateString);
           }
-
-          setIsStoreOpen(storeCurrentlyOpen);
-          setCanPlaceOrder(storeCurrentlyOpen || canPreOrder); // Pode fazer pedido se aberto ou em pré-pedido
-          setShowPreOrderModal(showPreOrderModalOnLoad);
-          setShowPreOrderBanner(showPreOrderBannerOnLoad);
-
-          console.log('Calculated storeCurrentlyOpen:', storeCurrentlyOpen);
-          console.log('Calculated canPreOrder:', canPreOrder);
-          console.log('Final canPlaceOrder:', storeCurrentlyOpen || canPreOrder);
-          console.log('--- End Time and Operating Hours Debug ---');
-
+          if (canPreOrder) showPreOrderBannerOnLoad = true;
         }
-      } catch (error: any) { // Explicitly type error as any to access message
-        console.error("fetchInitialAppData: Critical error during initial app data fetching:", error);
-        toast.error("Falha crítica ao carregar dados iniciais do aplicativo: " + (error.message || "Erro desconhecido"));
+
+        setIsStoreOpen(storeCurrentlyOpen);
+        setCanPlaceOrder(storeCurrentlyOpen || canPreOrder);
+        setShowPreOrderModal(showPreOrderModalOnLoad);
+        setShowPreOrderBanner(showPreOrderBannerOnLoad);
+
+        console.log('fetchInitialAppData: Store open:', storeCurrentlyOpen, '| Can pre-order:', canPreOrder);
+
+      } catch (error: any) {
+        console.error('fetchInitialAppData: Error fetching data:', error);
+        toast.error('Erro ao carregar dados. Verifique sua conexão.');
       } finally {
-        setInitialAppDataLoading(false); // Finaliza o carregamento de dados iniciais
+        setInitialAppDataLoading(false);
         console.log('fetchInitialAppData: Initial app data fetch finished.');
       }
     };
@@ -354,12 +365,15 @@ function App() {
     fetchInitialAppData();
   }, []); // Empty dependency array means this runs once on mount
 
+
   // Effect for Supabase Auth Session and User Profile
   useEffect(() => {
-    let authSubscription: ReturnType<typeof supabase.auth.onAuthStateChange>['data']['subscription'];
+    let authSubscription: ReturnType<typeof supabase.auth.onAuthStateChange>['data']['subscription'] | null = null;
     let lastProcessedUserId: string | null = null;
+    let isMounted = true;
 
-    const handleAuthChange = async (event: string) => {
+    const handleAuthChange = async (event: string, authSession?: any) => {
+      if (!isMounted) return;
       console.log(`handleAuthChange: Event received: ${event}, lastProcessedUserId: ${lastProcessedUserId}`);
 
       if (event === 'SIGNED_OUT') {
@@ -393,70 +407,80 @@ function App() {
         return;
       }
 
-      // Busca a sessão atual
-      const { data: { session: latestSession }, error: sessionError } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        console.error('handleAuthChange: Erro ao buscar sessão:', sessionError);
-        setAuthLoading(false);
-        return;
+      // Usa a sessão recebida no evento. Se for undefined (como no INITIAL_LOAD manual), busca a sessão
+      let latestSession = authSession;
+      if (authSession === undefined) {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          console.error('handleAuthChange: Erro ao buscar sessão:', sessionError);
+          if (isMounted) setAuthLoading(false);
+          return;
+        }
+        latestSession = session;
       }
+
+      if (!isMounted) return;
 
       console.log(`handleAuthChange: Processing event for user: ${latestSession?.user?.id}`);
       
       setSession(latestSession);
 
       if (latestSession?.user) {
-        const profile = await fetchUserProfile(latestSession.user);
-        setUser(profile);
-        lastProcessedUserId = latestSession.user.id;
-        console.log(`handleAuthChange: User processed and saved: ${lastProcessedUserId}`);
+        // Dispara a busca do perfil sem fazer 'await' (isso evita o DEADLOCK do Supabase SDK)
+        fetchUserProfile(latestSession.user).then((profile) => {
+          if (!isMounted) return;
+          
+          setUser(profile);
+          lastProcessedUserId = latestSession.user.id;
+          console.log(`handleAuthChange: User processed and saved: ${lastProcessedUserId}`);
 
-        if (profile && event === 'SIGNED_IN' && profile.role === 'customer') {
-          const userName = latestSession.user.user_metadata.full_name || latestSession.user.email;
-          if (userName) {
-            await supabase.from('login_notifications').insert({
-              user_id: latestSession.user.id,
-              user_name: userName,
-            });
+          if (profile && event === 'SIGNED_IN' && profile.role === 'customer') {
+            const userName = latestSession.user.user_metadata.full_name || latestSession.user.email;
+            if (userName) {
+              // Fire and forget insert
+              supabase.from('login_notifications').insert({
+                user_id: latestSession.user.id,
+                user_name: userName,
+              }).then(() => {}); 
+            }
+            if (isMounted) checkAndShowCouponNotification(latestSession.user.id);
           }
-          checkAndShowCouponNotification(latestSession.user.id);
-        }
+        }).catch(err => {
+          console.error('Erro ao buscar perfil do usuário de forma assíncrona:', err);
+        });
       } else {
-        setUser(null);
+        if (isMounted) setUser(null);
         lastProcessedUserId = null;
       }
       
-      setAuthLoading(false);
+      if (isMounted) setAuthLoading(false);
     };
 
-    // Busca a sessão inicial e então configura o listener
+    // Configura o listener em tempo real para mudanças de forma síncrona
+    authSubscription = supabase.auth.onAuthStateChange(handleAuthChange).data.subscription;
+    console.log('useEffect: Auth state change listener set up.');
+
+    // Busca a sessão inicial
     const initializeAuth = async () => {
       console.log('initializeAuth: Starting initial auth check.');
-      setAuthLoading(true);
       try {
         await supabase.auth.getSession();
         await handleAuthChange('INITIAL_LOAD'); // Processa a sessão inicial
       } catch (error) {
         console.error('initializeAuth: Erro ao buscar a sessão inicial:', error);
-        // Mesmo que haja um erro, precisamos parar o carregamento
-        setAuthLoading(false);
       }
-
-      // Configura o listener em tempo real para mudanças subsequentes
-      authSubscription = supabase.auth.onAuthStateChange(handleAuthChange).data.subscription;
-      console.log('initializeAuth: Auth state change listener set up.');
     };
 
     initializeAuth();
 
     return () => {
+      isMounted = false;
       if (authSubscription) {
         console.log('Auth subscription unsubscribed.');
         authSubscription.unsubscribe();
       }
     };
-  }, [checkAndShowCouponNotification]); // Dependência de checkAndShowCouponNotification
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const refetchUser = useCallback(async () => {
     console.log('refetchUser: Called.');

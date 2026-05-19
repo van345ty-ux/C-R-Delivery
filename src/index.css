@@ -1,9 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Premium Fonts Import */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 /* ============================================
    PREMIUM THEME SYSTEM - CSS VARIABLES
@@ -242,11 +241,18 @@ button {
   cursor: pointer;
 }
 
-input,
+/* Force light theme for inputs inside white containers (Admin Panel fix) */
+.bg-white input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]),
+.bg-white textarea,
+.bg-white select {
+  color: #111827 !important; /* text-gray-900 */
+  background-color: #ffffff !important; /* bg-white */
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]),
 textarea,
 select {
   font-family: var(--font-body);
-  color: var(--text-primary);
 }
 
 img {

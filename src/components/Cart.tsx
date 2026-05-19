@@ -293,6 +293,10 @@ export const Cart: React.FC<CartProps> = ({
       toast.error('Por favor, selecione uma forma de pagamento.');
       return;
     }
+    if (paymentMethod === 'cash' && needsChange === null) {
+      toast.error('escolha a opção de troco');
+      return;
+    }
     if (paymentMethod === 'cash' && needsChange === true && (!changeForAmount || parseFloat(changeForAmount) < total)) {
       toast.error('Por favor, insira um valor para o troco que seja maior que o total do pedido.');
       return;
@@ -997,7 +1001,13 @@ export const Cart: React.FC<CartProps> = ({
         )}
         <button
           onClick={handleFinishOrder}
-          disabled={isSubmitting || !canPlaceOrder || !user || !paymentMethod || (paymentMethod === 'pix' && (!pixKeyValue || !hasSeenPixInstructions))}
+          disabled={
+            isSubmitting || 
+            !canPlaceOrder || 
+            !user || 
+            !paymentMethod || 
+            (paymentMethod === 'pix' && (!pixKeyValue || !hasSeenPixInstructions))
+          }
           className={`w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${paymentMethod === 'card' && isMercadoPagoAcknowledged ? 'animate-pulse ring-4 ring-red-300' : ''}`}
           aria-label={isSubmitting ? 'Finalizando pedido, aguarde' : 'Finalizar pedido'}
         >

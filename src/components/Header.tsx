@@ -101,32 +101,31 @@ export const Header: React.FC<HeaderProps> = ({
             {user ? (
               <button
                 onClick={onProfileClick}
-                className={`flex items-center space-x-2 text-left rounded-xl transition-all duration-300 hover:scale-105 mt-1 ${
-                  isScrolled ? 'py-1 px-2.5' : 'py-2 px-3'
-                }`}
+                className={`text-left rounded-xl transition-all duration-300 hover:scale-105 mt-1 p-1.5 translate-y-2`}
                 style={{ 
                   backgroundColor: 'var(--bg-secondary)',
                   border: '2px solid var(--border-primary)',
                   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.15)'
                 }}
               >
-                <div className="text-sm">
-                  <p className="font-semibold whitespace-nowrap pt-1" style={{ color: 'var(--text-primary)' }}>{user.name}</p>
+                <div className="text-xs leading-none">
+                  <p className="font-semibold whitespace-nowrap mb-0.5" style={{ color: 'var(--text-primary)' }}>{user.name?.split(' ')[0]}</p>
                   <div 
-                    className={`flex items-center transition-all duration-300 ${
+                    className={`flex flex-col items-start transition-all duration-300 ${
                       isScrolled ? 'hidden' : 'flex'
                     }`}
-                    style={{ color: 'var(--accent-primary)' }}
                   >
-                    {Array.from({ length: user.purchaseCount % 10 }, (_, i) => (
-                      <Star key={i} className="w-3 h-3 fill-current" />
-                    ))}
-                    <span className="text-xs ml-1" style={{ color: 'var(--text-tertiary)' }}>
-                      {user.purchaseCount % 10}/10
+                    <span className="text-[10px] mb-0.5 font-medium tracking-wide" style={{ color: 'var(--text-tertiary)' }}>
+                      {String(user.purchaseCount % 10).padStart(2, '0')}/10
                     </span>
+                    <div className="grid grid-cols-5 gap-[2px] w-fit" style={{ color: 'var(--accent-primary)' }}>
+                      {Array.from({ length: user.purchaseCount % 10 }, (_, i) => (
+                        <Star key={i} className="w-3 h-3 fill-current" />
+                      ))}
+                    </div>
                   </div>
                   <p 
-                    className={`text-xs mt-px transition-all duration-300 ${
+                    className={`text-[10px] mt-1 transition-all duration-300 ${
                       isScrolled ? 'hidden' : 'block'
                     }`}
                     style={{ color: 'var(--text-tertiary)' }}
