@@ -94,8 +94,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
           {/* Descrição */}
           <p 
             className={cn(
-              "text-xs line-clamp-2 flex-grow",
-              isPromotion ? "mb-2" : "mb-0"
+              "text-xs",
+              isPromotion ? "line-clamp-3 mb-2" : "line-clamp-2 mb-0"
             )}
             style={{ color: 'var(--text-secondary)' }}
           >
