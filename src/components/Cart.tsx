@@ -108,6 +108,16 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.setItem('cartAppliedCoupon', JSON.stringify(appliedCoupon));
   }, [deliveryType, address, couponCode, appliedCoupon]);
 
+  // Limpa o cupom caso o carrinho fique vazio (evita que persista entre sessões)
+  useEffect(() => {
+    if (items.length === 0) {
+      setAppliedCoupon(null);
+      setCouponCode('');
+      localStorage.removeItem('cartAppliedCoupon');
+      localStorage.removeItem('cartCouponCode');
+    }
+  }, [items.length]);
+
   useEffect(() => {
     const handleStorageChange = () => {
       setIsMercadoPagoAcknowledged(JSON.parse(localStorage.getItem('hasSeenMercadoPagoWarning') || 'false'));
@@ -429,6 +439,8 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.removeItem('isMercadoPagoReturnFlow');
     localStorage.removeItem('hasSeenPixInstructions');
     localStorage.removeItem('cartPaymentMethod');
+    localStorage.removeItem('cartAppliedCoupon');
+    localStorage.removeItem('cartCouponCode');
     clearPixFlags();
     setIsMercadoPagoAcknowledged(false);
     setHasSeenPixInstructions(false);
