@@ -637,21 +637,23 @@ export const Cart: React.FC<CartProps> = ({
           </div>
         ))}
 
-        <div className="border-t pt-4">
+        <div className="border-t pt-4" style={{ borderColor: 'var(--border-primary)' }}>
           {!user ? (
-            <div className="text-center text-sm text-gray-600 bg-gray-100 p-4 rounded-lg"><p>Faça login para aplicar cupons de desconto.</p></div>
+            <div className="text-center text-sm p-4 rounded-lg" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
+              <p>Faça login para aplicar cupons de desconto.</p>
+            </div>
           ) : (
             <>
               {firstAvailableCoupon && !appliedCoupon && (
-                <div className="bg-green-50 border border-green-200 text-green-800 p-4 rounded-lg text-sm flex items-center justify-between mb-4">
+                <div className="border p-4 rounded-lg text-sm flex items-center justify-between mb-4 bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/50 text-green-800 dark:text-green-300 transition-colors duration-300">
                   <div className="flex items-center"><Gift className="w-4 h-4 mr-2" /><span>Você tem cupom disponível!</span></div>
-                <button 
-                  onClick={() => { if (firstAvailableCoupon) handleApplyCoupon(firstAvailableCoupon.code); }} 
-                  className="ml-2 px-3 py-2 rounded-md bg-green-100 hover:bg-green-200 text-green-800 font-medium focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2" 
-                  disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}
-                >
-                  Clique para aplicar
-                </button>
+                  <button 
+                    onClick={() => { if (firstAvailableCoupon) handleApplyCoupon(firstAvailableCoupon.code); }} 
+                    className="ml-2 px-3 py-2 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/50 text-green-800 dark:text-green-300" 
+                    disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}
+                  >
+                    Clique para aplicar
+                  </button>
                 </div>
               )}
               <div className="flex gap-2 mb-2">
@@ -660,14 +662,19 @@ export const Cart: React.FC<CartProps> = ({
                   placeholder="Cupom de desconto" 
                   value={couponCode} 
                   onChange={(e) => setCouponCode(e.target.value)} 
-                  className="flex-1 p-3 border rounded-lg text-sm" 
+                  className="flex-1 p-3 border rounded-lg text-sm transition-colors duration-300" 
+                  style={{
+                    backgroundColor: 'var(--bg-primary)',
+                    borderColor: 'var(--border-primary)',
+                    color: 'var(--text-primary)'
+                  }}
                   disabled={loadingCoupon || isMercadoPagoReturnFlow || isAwaitingPixPayment} 
                   ref={couponInputRef}
                   aria-label="Código do cupom de desconto"
                 />
                 <button 
                   onClick={() => handleApplyCoupon()} 
-                  className="bg-green-600 text-white px-4 py-3 rounded-lg text-sm hover:bg-green-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2" 
+                  className="bg-green-600 text-white px-4 py-3 rounded-lg text-sm hover:bg-green-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors" 
                   disabled={loadingCoupon || isMercadoPagoReturnFlow || isAwaitingPixPayment}
                   aria-label="Aplicar cupom de desconto"
                 >
@@ -675,7 +682,7 @@ export const Cart: React.FC<CartProps> = ({
                 </button>
               </div>
               {appliedCoupon && (
-                <p className="text-green-600 text-sm" role="status" aria-live="polite">
+                <p className="text-green-600 dark:text-green-400 text-sm font-semibold mt-2" role="status" aria-live="polite">
                   Cupom {appliedCoupon.code} aplicado! {appliedCoupon.discount}% de desconto
                 </p>
               )}
