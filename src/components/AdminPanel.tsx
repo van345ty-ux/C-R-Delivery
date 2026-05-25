@@ -44,16 +44,45 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
   };
 
   const fetchPendingBonificationCount = async () => {
-    const { count, error } = await supabase
-      .from('coupons')
-      .select('id', { count: 'exact' })
-      .eq('is_pending_admin_approval', true);
+    try {
+      // 1. Contar cupons de fidelidade pendentes de aprovação do admin
+      const { count: pendingCouponsCount, error: couponsError } = await supabase
+        .from('coupons')
+        .select('id', { count: 'exact' })
+        .eq('is_pending_admin_approval', true);
 
-    if (error) {
+      if (couponsError) throw couponsError;
+
+      // 2. Contar aniversariantes do mês atual que não receberam cupom de aniversário ainda
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, birth_date')
+        .eq('role', 'customer');
+
+      if (profilesError) throw profilesError;
+
+      const { data: birthdayCoupons, error: birthdayCouponsError } = await supabase
+        .from('coupons')
+        .select('user_id')
+        .eq('type', 'birthday');
+
+      if (birthdayCouponsError) throw birthdayCouponsError;
+
+      const currentMonthStr = String(new Date().getMonth() + 1).padStart(2, '0');
+      const celebrants = (profiles || []).filter(p => {
+        if (!p.birth_date) return false;
+        const parts = p.birth_date.split('-');
+        return parts.length >= 2 && parts[1] === currentMonthStr;
+      });
+
+      const giftedUserIds = new Set((birthdayCoupons || []).map(c => c.user_id));
+      const ungiftedCelebrantsCount = celebrants.filter(p => !giftedUserIds.has(p.id)).length;
+
+      // Total de novidades = cupons pendentes + aniversariantes sem presente
+      setPendingBonificationCount((pendingCouponsCount || 0) + ungiftedCelebrantsCount);
+    } catch (error) {
       console.error('Error fetching pending bonification count:', error);
       setPendingBonificationCount(0);
-    } else {
-      setPendingBonificationCount(count || 0);
     }
   };
 
@@ -116,10 +145,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
               event: '*',
               schema: 'public',
               table: 'coupons',
-              filter: 'is_pending_admin_approval=eq.true',
             },
             () => {
-              console.log('AdminPanel: Bonification change detected. Refetching count.'); // Log de depuração
+              console.log('AdminPanel: Coupon change detected. Refetching count.');
+              fetchPendingBonificationCount();
+            }
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'profiles',
+            },
+            () => {
+              console.log('AdminPanel: Customer profile change detected. Refetching count.');
               fetchPendingBonificationCount();
             }
           )
@@ -226,7 +266,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
                   <Icon className="w-4 h-4 mr-2" />
                   {tab.label}
                   {tab.id === 'bonification_coupons' && tab.notificationCount !== undefined && tab.notificationCount > 0 && (
-                    <span className="absolute -top-1 -right-1 block h-3 w-3 rounded-full bg-red-500 animate-pulse" />
+                    <span className="ml-1.5 inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
                   )}
                 </button>
               );

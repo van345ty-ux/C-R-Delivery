@@ -143,8 +143,8 @@ function App() {
   const [cities, setCities] = useState<City[]>([]);
   const [appSettings, setAppSettings] = useState<{ [key: string]: string }>({});
   const [initialAppDataLoading, setInitialAppDataLoading] = useState(true);
-  // Nunca bloqueia o carregamento inicial da UI com a autenticação (carrega em background)
-  const [authLoading, setAuthLoading] = useState(false);
+  // Inicializa como true se houver sessão armazenada para evitar renderizações precoces
+  const [authLoading, setAuthLoading] = useState(hasStoredSession);
   const [isStoreOpen, setIsStoreOpen] = useState(true);
   const [canPlaceOrder, setCanPlaceOrder] = useState(false); // Novo estado para controlar se pode fazer pedido (incluindo pré-pedido)
   const [showUserCouponNotification, setShowUserCouponNotification] = useState(false);
@@ -165,9 +165,9 @@ function App() {
     return false;
   });
 
-  // O aplicativo só para de carregar quando os dados iniciais E a autenticação estiverem prontos
-  const isLoading = initialAppDataLoading || authLoading;
-  console.log('App: isLoading:', isLoading, 'initialAppDataLoading:', initialAppDataLoading, 'authLoading:', authLoading);
+  // O aplicativo só para de carregar quando os dados iniciais E a autenticação estiverem prontos E o perfil do usuário logado (se houver) estiver carregado
+  const isLoading = initialAppDataLoading || authLoading || (session !== null && user === null);
+  console.log('App: isLoading:', isLoading, 'initialAppDataLoading:', initialAppDataLoading, 'authLoading:', authLoading, 'sessionActive:', session !== null, 'userProfileLoaded:', user !== null);
 
   // Effect to save currentView to localStorage whenever it changes
   useEffect(() => {
@@ -426,6 +426,7 @@ function App() {
       setSession(latestSession);
 
       if (latestSession?.user) {
+        if (isMounted) setAuthLoading(true);
         // Dispara a busca do perfil sem fazer 'await' (isso evita o DEADLOCK do Supabase SDK)
         fetchUserProfile(latestSession.user).then((profile) => {
           if (!isMounted) return;
@@ -445,15 +446,16 @@ function App() {
             }
             if (isMounted) checkAndShowCouponNotification(latestSession.user.id);
           }
+          if (isMounted) setAuthLoading(false);
         }).catch(err => {
           console.error('Erro ao buscar perfil do usuário de forma assíncrona:', err);
+          if (isMounted) setAuthLoading(false);
         });
       } else {
         if (isMounted) setUser(null);
         lastProcessedUserId = null;
+        if (isMounted) setAuthLoading(false);
       }
-      
-      if (isMounted) setAuthLoading(false);
     };
 
     // Configura o listener em tempo real para mudanças de forma síncrona

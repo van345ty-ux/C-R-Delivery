@@ -122,7 +122,7 @@ export const TermsOfUse: React.FC<TermsOfUseProps> = ({ onClose }) => {
           <TermSection icon={<FileText className="w-4 h-4" />} title="7. Cupons e promoções">
             <ul className="space-y-2 text-sm">
               <li>Cupons de desconto são pessoais e intransferíveis, salvo indicação contrária.</li>
-              <li><strong>Cupom de Aniversário:</strong> gerado automaticamente para usuários cadastrados com data de nascimento válida, válido apenas durante o mês de aniversário.</li>
+              <li><strong>Cupom de Aniversário:</strong>gerado automaticamente para usuários cadastrados com data de nascimento válida, cuja coleta de dados possui a finalidade exclusiva de validação da maioridade civil e concessão do benefício, válido apenas durante o mês de aniversário.</li>
               <li><strong>Cupom de Fidelidade:</strong> concedido a critério da C&R Sushi com base no histórico de compras.</li>
               <li>Promoções podem ter <strong>prazo de validade</strong> e quantidade limitada. Verificar condições específicas de cada oferta.</li>
               <li>É proibido o uso fraudulento de cupons. Contas suspeitas de abuso serão suspensas.</li>
@@ -161,7 +161,7 @@ export const TermsOfUse: React.FC<TermsOfUseProps> = ({ onClose }) => {
               <strong>Código de Defesa do Consumidor (Lei nº 8.078/1990)</strong>, pelo{' '}
               <strong>Marco Civil da Internet (Lei nº 12.965/2014)</strong> e pela{' '}
               <strong>Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD)</strong>.
-              Para resolução de conflitos, fica eleito o foro da comarca do estabelecimento, com renúncia a qualquer outro.
+              Para resolução de conflitos, fica eleito o foro da comarca de Una/BA, com renúncia a qualquer outro.
             </p>
           </TermSection>
 

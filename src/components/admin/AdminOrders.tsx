@@ -19,6 +19,8 @@ interface Order {
   created_at: string;
   change_for?: number | null; // Adicionado campo para o troco
   sushi_egg_delivery_day?: string | null; // Dia de entrega dos Ovos de Sushi
+  coupon_used?: string | null; // Adicionado
+  delivery_fee?: number | null; // Adicionado
 }
 
 interface AdminOrdersProps {
@@ -126,6 +128,10 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
         .single();
 
       if (fullOrder) {
+        const itemsSubtotal = (fullOrder.items || []).reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
+        const deliveryFeeVal = fullOrder.delivery_fee || 0;
+        const discountVal = Math.max(0, itemsSubtotal + deliveryFeeVal - fullOrder.total);
+
         const n8nPayload = {
           project_type: 'delivery',
           workflow_type: 'order_status_update',
@@ -141,6 +147,9 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
             delivery_fee: fullOrder.delivery_fee,
             payment_method: fullOrder.payment_method,
             address: fullOrder.address,
+            subtotal: itemsSubtotal,
+            discount: discountVal,
+            coupon_used: fullOrder.coupon_used || null,
           }
         };
 
@@ -314,6 +323,10 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
             const showSeparator = isCompleted && !previousIsCompleted;
             const steps = order.delivery_type === 'delivery' ? getDeliverySteps() : getPickupSteps();
 
+            const itemsSubtotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const deliveryFeeVal = order.delivery_fee || 0;
+            const discountVal = Math.max(0, itemsSubtotal + deliveryFeeVal - order.total);
+
             return (
               <React.Fragment key={order.id}>
                 {showSeparator && (
@@ -334,6 +347,18 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">Pedido #C&R{order.order_number.toString().padStart(2, '0')}</h3>
                         <p className="text-sm text-gray-600">{order.customer_name} • {order.customer_phone}</p>
+                        {order.coupon_used && (
+                          <div className="mt-1.5 flex flex-wrap gap-1.5">
+                            <span className="inline-flex items-center gap-1 bg-red-50 border border-red-200 text-red-700 px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">
+                              🎟️ Cupom: {order.coupon_used}
+                            </span>
+                            {discountVal > 0.01 && (
+                              <span className="inline-flex items-center gap-1 bg-green-50 border border-green-200 text-green-700 px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">
+                                💰 Desconto: -R$ {discountVal.toFixed(2)}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
@@ -366,6 +391,30 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
                             </div>
                           ))}
                         </div>
+                        
+                        {/* Detalhamento financeiro e cupom de desconto */}
+                        <div className="mt-4 pt-3 border-t border-dashed space-y-1 text-xs text-gray-500">
+                          <div className="flex justify-between">
+                            <span>Subtotal:</span>
+                            <span>R$ {itemsSubtotal.toFixed(2)}</span>
+                          </div>
+                          {deliveryFeeVal > 0 && (
+                            <div className="flex justify-between">
+                              <span>Taxa de Entrega:</span>
+                              <span>R$ {deliveryFeeVal.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {order.coupon_used && discountVal > 0.01 && (
+                            <div className="flex justify-between text-red-600 font-medium">
+                              <span>Cupom ({order.coupon_used}):</span>
+                              <span>- R$ {discountVal.toFixed(2)}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between font-bold text-gray-800 pt-1 border-t">
+                            <span>Total Geral:</span>
+                            <span>R$ {order.total.toFixed(2)}</span>
+                          </div>
+                        </div>
                       </div>
                       <div>
                         <h4 className="font-medium text-gray-900 mb-2">Detalhes</h4>
@@ -378,6 +427,16 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
                           </p>
                           {order.address && (<p className="text-sm text-gray-600"><strong>Endereço:</strong> {order.address}</p>)}
                           <p className="text-sm text-gray-600"><strong>Pedido às:</strong> {new Date(order.created_at).toLocaleTimeString('pt-BR')}</p>
+                          {order.coupon_used && (
+                            <p className="text-sm text-red-600 font-semibold">
+                              <strong>Cupom Usado:</strong> {order.coupon_used}
+                            </p>
+                          )}
+                          {discountVal > 0.01 && (
+                            <p className="text-sm text-green-700 font-semibold">
+                              <strong>Valor do Desconto:</strong> R$ {discountVal.toFixed(2)}
+                            </p>
+                          )}
                           {order.sushi_egg_delivery_day && (
                             <div className="mt-2 inline-flex items-center gap-1.5 bg-orange-100 border border-orange-300 text-orange-800 px-3 py-1.5 rounded-lg">
                               <span className="text-base">📅</span>

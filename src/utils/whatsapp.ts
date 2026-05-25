@@ -2,6 +2,9 @@ import { Order } from '../types';
 import { supabase } from '../integrations/supabase/client';
 
 export const sendWhatsappNotification = async (order: Order) => {
+  const subtotal = order.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const discount = Math.max(0, subtotal + order.deliveryFee - order.total);
+
   const payload = {
     project_type: 'delivery',
     workflow_type: 'delivery_order',
@@ -23,6 +26,9 @@ export const sendWhatsappNotification = async (order: Order) => {
         observations: item.observations,
       })),
       change_for: order.changeFor,
+      subtotal: subtotal.toFixed(2),
+      discount: discount.toFixed(2),
+      coupon_used: order.couponUsed || null,
     }
   };
 

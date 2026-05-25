@@ -234,13 +234,22 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, onLogou
                   <div>
                     <p className="text-sm text-gray-500">Data de Nascimento</p>
                     {isEditing ? (
-                      <input
-                        type="date"
-                        name="birthDate"
-                        value={editableUser.birthDate}
-                        onChange={handleInputChange}
-                        className="w-full p-2 border rounded-md text-gray-800"
-                      />
+                      user.birthDate ? (
+                        <div>
+                          <p className="font-medium text-gray-800">{formatDate(user.birthDate)}</p>
+                          <span className="text-xs text-gray-400 block mt-0.5">
+                            🔒 A data de nascimento não pode ser alterada.
+                          </span>
+                        </div>
+                      ) : (
+                        <input
+                          type="date"
+                          name="birthDate"
+                          value={editableUser.birthDate}
+                          onChange={handleInputChange}
+                          className="w-full p-2 border rounded-md text-gray-800"
+                        />
+                      )
                     ) : (
                       <p className="font-medium text-gray-800">{formatDate(user.birthDate)}</p>
                     )}

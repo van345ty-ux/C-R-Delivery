@@ -1,0 +1,187 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-bonification-coupon",
+        "options": {}
+      },
+      "name": "Webhook (Recebe Cupom)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -700,
+        150
+      ],
+      "webhookId": "whatsapp-bonification-coupon",
+      "id": "8d0ac40c-a3ae-4447-bdd2-baa5d96062b0"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.body?.workflow_type}}",
+              "value2": "birthday_coupon"
+            }
+          ]
+        }
+      },
+      "name": "IF Aniversario",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        50
+      ],
+      "id": "5365ea95-60f4-43e7-8e36-6594eb6284b0"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.body?.workflow_type}}",
+              "value2": "loyalty_coupon"
+            }
+          ]
+        }
+      },
+      "name": "IF Fidelidade",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        250
+      ],
+      "id": "6365ea95-60f4-43e7-8e36-6594eb6284b0"
+    },
+    {
+      "parameters": {
+        "functionCode": "const data = $json.body?.message_data || {};\nconst phone = `${$json.body?.phone_number}`;\nconst msg = `🎂 *Feliz Aniversário, ${data.nome}!* 🎉\\n\\nHoje é um dia especial e queremos comemorar com você 🍣❤️\\n\\nPreparamos um presente exclusivo: um cupom de *15% OFF* para você aproveitar seu sushi favorito.\\n\\n🎁 Seu cupom: *${data.cupom_aniversario}*\\n\\nDesejamos muita felicidade, saúde e muitos momentos especiais no seu novo ciclo! 🥳`;\nreturn [{json:{phoneNumber:phone,message:msg}}];"
+      },
+      "name": "Format Birthday Message",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -150,
+        0
+      ],
+      "id": "45bb6f96-7e0f-4427-8e49-f0a0d807d444"
+    },
+    {
+      "parameters": {
+        "functionCode": "const data = $json.body?.message_data || {};\nconst phone = `${$json.body?.phone_number}`;\nconst msg = `🍣 *Obrigado por escolher nosso sushi mais uma vez!*\\n\\nVocê acaba de completar 10 pedidos conosco 🎉\\n\\nComo agradecimento pela sua preferência, preparamos um \\ncupom especial de *10% OFF* para sua próxima compra.\\n\\n🎁 Seu cupom: *${data.cupom_10}*\\n\\nEsperamos você para o próximo pedido 😋🤤🍱`;\nreturn [{json:{phoneNumber:phone,message:msg}}];"
+      },
+      "name": "Format Loyalty Message",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -150,
+        200
+      ],
+      "id": "55bb6f96-7e0f-4427-8e49-f0a0d807d445"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://independent-effort-banana-powder.trycloudflare.com/message/sendText/C7R",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "={\"Token\":\"6151C031DB1F-4545-B2AC-D6001108E32F\",\"Content-Type\":\"application/json\"}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{$json[\"phoneNumber\"]}}"
+            },
+            {
+              "name": "text",
+              "value": "={{$json[\"message\"]}}"
+            },
+            {
+              "name": "linkPreview",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Enviar Mensagem NOTIFY",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        150,
+        100
+      ],
+      "id": "5d3072fe-f681-4ca1-85f1-4a73f028917f"
+    }
+  ],
+  "connections": {
+    "Webhook (Recebe Cupom)": {
+      "main": [
+        [
+          {
+            "node": "IF Aniversario",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "IF Fidelidade",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Aniversario": {
+      "main": [
+        [
+          {
+            "node": "Format Birthday Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Fidelidade": {
+      "main": [
+        [
+          {
+            "node": "Format Loyalty Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Birthday Message": {
+      "main": [
+        [
+          {
+            "node": "Enviar Mensagem NOTIFY",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Loyalty Message": {
+      "main": [
+        [
+          {
+            "node": "Enviar Mensagem NOTIFY",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "86f02deaa45f9fd64e806ce6c95c4e74b601183f03394346cfa3c207d07f9c73"
+  }
+}
