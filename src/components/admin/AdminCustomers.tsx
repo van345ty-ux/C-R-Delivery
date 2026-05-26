@@ -162,7 +162,7 @@ export const AdminCustomers: React.FC = () => {
               </button>
             </div>
             
-            <div className="space-y-3 text-sm">
+            <div className="space-y-3 text-sm text-gray-600">
               <div className="flex items-center">
                 <Phone className="w-4 h-4 mr-2 text-gray-500" />
                 <span>{customer.phone || 'Não informado'}</span>
