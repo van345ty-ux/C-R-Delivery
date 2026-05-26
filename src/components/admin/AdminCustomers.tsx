@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { User, Phone, Calendar, ShoppingBag } from 'lucide-react';
+import { User, Phone, Calendar, ShoppingBag, Trash2 } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
+import toast from 'react-hot-toast';
 
 interface CustomerProfile {
   id: string;
@@ -69,6 +70,35 @@ export const AdminCustomers: React.FC = () => {
     }
   };
 
+  const handleDeleteCustomer = async (id: string, name: string) => {
+    const confirmMessage = `ATENÇÃO (Conformidade LGPD - Art. 18):\n\n` +
+      `Tem certeza que deseja apagar o cliente "${name}" permanentemente?\n\n` +
+      `Esta ação irá:\n` +
+      `1. Excluir permanentemente o perfil do cliente do banco de dados.\n` +
+      `2. Anonimizar todos os pedidos associados a este cliente (definindo o nome do comprador como 'Cliente Anonimizado' e removendo telefone/endereço) para resguardar a privacidade do usuário conforme a LGPD.\n` +
+      `3. Preservar intactos os dados financeiros dos pedidos (valores, itens e impostos) apenas para fins fiscais e de auditoria.\n\n` +
+      `Esta ação NÃO pode ser desfeita. Deseja prosseguir com a exclusão?`;
+
+    if (!window.confirm(confirmMessage)) return;
+
+    try {
+      setLoading(true);
+      const { error: deleteError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', id);
+
+      if (deleteError) throw deleteError;
+
+      toast.success('Cliente excluído e pedidos anonimizados (LGPD) com sucesso!');
+      await fetchCustomers();
+    } catch (err: any) {
+      console.error('Erro ao excluir cliente:', err);
+      toast.error('Erro ao excluir cliente: ' + err.message);
+      setLoading(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     if (!dateString) return 'Não informado';
     return new Date(dateString).toLocaleDateString('pt-BR');
@@ -110,17 +140,26 @@ export const AdminCustomers: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {customers.map((customer) => (
-          <div key={customer.id} className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center mb-4">
-              <div className="bg-red-100 p-2 rounded-full mr-3">
-                <User className="w-5 h-5 text-red-600" />
+          <div key={customer.id} className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-shadow relative">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center">
+                <div className="bg-red-100 p-2 rounded-full mr-3">
+                  <User className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-gray-900 line-clamp-1" title={customer.full_name}>
+                    {customer.full_name || 'Nome não informado'}
+                  </h3>
+                  <p className="text-sm text-gray-500">ID: {customer.id.substring(0, 6)}...</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-lg text-gray-900">
-                  {customer.full_name || 'Nome não informado'}
-                </h3>
-                <p className="text-sm text-gray-500">ID: {customer.id.substring(0, 6)}...</p>
-              </div>
+              <button
+                onClick={() => handleDeleteCustomer(customer.id, customer.full_name || 'Nome não informado')}
+                className="text-gray-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors ml-2 flex-shrink-0"
+                title="Excluir cliente e anonimizar pedidos (LGPD)"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
             </div>
             
             <div className="space-y-3 text-sm">
