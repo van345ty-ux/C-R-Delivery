@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Phone, Calendar, ShoppingBag, Trash2 } from 'lucide-react';
+import { User, Phone, Calendar, ShoppingBag, Trash2, Gift } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
 
@@ -11,6 +11,7 @@ interface CustomerProfile {
   purchase_count: number;
   updated_at: string;
   role?: string;
+  total_orders?: number;
 }
 
 export const AdminCustomers: React.FC = () => {
@@ -53,6 +54,7 @@ export const AdminCustomers: React.FC = () => {
     setError(null);
     
     try {
+      // 1. Buscar os perfis dos clientes
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -61,7 +63,30 @@ export const AdminCustomers: React.FC = () => {
 
       if (profilesError) throw profilesError;
 
-      setCustomers(profiles || []);
+      // 2. Buscar a contagem de todos os pedidos entregues/retirados para cálculo do total histórico
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select('user_id')
+        .in('status', ['Entregue', 'Cliente já fez a retirada']);
+
+      if (ordersError) console.error('Erro ao carregar histórico de pedidos:', ordersError);
+
+      const orderCounts: Record<string, number> = {};
+      if (ordersData) {
+        ordersData.forEach(order => {
+          if (order.user_id) {
+            orderCounts[order.user_id] = (orderCounts[order.user_id] || 0) + 1;
+          }
+        });
+      }
+
+      // 3. Mapear os perfis acoplando o total histórico calculado
+      const mappedCustomers: CustomerProfile[] = (profiles || []).map(profile => ({
+        ...profile,
+        total_orders: orderCounts[profile.id] || 0
+      }));
+
+      setCustomers(mappedCustomers);
     } catch (error: any) { // Explicitly type error as any
       console.error('Erro ao carregar clientes:', error);
       setError(error.message);
@@ -174,8 +199,13 @@ export const AdminCustomers: React.FC = () => {
               </div>
               
               <div className="flex items-center">
-                <ShoppingBag className="w-4 h-4 mr-2 text-gray-500" />
-                <span>Compras: {customer.purchase_count || 0}</span>
+                <Gift className="w-4 h-4 mr-2 text-red-500 flex-shrink-0" />
+                <span>Progresso Fidelidade: <strong>{customer.purchase_count || 0}/10</strong></span>
+              </div>
+
+              <div className="flex items-center">
+                <ShoppingBag className="w-4 h-4 mr-2 text-gray-500 flex-shrink-0" />
+                <span>Total de Pedidos: <strong>{customer.total_orders || 0}</strong></span>
               </div>
               
               <div className="pt-2 mt-2 border-t text-xs text-gray-400">
