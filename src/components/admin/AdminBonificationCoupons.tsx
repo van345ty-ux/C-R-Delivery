@@ -231,46 +231,20 @@ export const AdminBonificationCoupons: React.FC = () => {
   const handleReactivateBirthdayCoupon = async (profileId: string, name: string) => {
     setIsUpdating(true);
     try {
-      // 1. Buscar os cupons de aniversário deste usuário
-      const { data: existing, error: fetchError } = await supabase
+      // 1. Deletar os cupons de aniversário antigos deste usuário
+      const { error: deleteError } = await supabase
         .from('coupons')
-        .select('id, code')
+        .delete()
         .eq('user_id', profileId)
         .eq('type', 'birthday');
 
-      if (fetchError) throw fetchError;
+      if (deleteError) throw deleteError;
 
-      if (!existing || existing.length === 0) {
-        toast.error('Nenhum cupom de aniversário encontrado para reativar.');
-        setIsUpdating(false);
-        return;
-      }
-
-      const today = new Date();
-      const validTo = new Date(today);
-      validTo.setDate(today.getDate() + 30);
-
-      // 2. Para cada cupom, atualizar para torná-lo ativo e com 0 usos
-      for (const coupon of existing) {
-        const { error: updateError } = await supabase
-          .from('coupons')
-          .update({
-            active: true,
-            usage_count: 0,
-            usage_limit: 1,
-            valid_from: today.toISOString().split('T')[0],
-            valid_to: validTo.toISOString().split('T')[0]
-          })
-          .eq('id', coupon.id);
-
-        if (updateError) throw updateError;
-      }
-
-      toast.success(`Cupom de aniversário de "${name}" reativado com sucesso (10% OFF)!`);
+      toast.success(`Cupom antigo de "${name}" removido com sucesso! Agora você pode clicar em "Presentear" para gerar um cupom novo e testar do zero.`);
       fetchData(); // Atualiza a listagem
     } catch (error: any) {
-      console.error('Error reactivating birthday coupon:', error);
-      toast.error('Erro ao reativar cupom: ' + error.message);
+      console.error('Error deleting birthday coupon for reactivation:', error);
+      toast.error('Erro ao reiniciar cupom: ' + error.message);
     } finally {
       setIsUpdating(false);
     }
