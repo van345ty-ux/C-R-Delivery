@@ -228,6 +228,54 @@ export const AdminBonificationCoupons: React.FC = () => {
     setIsUpdating(false);
   };
 
+  const handleReactivateBirthdayCoupon = async (profileId: string, name: string) => {
+    setIsUpdating(true);
+    try {
+      // 1. Buscar os cupons de aniversário deste usuário
+      const { data: existing, error: fetchError } = await supabase
+        .from('coupons')
+        .select('id, code')
+        .eq('user_id', profileId)
+        .eq('type', 'birthday');
+
+      if (fetchError) throw fetchError;
+
+      if (!existing || existing.length === 0) {
+        toast.error('Nenhum cupom de aniversário encontrado para reativar.');
+        setIsUpdating(false);
+        return;
+      }
+
+      const today = new Date();
+      const validTo = new Date(today);
+      validTo.setDate(today.getDate() + 30);
+
+      // 2. Para cada cupom, atualizar para torná-lo ativo e com 0 usos
+      for (const coupon of existing) {
+        const { error: updateError } = await supabase
+          .from('coupons')
+          .update({
+            active: true,
+            usage_count: 0,
+            usage_limit: 1,
+            valid_from: today.toISOString().split('T')[0],
+            valid_to: validTo.toISOString().split('T')[0]
+          })
+          .eq('id', coupon.id);
+
+        if (updateError) throw updateError;
+      }
+
+      toast.success(`Cupom de aniversário de "${name}" reativado com sucesso (10% OFF)!`);
+      fetchData(); // Atualiza a listagem
+    } catch (error: any) {
+      console.error('Error reactivating birthday coupon:', error);
+      toast.error('Erro ao reativar cupom: ' + error.message);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleGenerateLoyaltyCoupon = async (profile: CustomerProfile) => {
     setIsUpdating(true);
     const today = new Date();
@@ -615,9 +663,19 @@ export const AdminBonificationCoupons: React.FC = () => {
                     <span className="text-xs text-gray-400">Contato: {profile.phone || 'Não cadastrado'}</span>
                     
                     {couponGifted ? (
-                      <span className="text-xs font-mono font-bold text-green-600 bg-green-50 border border-green-200 px-2 py-1 rounded">
-                        Código: {couponGifted.code}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-bold text-green-600 bg-green-50 border border-green-200 px-2 py-1 rounded">
+                          Código: {couponGifted.code}
+                        </span>
+                        <button
+                          onClick={() => handleReactivateBirthdayCoupon(profile.id, profile.full_name)}
+                          disabled={isUpdating}
+                          className="bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 font-bold text-[10px] px-2.5 py-1 rounded transition-colors flex items-center gap-1 shadow-sm disabled:opacity-50"
+                          title="Reativar cupom para fins de testes"
+                        >
+                          Reativar
+                        </button>
+                      </div>
                     ) : (
                       <button
                         onClick={() => handleGiftBirthdayCoupon(profile)}
