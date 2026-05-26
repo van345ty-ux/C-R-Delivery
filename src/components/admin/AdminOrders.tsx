@@ -426,7 +426,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
                             )}
                           </p>
                           {order.address && (<p className="text-sm text-gray-600"><strong>Endereço:</strong> {order.address}</p>)}
-                          <p className="text-sm text-gray-600"><strong>Pedido às:</strong> {new Date(order.created_at).toLocaleTimeString('pt-BR')}</p>
+                          <p className="text-sm text-gray-600"><strong>Pedido em:</strong> {new Date(order.created_at).toLocaleDateString('pt-BR')} às {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
                           {order.coupon_used && (
                             <p className="text-sm text-red-600 font-semibold">
                               <strong>Cupom Usado:</strong> {order.coupon_used}
