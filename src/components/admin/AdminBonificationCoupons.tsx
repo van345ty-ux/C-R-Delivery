@@ -182,7 +182,7 @@ export const AdminBonificationCoupons: React.FC = () => {
       .insert({
         name: `Parabéns, ${profile.full_name}! 🎂`,
         code: couponCode,
-        discount: 15, // 15% OFF de presente
+        discount: 10, // 10% OFF de presente
         type: 'birthday',
         valid_from: today.toISOString().split('T')[0],
         valid_to: validTo.toISOString().split('T')[0],
@@ -608,7 +608,7 @@ export const AdminBonificationCoupons: React.FC = () => {
                   </div>
 
                   <p className="text-sm text-gray-700 my-4 font-medium">
-                    🍰 <strong className="text-gray-900">{profile.full_name}</strong> é aniversariante de <strong className="text-pink-600 font-bold">{currentMonthName}</strong>! Dê a ele(a) um cupom de aniversário de 15% OFF de presente.
+                    🍰 <strong className="text-gray-900">{profile.full_name}</strong> é aniversariante de <strong className="text-pink-600 font-bold">{currentMonthName}</strong>! Dê a ele(a) um cupom de aniversário de 10% OFF de presente.
                   </p>
 
                   <div className="flex items-center justify-between border-t pt-3 mt-3 gap-2">
@@ -625,7 +625,7 @@ export const AdminBonificationCoupons: React.FC = () => {
                         className="bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-50"
                       >
                         <Gift className="w-3.5 h-3.5" />
-                        Presentear (15% OFF)
+                        Presentear (10% OFF)
                       </button>
                     )}
                   </div>
