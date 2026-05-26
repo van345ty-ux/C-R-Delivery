@@ -30,6 +30,8 @@ interface AdminOrdersProps {
 export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const fetchOrders = useCallback(async () => {
     console.log('AdminOrders: fetchOrders called.');
@@ -297,6 +299,12 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
   const finishedOrders = orders.filter(order => completedStatuses.includes(order.status));
 
   const activeOrdersCount = activeOrders.length;
+  const combinedOrders = [...activeOrders, ...finishedOrders];
+  const totalPages = Math.ceil(combinedOrders.length / itemsPerPage);
+  
+  // Garantir que a página atual nunca fique fora dos limites
+  const safeCurrentPage = Math.min(currentPage, Math.max(1, totalPages));
+  const paginatedOrders = combinedOrders.slice((safeCurrentPage - 1) * itemsPerPage, safeCurrentPage * itemsPerPage);
 
   return (
     <div className="space-y-6">
@@ -315,174 +323,246 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
           <p className="text-gray-600">Aguardando novos pedidos de clientes.</p>
         </div>
       ) : (
-        <div className="grid gap-6">
-          {[...activeOrders, ...finishedOrders].map((order, index) => {
-            const isCompleted = completedStatuses.includes(order.status);
-            const previousOrder = index > 0 ? [...activeOrders, ...finishedOrders][index - 1] : null;
-            const previousIsCompleted = previousOrder ? completedStatuses.includes(previousOrder.status) : false;
-            const showSeparator = isCompleted && !previousIsCompleted;
-            const steps = order.delivery_type === 'delivery' ? getDeliverySteps() : getPickupSteps();
+        <div className="space-y-6">
+          <div className="grid gap-6">
+            {paginatedOrders.map((order, index) => {
+              const isCompleted = completedStatuses.includes(order.status);
+              
+              // Usar o globalIndex para que o separador de Pedidos Finalizados continue 100% correto
+              const globalIndex = (safeCurrentPage - 1) * itemsPerPage + index;
+              const previousOrder = globalIndex > 0 ? combinedOrders[globalIndex - 1] : null;
+              const previousIsCompleted = previousOrder ? completedStatuses.includes(previousOrder.status) : false;
+              const showSeparator = isCompleted && !previousIsCompleted;
+              const steps = order.delivery_type === 'delivery' ? getDeliverySteps() : getPickupSteps();
 
-            const itemsSubtotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const deliveryFeeVal = order.delivery_fee || 0;
-            const discountVal = Math.max(0, itemsSubtotal + deliveryFeeVal - order.total);
+              const itemsSubtotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+              const deliveryFeeVal = order.delivery_fee || 0;
+              const discountVal = Math.max(0, itemsSubtotal + deliveryFeeVal - order.total);
 
-            return (
-              <React.Fragment key={order.id}>
-                {showSeparator && (
-                  <div className="relative py-2">
-                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                      <div className="w-full border-t border-gray-300" />
+              return (
+                <React.Fragment key={order.id}>
+                  {showSeparator && (
+                    <div className="relative py-2">
+                      <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div className="w-full border-t border-gray-300" />
+                      </div>
+                      <div className="relative flex justify-center">
+                        <span className="bg-gray-50 px-3 text-sm font-semibold text-gray-500 font-semibold uppercase tracking-wider">
+                          Pedidos Finalizados
+                        </span>
+                      </div>
                     </div>
-                    <div className="relative flex justify-center">
-                      <span className="bg-gray-50 px-3 text-sm font-medium text-gray-500">
-                        Pedidos Finalizados
-                      </span>
-                    </div>
-                  </div>
-                )}
-                <div className="bg-white rounded-lg shadow-sm border">
-                  <div className="p-6 border-b">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">Pedido #C&R{order.order_number.toString().padStart(2, '0')}</h3>
-                        <p className="text-sm text-gray-600">{order.customer_name} • {order.customer_phone}</p>
-                        {order.coupon_used && (
-                          <div className="mt-1.5 flex flex-wrap gap-1.5">
-                            <span className="inline-flex items-center gap-1 bg-red-50 border border-red-200 text-red-700 px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">
-                              🎟️ Cupom: {order.coupon_used}
-                            </span>
-                            {discountVal > 0.01 && (
-                              <span className="inline-flex items-center gap-1 bg-green-50 border border-green-200 text-green-700 px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">
-                                💰 Desconto: -R$ {discountVal.toFixed(2)}
+                  )}
+                  <div className="bg-white rounded-lg shadow-sm border">
+                    <div className="p-6 border-b">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">Pedido #C&R{order.order_number.toString().padStart(2, '0')}</h3>
+                          <p className="text-sm text-gray-600">{order.customer_name} • {order.customer_phone}</p>
+                          {order.coupon_used && (
+                            <div className="mt-1.5 flex flex-wrap gap-1.5">
+                              <span className="inline-flex items-center gap-1 bg-red-50 border border-red-200 text-red-700 px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">
+                                🎟️ Cupom: {order.coupon_used}
                               </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-green-600">R$ {order.total.toFixed(2)}</p>
-                          <p className="text-sm text-gray-600">{order.delivery_type === 'delivery' ? 'Delivery' : 'Retirada'}</p>
-                        </div>
-                        <button
-                          onClick={() => handleDeleteOrder(order.id)}
-                          className="text-gray-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition-colors"
-                          title="Excluir Pedido Permanentemente"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-2">Itens do Pedido</h4>
-                        <div className="space-y-1">
-                          {order.items.map((item, idx) => (
-                            <div key={idx}>
-                              <p className="text-sm text-gray-600">
-                                {item.quantity}x {item.name} - R$ {(item.price * item.quantity).toFixed(2)}
-                              </p>
-                              {item.observations && (
-                                <p className="text-xs text-red-600 ml-4 mt-0.5">
-                                  Obs: {item.observations}
-                                </p>
+                              {discountVal > 0.01 && (
+                                <span className="inline-flex items-center gap-1 bg-green-50 border border-green-200 text-green-700 px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm">
+                                  💰 Desconto: -R$ {discountVal.toFixed(2)}
+                                </span>
                               )}
                             </div>
-                          ))}
+                          )}
                         </div>
-                        
-                        {/* Detalhamento financeiro e cupom de desconto */}
-                        <div className="mt-4 pt-3 border-t border-dashed space-y-1 text-xs text-gray-500">
-                          <div className="flex justify-between">
-                            <span>Subtotal:</span>
-                            <span>R$ {itemsSubtotal.toFixed(2)}</span>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-green-600">R$ {order.total.toFixed(2)}</p>
+                            <p className="text-sm text-gray-600">{order.delivery_type === 'delivery' ? 'Delivery' : 'Retirada'}</p>
                           </div>
-                          {deliveryFeeVal > 0 && (
-                            <div className="flex justify-between">
-                              <span>Taxa de Entrega:</span>
-                              <span>R$ {deliveryFeeVal.toFixed(2)}</span>
-                            </div>
-                          )}
-                          {order.coupon_used && discountVal > 0.01 && (
-                            <div className="flex justify-between text-red-600 font-medium">
-                              <span>Cupom ({order.coupon_used}):</span>
-                              <span>- R$ {discountVal.toFixed(2)}</span>
-                            </div>
-                          )}
-                          <div className="flex justify-between font-bold text-gray-800 pt-1 border-t">
-                            <span>Total Geral:</span>
-                            <span>R$ {order.total.toFixed(2)}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-2">Detalhes</h4>
-                        <div className="space-y-1">
-                          <p className="text-sm text-gray-600">
-                            <strong>Pagamento:</strong> {order.payment_method}
-                            {order.change_for && order.change_for > order.total && (
-                              <span className="text-blue-600 font-semibold"> (Troco para R$ {order.change_for.toFixed(2)}, levar R$ {(order.change_for - order.total).toFixed(2)})</span>
-                            )}
-                          </p>
-                          {order.address && (<p className="text-sm text-gray-600"><strong>Endereço:</strong> {order.address}</p>)}
-                          <p className="text-sm text-gray-600"><strong>Pedido em:</strong> {new Date(order.created_at).toLocaleDateString('pt-BR')} às {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
-                          {order.coupon_used && (
-                            <p className="text-sm text-red-600 font-semibold">
-                              <strong>Cupom Usado:</strong> {order.coupon_used}
-                            </p>
-                          )}
-                          {discountVal > 0.01 && (
-                            <p className="text-sm text-green-700 font-semibold">
-                              <strong>Valor do Desconto:</strong> R$ {discountVal.toFixed(2)}
-                            </p>
-                          )}
-                          {order.sushi_egg_delivery_day && (
-                            <div className="mt-2 inline-flex items-center gap-1.5 bg-orange-100 border border-orange-300 text-orange-800 px-3 py-1.5 rounded-lg">
-                              <span className="text-base">📅</span>
-                              <span className="text-sm font-bold">Entrega Ovos de Sushi: {order.sushi_egg_delivery_day}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-medium text-gray-900">Status do Pedido</h4>
-                      <div className={`inline-flex items-center px-2 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
-                        {getStatusIcon(order.status)}
-                        <span className="ml-1">{order.status}</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {steps.map((step) => {
-                        const currentIndex = steps.indexOf(order.status);
-                        const isStepCompleted = steps.indexOf(step) < currentIndex;
-                        const isStepActive = steps.indexOf(step) === currentIndex;
-                        return (
                           <button
-                            key={step}
-                            onClick={() => updateOrderStatus(order.id, step, order.user_id)}
-                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isStepActive && (step === 'Entregue' || step === 'Cliente já fez a retirada')
-                              ? 'bg-green-600 text-white'
-                              : isStepActive
-                                ? 'bg-red-600 text-white'
-                                : isStepCompleted
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                              }`}
+                            onClick={() => handleDeleteOrder(order.id)}
+                            className="text-gray-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition-colors"
+                            title="Excluir Pedido Permanentemente"
                           >
-                            {step}
+                            <Trash2 className="w-5 h-5" />
                           </button>
-                        );
-                      })}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <h4 className="font-medium text-gray-900 mb-2">Itens do Pedido</h4>
+                          <div className="space-y-1">
+                            {order.items.map((item, idx) => (
+                              <div key={idx}>
+                                <p className="text-sm text-gray-600">
+                                  {item.quantity}x {item.name} - R$ {(item.price * item.quantity).toFixed(2)}
+                                </p>
+                                {item.observations && (
+                                  <p className="text-xs text-red-600 ml-4 mt-0.5">
+                                    Obs: {item.observations}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Detalhamento financeiro e cupom de desconto */}
+                          <div className="mt-4 pt-3 border-t border-dashed space-y-1 text-xs text-gray-500">
+                            <div className="flex justify-between">
+                              <span>Subtotal:</span>
+                              <span>R$ {itemsSubtotal.toFixed(2)}</span>
+                            </div>
+                            {deliveryFeeVal > 0 && (
+                              <div className="flex justify-between">
+                                <span>Taxa de Entrega:</span>
+                                <span>R$ {deliveryFeeVal.toFixed(2)}</span>
+                              </div>
+                            )}
+                            {order.coupon_used && discountVal > 0.01 && (
+                              <div className="flex justify-between text-red-600 font-medium">
+                                <span>Cupom ({order.coupon_used}):</span>
+                                <span>- R$ {discountVal.toFixed(2)}</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between font-bold text-gray-800 pt-1 border-t">
+                              <span>Total Geral:</span>
+                              <span>R$ {order.total.toFixed(2)}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-900 mb-2">Detalhes</h4>
+                          <div className="space-y-1">
+                            <p className="text-sm text-gray-600">
+                              <strong>Pagamento:</strong> {order.payment_method}
+                              {order.change_for && order.change_for > order.total && (
+                                <span className="text-blue-600 font-semibold"> (Troco para R$ {order.change_for.toFixed(2)}, levar R$ {(order.change_for - order.total).toFixed(2)})</span>
+                              )}
+                            </p>
+                            {order.address && (<p className="text-sm text-gray-600"><strong>Endereço:</strong> {order.address}</p>)}
+                            <p className="text-sm text-gray-600"><strong>Pedido em:</strong> {new Date(order.created_at).toLocaleDateString('pt-BR')} às {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                            {order.coupon_used && (
+                              <p className="text-sm text-red-600 font-semibold">
+                                <strong>Cupom Usado:</strong> {order.coupon_used}
+                              </p>
+                            )}
+                            {discountVal > 0.01 && (
+                              <p className="text-sm text-green-700 font-semibold">
+                                <strong>Valor do Desconto:</strong> R$ {discountVal.toFixed(2)}
+                              </p>
+                            )}
+                            {order.sushi_egg_delivery_day && (
+                              <div className="mt-2 inline-flex items-center gap-1.5 bg-orange-100 border border-orange-300 text-orange-800 px-3 py-1.5 rounded-lg">
+                                <span className="text-base">📅</span>
+                                <span className="text-sm font-bold">Entrega Ovos de Sushi: {order.sushi_egg_delivery_day}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-medium text-gray-900">Status do Pedido</h4>
+                        <div className={`inline-flex items-center px-2 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
+                          {getStatusIcon(order.status)}
+                          <span className="ml-1">{order.status}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {steps.map((step) => {
+                          const currentIndex = steps.indexOf(order.status);
+                          const isStepCompleted = steps.indexOf(step) < currentIndex;
+                          const isStepActive = steps.indexOf(step) === currentIndex;
+                          return (
+                            <button
+                              key={step}
+                              onClick={() => updateOrderStatus(order.id, step, order.user_id)}
+                              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isStepActive && (step === 'Entregue' || step === 'Cliente já fez a retirada')
+                                ? 'bg-green-600 text-white'
+                                : isStepActive
+                                  ? 'bg-red-600 text-white'
+                                  : isStepCompleted
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                            >
+                              {step}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
+                </React.Fragment>
+              );
+            })}
+          </div>
+
+          {/* Sistema de Paginação Premium */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t mt-8 bg-white p-4 rounded-lg shadow-sm border">
+              <span className="text-sm text-gray-600">
+                Mostrando pedidos <strong>{Math.min(combinedOrders.length, (safeCurrentPage - 1) * itemsPerPage + 1)}</strong> a{' '}
+                <strong>{Math.min(combinedOrders.length, safeCurrentPage * itemsPerPage)}</strong> de{' '}
+                <strong>{combinedOrders.length}</strong>
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setCurrentPage(prev => Math.max(1, prev - 1));
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  disabled={safeCurrentPage === 1}
+                  className="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all border border-gray-200"
+                >
+                  Anterior
+                </button>
+                
+                <div className="hidden sm:flex items-center gap-1.5">
+                  {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(page => {
+                    if (page === 1 || page === totalPages || Math.abs(page - safeCurrentPage) <= 1) {
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => {
+                            setCurrentPage(page);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className={`w-9 h-9 text-sm font-bold rounded-lg transition-all border flex items-center justify-center ${
+                            safeCurrentPage === page
+                              ? 'bg-red-600 border-red-600 text-white shadow-sm'
+                              : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    }
+                    
+                    if (page === 2 || page === totalPages - 1) {
+                      return <span key={page} className="px-1 text-gray-400 font-medium">...</span>;
+                    }
+                    
+                    return null;
+                  })}
                 </div>
-              </React.Fragment>
-            );
-          })}
+                
+                <span className="sm:hidden text-sm font-semibold text-gray-700">
+                  {safeCurrentPage} de {totalPages}
+                </span>
+
+                <button
+                  onClick={() => {
+                    setCurrentPage(prev => Math.min(totalPages, prev + 1));
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  disabled={safeCurrentPage === totalPages}
+                  className="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all border border-gray-200"
+                >
+                  Próximo
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
