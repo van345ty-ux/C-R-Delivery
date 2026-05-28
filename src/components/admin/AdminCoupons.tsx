@@ -239,12 +239,10 @@ export const AdminCoupons: React.FC = () => {
                     </span>
                   </div>
                 </div>
-                {coupon.user_id && (
-                  <div className="flex items-center text-sm text-gray-600 mb-2">
-                    <UserIcon className="w-4 h-4 mr-2" />
-                    <span>Para: {coupon.profiles?.full_name || 'Usuário Desconhecido'}</span>
-                  </div>
-                )}
+                <div className="flex items-center text-sm text-gray-600 mb-2">
+                  <UserIcon className="w-4 h-4 mr-2" />
+                  <span>Para: {coupon.user_id ? (coupon.profiles?.full_name || 'Usuário Desconhecido') : 'Qualquer Cliente (Universal)'}</span>
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div><p className="text-gray-600">Código</p><p className="font-mono font-bold text-red-600">{coupon.code}</p></div>
                   <div><p className="text-gray-600">Desconto</p><p className="font-semibold">{coupon.discount}%</p></div>
@@ -294,7 +292,7 @@ export const AdminCoupons: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, user_id: e.target.value || undefined })}
                   className="w-full p-3 border rounded-lg"
                 >
-                  <option value="">Cupom Universal (para todos os clientes)</option>
+                  <option value="">Atribuir a nenhum cliente (Universal - Válido para qualquer cliente, inclusive futuros cadastros)</option>
                   {filteredCustomers.map(customer => (
                     <option key={customer.id} value={customer.id}>
                       {customer.full_name}
@@ -302,7 +300,7 @@ export const AdminCoupons: React.FC = () => {
                   ))}
                 </select>
                 <p className="text-xs text-gray-500 mt-1">
-                  Se um cliente for selecionado, apenas ele poderá usar este cupom.
+                  Se um cliente for selecionado, apenas ele poderá usar este cupom. Caso contrário, qualquer pessoa (inclusive quem se cadastrar no futuro) poderá usá-lo.
                 </p>
               </div>
 

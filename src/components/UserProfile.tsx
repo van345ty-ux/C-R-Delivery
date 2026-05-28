@@ -35,7 +35,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, onLogou
       const { data: couponsData, error: couponsError } = await supabase
         .from('coupons')
         .select('*')
-        .or(`user_id.eq.${user.id},user_id.is.null`)
+        .eq('user_id', user.id)
         .eq('active', true)
         .eq('is_pending_admin_approval', false);
 

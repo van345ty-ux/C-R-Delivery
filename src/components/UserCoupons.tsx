@@ -31,7 +31,7 @@ export const UserCoupons: React.FC<UserCouponsProps> = ({ userId }) => {
       const { data, error } = await supabase
         .from('coupons')
         .select('*')
-        .or(`user_id.eq.${userId},user_id.is.null`) // Cupons específicos do usuário ou universais
+        .eq('user_id', userId) // Apenas cupons específicos atribuídos a este usuário
         .eq('active', true) // Apenas cupons ativos
         .eq('is_pending_admin_approval', false) // Apenas cupons já aprovados
         .order('valid_to', { ascending: true });

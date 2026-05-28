@@ -222,6 +222,7 @@ export const Cart: React.FC<CartProps> = ({
         validTo.setHours(23, 59, 59, 999);
         const isCurrentlyValid = today >= validFrom && today <= validTo;
         const hasUsagesLeft = coupon.usage_limit === null || coupon.usage_limit === undefined || coupon.usage_count < coupon.usage_limit;
+        if (!coupon.user_id) return false; // Não sugerir cupons universais automaticamente no banner do carrinho
         if ((coupon.type === 'birthday' || coupon.type === 'loyalty') && !coupon.user_id) return false;
         return isCurrentlyValid && hasUsagesLeft;
       });

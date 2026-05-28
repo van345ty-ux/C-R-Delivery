@@ -253,6 +253,10 @@ function App() {
       const isCurrentlyValid = today >= validFrom && today <= validTo;
       const hasUsagesLeft = coupon.usage_limit === null || coupon.usage_limit === undefined || coupon.usage_count < coupon.usage_limit;
 
+      if (!coupon.user_id) {
+        return false; // Não notificar automaticamente cupons universais (apenas uso manual)
+      }
+
       if ((coupon.type === 'birthday' || coupon.type === 'loyalty') && !coupon.user_id) {
         return false;
       }
