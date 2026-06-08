@@ -31,7 +31,7 @@ serve(async (req) => {
         targetWebhookUrl = Deno.env.get('N8N_DELIVERY_WEBHOOK_URL') || 'https://achronychous-anabelle-transstellar.ngrok-free.dev/webhook/whatsapp-order-notification-cr';
       } else if (project_type === 'marketing') {
         targetWebhookUrl = Deno.env.get('N8N_MARKETING_WEBHOOK_URL') || 'https://achronychous-anabelle-transstellar.ngrok-free.dev/webhook/iniciar-campanha';
-      } else if (project_type === 'nail-designer') {
+      } else if (project_type === 'nail-designer' || project_type === 'nail_scheduler') {
         targetWebhookUrl = Deno.env.get('N8N_NAIL_DESIGNER_WEBHOOK_URL') || 'https://achronychous-anabelle-transstellar.ngrok-free.dev/webhook/nail-designer';
       } else {
         const errorMsg = `Tipo de projeto não suportado: ${project_type}`;
