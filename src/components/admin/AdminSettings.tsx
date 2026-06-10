@@ -13,7 +13,11 @@ interface OperatingHour {
   close_time: string;
 }
 
-export const AdminSettings: React.FC = () => {
+interface AdminSettingsProps {
+  onSettingsSaved?: () => void;
+}
+
+export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved }) => {
   const [settings, setSettings] = useState<Settings>({
     promotion_modal_title: 'Promoções do Dia',
     delivery_fee: '3.00',
@@ -31,6 +35,7 @@ export const AdminSettings: React.FC = () => {
     hero_subtitle_border_color: '#000000',
     hero_text_background_enabled: 'true', // Nova configuração para habilitar/desabilitar fundo do texto
     is_festive_mode_enabled: 'false',
+    valentine_theme_active: 'false', // Tema Dia dos Namorados
     menu_mobile_columns: '1', // Nova configuração: '1' ou '2' colunas no mobile
     // Configurações de Tema
     default_theme: 'light',
@@ -157,6 +162,8 @@ export const AdminSettings: React.FC = () => {
       setSettings(settingsToSave);
       setSelectedLogoFile(null);
       setSelectedHeroFile(null);
+      // Notifica o App.tsx para re-buscar as configurações (ativa temas em tempo real)
+      onSettingsSaved?.();
     }
   };
 
@@ -428,6 +435,64 @@ export const AdminSettings: React.FC = () => {
               onChange={(e) => handleInputChange('is_festive_mode_enabled', e.target.checked ? 'true' : 'false')}
             />
             <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-yellow-500"></div>
+          </label>
+        </div>
+      </div>
+
+      {/* Seção de Decoração Romântica - Dia dos Namorados */}
+      <div
+        className="rounded-lg shadow-sm border p-6"
+        style={{
+          background: 'linear-gradient(135deg, #fff0f3 0%, #fff5f7 50%, #fff0f6 100%)',
+          borderColor: '#f9a8bc',
+        }}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 flex-wrap">
+              💝 Decoração Romântica de Dia dos Namorados
+              <span
+                className="text-xs px-2 py-0.5 rounded-full font-medium"
+                style={{ background: '#fce7ef', color: '#c2185b' }}
+              >
+                Sazonal
+              </span>
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Ative para exibir corações flutuantes, cores e ornamentos românticos no aplicativo para o Dia dos Namorados.
+              O efeito fica visível para todos os clientes enquanto este interruptor estiver ligado.
+            </p>
+            {settings.valentine_theme_active === 'true' && (
+              <p
+                className="text-xs mt-2 font-medium flex items-center gap-1"
+                style={{ color: '#c2185b' }}
+              >
+                ❤️ Tema ativo — corações estão aparecendo para os clientes agora!
+              </p>
+            )}
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
+            <input
+              type="checkbox"
+              id="valentine-theme-toggle"
+              className="sr-only peer"
+              checked={settings.valentine_theme_active === 'true'}
+              onChange={(e) => handleInputChange('valentine_theme_active', e.target.checked ? 'true' : 'false')}
+            />
+            <div
+              className="w-14 h-7 rounded-full peer transition-all duration-300"
+              style={{
+                background: settings.valentine_theme_active === 'true' ? '#e91e8c' : '#d1d5db',
+                boxShadow: settings.valentine_theme_active === 'true' ? '0 0 12px rgba(233, 30, 140, 0.4)' : 'none',
+              }}
+            >
+              <div
+                className="absolute top-0.5 h-6 w-6 rounded-full bg-white border border-gray-300 shadow transition-all duration-300"
+                style={{
+                  left: settings.valentine_theme_active === 'true' ? 'calc(100% - 28px)' : '4px',
+                }}
+              />
+            </div>
           </label>
         </div>
       </div>

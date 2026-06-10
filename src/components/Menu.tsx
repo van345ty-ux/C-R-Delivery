@@ -27,6 +27,7 @@ interface MenuProps {
   showPreOrderBanner: boolean; // Nova prop
   isMercadoPagoReturnFlow: boolean; // Nova prop
   menuMobileColumns: string; // Nova prop para controlar colunas no mobile
+  onTriggerValentine: () => void;
 }
 
 const categories = [
@@ -59,6 +60,7 @@ export const Menu: React.FC<MenuProps> = ({
   showPreOrderBanner, // Nova prop
   isMercadoPagoReturnFlow, // Nova prop
   menuMobileColumns, // Nova prop para controlar colunas no mobile
+  onTriggerValentine,
 }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
@@ -191,7 +193,10 @@ export const Menu: React.FC<MenuProps> = ({
     <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 py-8">
       {/* Hero Section - Premium Design with Gradient Overlay and Glassmorphism */}
       <div className="mb-8">
-        <div className="relative h-[300px] md:h-[400px] rounded-2xl overflow-hidden shadow-xl">
+        <div 
+          onClick={onTriggerValentine}
+          className="relative h-[300px] md:h-[400px] rounded-2xl overflow-hidden shadow-xl cursor-pointer hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.01]"
+        >
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40"></div>
           <img
@@ -347,6 +352,7 @@ export const Menu: React.FC<MenuProps> = ({
                 imageUrl={highlight.image_url}
                 borderColor={highlight.border_color}
                 shadowSize={highlight.shadow_size}
+                onClick={onTriggerValentine}
               />
             ))}
           </div>

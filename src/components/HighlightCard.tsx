@@ -6,6 +6,7 @@ interface HighlightCardProps {
   imageUrl: string;
   borderColor: string;
   shadowSize: number;
+  onClick?: () => void;
 }
 
 // Map border colors to premium gold palette
@@ -31,11 +32,14 @@ const getPremiumBorderColor = (color: string): string => {
   return 'var(--accent-primary)';
 };
 
-export const HighlightCard: React.FC<HighlightCardProps> = ({ name, price, imageUrl, borderColor }) => {
+export const HighlightCard: React.FC<HighlightCardProps> = ({ name, price, imageUrl, borderColor, onClick }) => {
   const premiumBorderColor = getPremiumBorderColor(borderColor);
   
   return (
-    <div className="flex flex-col items-center text-center w-32 flex-shrink-0 animate-fade-in">
+    <div 
+      className="flex flex-col items-center text-center w-32 flex-shrink-0 animate-fade-in cursor-pointer transition-transform duration-300 hover:scale-105"
+      onClick={onClick}
+    >
       <div 
         className="relative w-28 h-28 rounded-full flex items-center justify-center overflow-hidden mb-3 aspect-square transition-all duration-300 hover:scale-110" 
         style={{ 

@@ -12,6 +12,7 @@ import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import toast, { Toaster } from 'react-hot-toast';
 import { User, Coupon, Product, CartItem, Order, City, OperatingHour } from './types'; // Importando tipos de types.ts
 import { CookieBanner } from './components/CookieBanner';
+import { ValentineTheme } from './components/ValentineTheme';
 
 // Usa fetch nativo para evitar travamento do SDK do Supabase
 const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null> => {
@@ -112,6 +113,8 @@ function App() {
     }
     return 'location';
   });
+
+  const [valentineTriggerKey, setValentineTriggerKey] = useState(0);
 
   const [cart, setCart] = useState<CartItem[]>(() => {
     if (typeof window !== 'undefined') {
@@ -274,6 +277,30 @@ function App() {
   });
 
   const checkAndShowCouponNotification = checkAndShowCouponNotificationRef.current;
+
+  // Função para re-buscar apenas as configurações — chamada após o admin salvar settings
+  const fetchSettingsOnly = useCallback(async () => {
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+    const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const headers = {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+    };
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/settings?select=key,value`, { headers });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const settingsMap = (data || []).reduce((acc: { [key: string]: string }, { key, value }: { key: string, value: string }) => {
+        acc[key] = value;
+        return acc;
+      }, {});
+      setAppSettings(settingsMap);
+      console.log('fetchSettingsOnly: Settings re-loaded.', Object.keys(settingsMap).length, 'keys');
+    } catch (err) {
+      console.error('fetchSettingsOnly: Error:', err);
+    }
+  }, []);
 
   // Effect for initial app data fetching (settings, cities, hours)
   useEffect(() => {
@@ -655,6 +682,16 @@ function App() {
   const logoUrl = appSettings.app_logo_url || 'public/assets/logo.png';
   const heroImageUrl = appSettings.hero_image_url || 'https://images.pexels.com/photos/2641886/pexels-photo-2641886.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2';
 
+  // Tema Dia dos Namorados — ativado/desativado unicamente pelo toggle do admin
+  const isValentineThemeActive = appSettings.valentine_theme_active === 'true';
+  console.log('[ValentineTheme] isValentineThemeActive:', isValentineThemeActive, '| raw value:', appSettings.valentine_theme_active, '| all settings keys:', Object.keys(appSettings));
+
+  const handleTriggerValentine = () => {
+    if (isValentineThemeActive) {
+      setValentineTriggerKey(prev => prev + 1);
+    }
+  };
+
   // Novas props para o título e subtítulo do hero
   const heroTitleText = appSettings.hero_title_text || '';
   const heroTitleFontSize = appSettings.hero_title_font_size || '48px';
@@ -678,7 +715,7 @@ function App() {
     if (currentView === 'admin') {
       // Only render AdminPanel if user is an admin, otherwise redirect to home
       if (user?.role === 'admin') {
-        return <AdminPanel onBack={() => setCurrentView('home')} onUserUpdate={refetchUser} />;
+        return <AdminPanel onBack={() => setCurrentView('home')} onUserUpdate={refetchUser} onSettingsSaved={fetchSettingsOnly} />;
       } else {
         // If somehow currentView is 'admin' but user is not admin, redirect to home
         setCurrentView('home');
@@ -737,6 +774,7 @@ function App() {
         isPixReturnFlow={isPixReturnFlow} // Passando a nova prop
         setIsPixReturnFlow={setIsPixReturnFlow} // Passando a nova prop
         menuMobileColumns={menuMobileColumns} // Nova prop para controlar colunas no mobile
+        onTriggerValentine={handleTriggerValentine}
       />
     );
   };
@@ -761,6 +799,10 @@ function App() {
           <UserCouponNotification onClose={() => setShowUserCouponNotification(false)} />
         )}
         <CookieBanner />
+        {/* Overlay do Tema Dia dos Namorados — Apenas no cardápio e quando ativado por clique */}
+        {isValentineThemeActive && currentView === 'home' && valentineTriggerKey > 0 && (
+          <ValentineTheme key={valentineTriggerKey} />
+        )}
       </div>
     </ThemeProvider>
   );

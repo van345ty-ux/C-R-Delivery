@@ -44,6 +44,7 @@ interface HomePageProps {
   isPixReturnFlow: boolean; // Nova prop
   setIsPixReturnFlow: (isReturning: boolean) => void; // Nova prop
   menuMobileColumns: string; // Nova prop para controlar colunas no mobile
+  onTriggerValentine: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -81,6 +82,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   isPixReturnFlow, // Nova prop
   setIsPixReturnFlow, // Nova prop
   menuMobileColumns, // Nova prop para controlar colunas no mobile
+  onTriggerValentine,
 }) => {
   const [showCart, setShowCart] = useState(isMercadoPagoReturnFlow || isPixReturnFlow);
   const [showPromotions, setShowPromotions] = useState(false);
@@ -89,6 +91,8 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [promotionModalTitle, setPromotionModalTitle] = useState('Promoções do Dia');
   const [menuFilter, setMenuFilter] = useState(localStorage.getItem('pendingMenuFilter') || 'Todos');
   const [showEasterPopup, setShowEasterPopup] = useState(false);
+  const [loadingPromotions, setLoadingPromotions] = useState(true);
+  const [hasTriggeredOnLoad, setHasTriggeredOnLoad] = useState(false);
 
   useEffect(() => {
     const PROMOTION_MODAL_COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 horas
@@ -108,8 +112,9 @@ export const HomePage: React.FC<HomePageProps> = ({
 
     fetchModalTitle();
 
-    // Condições de saída antecipada: não mostrar modal se estiver em fluxos de pagamento ou pré-pedido
-    if (isMercadoPagoReturnFlow || isPixReturnFlow || showPreOrderModal) {
+    // Condições de saída antecipada: não mostrar modal se estiver em fluxos de pagamento
+    if (isMercadoPagoReturnFlow || isPixReturnFlow) {
+      setLoadingPromotions(false);
       return;
     }
 
@@ -127,17 +132,8 @@ export const HomePage: React.FC<HomePageProps> = ({
     const lastShownTimestamp = parseInt(localStorage.getItem(LAST_SHOWN_KEY) || '0');
     const isCooldownActive = (Date.now() - lastShownTimestamp) < PROMOTION_MODAL_COOLDOWN_MS;
 
-    // Easter popup desabilitado
-    // const LAST_EASTER_SHOWN_KEY = 'easterPopupLastShown';
-    // const lastEasterShownTimestamp = parseInt(localStorage.getItem(LAST_EASTER_SHOWN_KEY) || '0');
-    // const isEasterCooldownActive = (Date.now() - lastEasterShownTimestamp) < PROMOTION_MODAL_COOLDOWN_MS;
-
-    // if (shouldShowOnLoadFromLocation || !isEasterCooldownActive) {
-    //   setShowEasterPopup(true);
-    //   localStorage.setItem(LAST_EASTER_SHOWN_KEY, Date.now().toString());
-    // } else 
-    if (shouldShowOnLoadFromLocation || !isCooldownActive) {
-      const fetchAndShowPromotions = async () => {
+    const fetchPromotionsData = async () => {
+      try {
         const { data: promotionsData, error } = await supabase
           .from('products')
           .select('*')
@@ -149,24 +145,40 @@ export const HomePage: React.FC<HomePageProps> = ({
           return;
         }
 
-        if (promotionsData && promotionsData.length > 0) {
+        if (promotionsData) {
           setPromotions(promotionsData);
-          setShowPromotions(true);
-          // Atualiza o timestamp de quando o modal foi exibido pela última vez
-          localStorage.setItem(LAST_SHOWN_KEY, Date.now().toString());
-        }
-      };
 
-      fetchAndShowPromotions();
-    } else {
-       // Buscar promoções em background caso easter cooldown esteja ativo mas queira mostrar promos depois
-       const fetchBgPromos = async () => {
-         const { data: promos } = await supabase.from('products').select('*').eq('category', 'Promoção').eq('available', true);
-         if (promos) setPromotions(promos);
-       };
-       fetchBgPromos();
-    }
+          // SÓ exibe o modal de promoções se:
+          // 1. O modal de pré-pedido NÃO estiver aberto agora
+          // 2. O cooldown permitir OU foi redirecionado da localização
+          // 3. Houver promoções ativas cadastradas
+          if (!showPreOrderModal && (shouldShowOnLoadFromLocation || !isCooldownActive) && promotionsData.length > 0) {
+            setShowPromotions(true);
+            // Atualiza o timestamp de quando o modal foi exibido pela última vez
+            localStorage.setItem(LAST_SHOWN_KEY, Date.now().toString());
+          }
+        }
+      } finally {
+        setLoadingPromotions(false);
+      }
+    };
+
+    fetchPromotionsData();
   }, [isMercadoPagoReturnFlow, isPixReturnFlow, showPreOrderModal]);
+
+  // Efeito secundário: dispara a animação do Dia dos Namorados assim que o cliente fechar todos os modais iniciais
+  useEffect(() => {
+    if (
+      !showPreOrderModal &&
+      !showPromotions &&
+      !showEasterPopup &&
+      !loadingPromotions &&
+      !hasTriggeredOnLoad
+    ) {
+      onTriggerValentine();
+      setHasTriggeredOnLoad(true);
+    }
+  }, [showPreOrderModal, showPromotions, showEasterPopup, loadingPromotions, hasTriggeredOnLoad, onTriggerValentine]);
 
   const handleAddToCart = (product: Product, quantity = 1, observations?: string) => {
     onAddToCart(product, quantity, observations || undefined);
@@ -224,6 +236,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           showPreOrderBanner={showPreOrderBanner} // Nova prop
           isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
           menuMobileColumns={menuMobileColumns} // Nova prop para controlar colunas no mobile
+          onTriggerValentine={onTriggerValentine}
         />
       </main>
 

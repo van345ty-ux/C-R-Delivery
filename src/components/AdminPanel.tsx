@@ -18,9 +18,10 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 interface AdminPanelProps {
   onBack: () => void;
   onUserUpdate: () => void;
+  onSettingsSaved: () => void;
 }
 
-export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) => {
+export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate, onSettingsSaved }) => {
   // Inicializa o estado lendo do localStorage, com 'dashboard' como padrão.
   const [activeTab, setActiveTab] = useState(() => {
     return localStorage.getItem('adminActiveTab') || 'dashboard';
@@ -225,7 +226,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate }) 
       case 'customers':
         return <AdminCustomers />;
       case 'settings':
-        return <AdminSettings />;
+        return <AdminSettings onSettingsSaved={onSettingsSaved} />;
       default:
         return <AdminDashboard />;
     }
