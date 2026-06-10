@@ -8,6 +8,7 @@ import { User, CartItem, Product, Order } from '../types'; // Corrected import p
 import { supabase } from '../integrations/supabase/client';
 import { PreOrderModal } from './PreOrderModal'; // Importando o novo modal
 import { EasterPopup } from './EasterPopup'; // Importando o novo popup de Páscoa
+import { ValentinePopup } from './ValentinePopup'; // Importando o novo popup de Dia dos Namorados
 
 interface HomePageProps {
   selectedCity: string;
@@ -45,6 +46,7 @@ interface HomePageProps {
   setIsPixReturnFlow: (isReturning: boolean) => void; // Nova prop
   menuMobileColumns: string; // Nova prop para controlar colunas no mobile
   onTriggerValentine: () => void;
+  isValentineThemeActive: boolean; // Nova prop
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -83,6 +85,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   setIsPixReturnFlow, // Nova prop
   menuMobileColumns, // Nova prop para controlar colunas no mobile
   onTriggerValentine,
+  isValentineThemeActive, // Nova prop
 }) => {
   const [showCart, setShowCart] = useState(isMercadoPagoReturnFlow || isPixReturnFlow);
   const [showPromotions, setShowPromotions] = useState(false);
@@ -93,6 +96,9 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [showEasterPopup, setShowEasterPopup] = useState(false);
   const [loadingPromotions, setLoadingPromotions] = useState(true);
   const [hasTriggeredOnLoad, setHasTriggeredOnLoad] = useState(false);
+  const [showValentinePopup, setShowValentinePopup] = useState(false);
+  const [pendingShowPromotions, setPendingShowPromotions] = useState(false);
+  const [pendingShowPreOrder, setPendingShowPreOrder] = useState(false);
 
   useEffect(() => {
     const PROMOTION_MODAL_COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 horas
@@ -148,14 +154,28 @@ export const HomePage: React.FC<HomePageProps> = ({
         if (promotionsData) {
           setPromotions(promotionsData);
 
-          // SÓ exibe o modal de promoções se:
-          // 1. O modal de pré-pedido NÃO estiver aberto agora
-          // 2. O cooldown permitir OU foi redirecionado da localização
-          // 3. Houver promoções ativas cadastradas
-          if (!showPreOrderModal && (shouldShowOnLoadFromLocation || !isCooldownActive) && promotionsData.length > 0) {
-            setShowPromotions(true);
-            // Atualiza o timestamp de quando o modal foi exibido pela última vez
-            localStorage.setItem(LAST_SHOWN_KEY, Date.now().toString());
+          const willShowPromotions = (shouldShowOnLoadFromLocation || !isCooldownActive) && promotionsData.length > 0;
+          const hasSeenValentine = sessionStorage.getItem('hasSeenValentinePopup') === 'true';
+
+          if (isValentineThemeActive && !hasSeenValentine) {
+            setShowValentinePopup(true);
+            if (showPreOrderModal) {
+              setPendingShowPreOrder(true);
+              setShowPreOrderModal(false); // Esconde temporariamente para dar prioridade ao pop-up dos namorados
+            }
+            if (willShowPromotions) {
+              setPendingShowPromotions(true);
+            }
+          } else {
+            // SÓ exibe o modal de promoções se:
+            // 1. O modal de pré-pedido NÃO estiver aberto agora
+            // 2. O cooldown permitir OU foi redirecionado da localização
+            // 3. Houver promoções ativas cadastradas
+            if (!showPreOrderModal && willShowPromotions) {
+              setShowPromotions(true);
+              // Atualiza o timestamp de quando o modal foi exibido pela última vez
+              localStorage.setItem(LAST_SHOWN_KEY, Date.now().toString());
+            }
           }
         }
       } finally {
@@ -164,21 +184,25 @@ export const HomePage: React.FC<HomePageProps> = ({
     };
 
     fetchPromotionsData();
-  }, [isMercadoPagoReturnFlow, isPixReturnFlow, showPreOrderModal]);
+  }, [isMercadoPagoReturnFlow, isPixReturnFlow, showPreOrderModal, isValentineThemeActive]);
 
   // Efeito secundário: dispara a animação do Dia dos Namorados assim que o cliente fechar todos os modais iniciais
   useEffect(() => {
+    const hasTriggeredAnim = sessionStorage.getItem('hasTriggeredValentineAnimation') === 'true';
     if (
+      !showValentinePopup &&
       !showPreOrderModal &&
       !showPromotions &&
       !showEasterPopup &&
       !loadingPromotions &&
-      !hasTriggeredOnLoad
+      !hasTriggeredOnLoad &&
+      !hasTriggeredAnim
     ) {
       onTriggerValentine();
       setHasTriggeredOnLoad(true);
+      sessionStorage.setItem('hasTriggeredValentineAnimation', 'true');
     }
-  }, [showPreOrderModal, showPromotions, showEasterPopup, loadingPromotions, hasTriggeredOnLoad, onTriggerValentine]);
+  }, [showValentinePopup, showPreOrderModal, showPromotions, showEasterPopup, loadingPromotions, hasTriggeredOnLoad, onTriggerValentine]);
 
   const handleAddToCart = (product: Product, quantity = 1, observations?: string) => {
     onAddToCart(product, quantity, observations || undefined);
@@ -193,6 +217,20 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   const handleClosePromotionModal = (source?: 'full_menu' | 'x_button') => {
     setShowPromotions(false); // ✅ Apenas fecha o modal
+  };
+
+  const handleCloseValentinePopup = () => {
+    setShowValentinePopup(false);
+    sessionStorage.setItem('hasSeenValentinePopup', 'true');
+
+    if (pendingShowPreOrder) {
+      setShowPreOrderModal(true);
+      setPendingShowPreOrder(false);
+    } else if (pendingShowPromotions) {
+      setShowPromotions(true);
+      setPendingShowPromotions(false);
+      localStorage.setItem('promotionModalLastShown', Date.now().toString());
+    }
   };
 
   const handleCloseCart = () => {
@@ -237,6 +275,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
           menuMobileColumns={menuMobileColumns} // Nova prop para controlar colunas no mobile
           onTriggerValentine={onTriggerValentine}
+          isValentineThemeActive={isValentineThemeActive}
         />
       </main>
 
@@ -283,15 +322,20 @@ export const HomePage: React.FC<HomePageProps> = ({
           canPlaceOrder={canPlaceOrder}
           isMercadoPagoReturnFlow={isMercadoPagoReturnFlow}
           isPixReturnFlow={isPixReturnFlow}
+          isValentineThemeActive={isValentineThemeActive}
         />
       )}
 
-      {/* PreOrderModal takes precedence */}
-      {showPreOrderModal ? (
+      {/* ValentinePopup takes precedence, then PreOrderModal */}
+      {showValentinePopup ? (
+        <ValentinePopup onClose={handleCloseValentinePopup} />
+      ) : showPreOrderModal ? (
         <PreOrderModal onClose={() => {
           setShowPreOrderModal(false);
-          if (showEasterPopup) {
-            // Already handled by component below
+          if (pendingShowPromotions) {
+            setShowPromotions(true);
+            setPendingShowPromotions(false);
+            localStorage.setItem('promotionModalLastShown', Date.now().toString());
           } else if (promotions.length > 0) {
             setShowPromotions(true);
           }
@@ -305,7 +349,6 @@ export const HomePage: React.FC<HomePageProps> = ({
           onGoToMenu={() => {
             setShowEasterPopup(false);
             setMenuFilter('Todos'); // Mudado de 'Ovos de Sushi' para 'Todos'
-
           }}
         />
       ) : (

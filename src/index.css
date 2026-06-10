@@ -347,6 +347,14 @@ body.cart-open::-webkit-scrollbar {
    UTILITY CLASSES
    ============================================ */
 
+.animate-green-pulse {
+  animation: greenPulse 1.5s ease-in-out infinite !important;
+}
+
+.animate-pulse-fade {
+  animation: pulseFade 1.5s ease-in-out infinite !important;
+}
+
 @layer utilities {
   /* Premium Animations */
   .animate-fade-in {
@@ -359,17 +367,6 @@ body.cart-open::-webkit-scrollbar {
 
   .animate-slide-up {
     animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-
-  /* Store Status Animation */
-  .animate-pulse-fade {
-    animation: pulseFade 1s ease-in-out infinite;
-  }
-
-  /* Green Dot Pulse Animation */
-  .animate-green-pulse {
-    animation: greenPulse 1.5s ease-in-out infinite;
   }
 
   /* Ovos de Sushi Animation */

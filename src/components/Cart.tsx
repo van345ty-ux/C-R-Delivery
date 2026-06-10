@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Minus, CreditCard, Smartphone, DollarSign, Gift, ExternalLink, Copy } from 'lucide-react';
+import { X, Plus, Minus, CreditCard, Smartphone, DollarSign, Gift, ExternalLink, Copy, Heart } from 'lucide-react';
 import { CartItem, Order, User, Coupon } from '../types';
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
@@ -19,6 +19,7 @@ interface CartProps {
   canPlaceOrder: boolean;
   isMercadoPagoReturnFlow: boolean;
   isPixReturnFlow: boolean;
+  isValentineThemeActive?: boolean; // Nova prop
 }
 
 export const Cart: React.FC<CartProps> = ({
@@ -32,6 +33,7 @@ export const Cart: React.FC<CartProps> = ({
   canPlaceOrder,
   isMercadoPagoReturnFlow,
   isPixReturnFlow,
+  isValentineThemeActive = false, // Nova prop
 }) => {
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>(() => {
     return localStorage.getItem('cartDeliveryType') as 'delivery' | 'pickup' || 'delivery';
@@ -61,6 +63,8 @@ export const Cart: React.FC<CartProps> = ({
   const [pixPaymentInitiated, setPixPaymentInitiated] = useState(() => JSON.parse(localStorage.getItem('pixPaymentInitiated') || 'false'));
   const [showPixReturnConfirmation, setShowPixReturnConfirmation] = useState(false);
   const [hasAcknowledgedPixReturnConfirmation, setHasAcknowledgedPixReturnConfirmation] = useState(() => JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false'));
+  const [showValentineWarning, setShowValentineWarning] = useState(false);
+  const [isValentineWarningAcknowledged, setIsValentineWarningAcknowledged] = useState(false);
 
   // Novos estados para o troco
   const [needsChange, setNeedsChange] = useState<boolean | null>(null);
@@ -232,7 +236,7 @@ export const Cart: React.FC<CartProps> = ({
   }, [user?.id]);
 
   const subtotal = items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  const deliveryFee = deliveryType === 'delivery' ? deliveryFeeValue : 0;
+  const deliveryFee = (deliveryType === 'delivery' && !isValentineThemeActive) ? deliveryFeeValue : 0;
   const discount = appliedCoupon ? (subtotal * appliedCoupon.discount / 100) : 0;
   const total = subtotal + deliveryFee - discount;
 
@@ -325,6 +329,13 @@ export const Cart: React.FC<CartProps> = ({
       toast.error('🍣 Escolha o dia de entrega dos Ovos de Sushi: Sábado ou Domingo.');
       return;
     }
+
+    // Intercepta para o aviso de Dia dos Namorados (Agendamento Sexta-Feira)
+    if (isValentineThemeActive && !isValentineWarningAcknowledged) {
+      setShowValentineWarning(true);
+      return;
+    }
+
     if (paymentMethod === 'pix' && isAwaitingPixPayment) {
       toast.error('Vá até o seu banco, pague o valor do pedido e volte para finalizar.');
       return;
@@ -760,19 +771,46 @@ export const Cart: React.FC<CartProps> = ({
             Tipo de Entrega
           </h3>
           <div className="space-y-2">
-            <label className="flex items-center">
-              <input 
-                type="radio" 
-                checked={deliveryType === 'delivery'} 
-                onChange={() => setDeliveryType('delivery')} 
-                className="mr-2" 
-                disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}
-                aria-label={`Delivery com taxa de R$ ${deliveryFeeValue.toFixed(2)}`}
-              />
-              <span style={{ color: 'var(--text-primary)' }}>
-                Delivery (+R$ {deliveryFeeValue.toFixed(2)})
-              </span>
-            </label>
+            {isValentineThemeActive ? (
+              <label className="flex flex-col text-left">
+                <div className="flex items-center">
+                  <input 
+                    type="radio" 
+                    checked={deliveryType === 'delivery'} 
+                    onChange={() => setDeliveryType('delivery')} 
+                    className="mr-2" 
+                    disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}
+                    aria-label="Delivery (Grátis)"
+                  />
+                  <span style={{ color: 'var(--text-primary)' }}>
+                    Delivery (Grátis)
+                  </span>
+                </div>
+                <div className="mt-2 ml-6 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 w-fit animate-fade-in shadow-sm select-none">
+                  No dia dos namorados o frete é por nossa conta
+                  <span className="relative inline-flex items-center justify-center w-5 h-5 ml-1 shrink-0">
+                    {/* Coração branco de fundo (estático e 20% maior) */}
+                    <Heart className="absolute w-[18px] h-[18px] text-white fill-white" />
+                    {/* Coração vermelho da frente (pulsando e no tamanho original) */}
+                    <Heart className="absolute w-[15px] h-[15px] text-red-600 fill-red-600 animate-pulse" />
+                  </span>
+                </div>
+              </label>
+            ) : (
+              <label className="flex items-center">
+                <input 
+                  type="radio" 
+                  checked={deliveryType === 'delivery'} 
+                  onChange={() => setDeliveryType('delivery')} 
+                  className="mr-2" 
+                  disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}
+                  aria-label={`Delivery com taxa de R$ ${deliveryFeeValue.toFixed(2)}`}
+                />
+                <span style={{ color: 'var(--text-primary)' }}>
+                  Delivery (+R$ {deliveryFeeValue.toFixed(2)})
+                </span>
+              </label>
+            )}
             <label className="flex items-center">
               <input 
                 type="radio" 
@@ -992,10 +1030,12 @@ export const Cart: React.FC<CartProps> = ({
             <span style={{ color: 'var(--text-primary)' }}>Subtotal:</span>
             <span style={{ color: 'var(--text-primary)' }}>R$ {subtotal.toFixed(2)}</span>
           </div>
-          {deliveryFee > 0 && (
+          {deliveryType === 'delivery' && (
             <div className="flex justify-between">
               <span style={{ color: 'var(--text-primary)' }}>Taxa de entrega:</span>
-              <span style={{ color: 'var(--text-primary)' }}>R$ {deliveryFee.toFixed(2)}</span>
+              <span style={isValentineThemeActive ? { color: '#ef4444', fontWeight: 'bold' } : { color: 'var(--text-primary)' }}>
+                {isValentineThemeActive ? 'Grátis' : `R$ ${deliveryFee.toFixed(2)}`}
+              </span>
             </div>
           )}
           {discount > 0 && (
@@ -1037,7 +1077,13 @@ export const Cart: React.FC<CartProps> = ({
             !paymentMethod || 
             (paymentMethod === 'pix' && (!pixKeyValue || !hasSeenPixInstructions))
           }
-          className={`w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${paymentMethod === 'card' && isMercadoPagoAcknowledged ? 'animate-pulse ring-4 ring-red-300' : ''}`}
+          className={`w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
+            isValentineWarningAcknowledged
+              ? 'animate-pulse ring-4 ring-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.6)]'
+              : (paymentMethod === 'card' && isMercadoPagoAcknowledged)
+                ? 'animate-pulse ring-4 ring-red-300'
+                : ''
+          }`}
           aria-label={isSubmitting ? 'Finalizando pedido, aguarde' : 'Finalizar pedido'}
         >
           {isSubmitting ? 'Finalizando...' : 'Finalizar Pedido'}
@@ -1071,6 +1117,30 @@ export const Cart: React.FC<CartProps> = ({
             localStorage.setItem('hasAcknowledgedPixReturnConfirmation', 'true');
           }}
         />
+      )}
+
+      {showValentineWarning && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[100000] p-4 animate-fade-in">
+          <div className="bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center border border-pink-100 dark:border-rose-950 animate-scale-in">
+            <div className="inline-flex items-center justify-center p-3 bg-rose-50 dark:bg-rose-950/30 rounded-full mb-3 border border-rose-100 dark:border-rose-900/30">
+              <Heart className="w-8 h-8 text-rose-500 fill-rose-500 animate-pulse" />
+            </div>
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">Aviso Importante</h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6 leading-relaxed font-medium">
+              Aviso: seu pedido será agendado para entrega na sexta-feira.
+            </p>
+            <button
+              onClick={() => {
+                setIsValentineWarningAcknowledged(true);
+                setShowValentineWarning(false);
+                toast.success('Aviso confirmado! Clique em Finalizar Pedido novamente.');
+              }}
+              className="w-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-extrabold py-3 rounded-xl transition-all duration-300 shadow-md shadow-pink-500/10 hover:shadow-pink-500/20 active:scale-[0.98] cursor-pointer text-sm"
+            >
+              Estou ciente ❤️
+            </button>
+          </div>
+        </div>
       )}
     </div>
     </>

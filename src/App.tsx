@@ -827,6 +827,7 @@ function App() {
         setIsPixReturnFlow={setIsPixReturnFlow} // Passando a nova prop
         menuMobileColumns={menuMobileColumns} // Nova prop para controlar colunas no mobile
         onTriggerValentine={handleTriggerValentine}
+        isValentineThemeActive={isValentineThemeActive}
       />
     );
   };

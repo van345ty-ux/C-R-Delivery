@@ -28,6 +28,7 @@ interface MenuProps {
   isMercadoPagoReturnFlow: boolean; // Nova prop
   menuMobileColumns: string; // Nova prop para controlar colunas no mobile
   onTriggerValentine: () => void;
+  isValentineThemeActive?: boolean; // Nova prop
 }
 
 const categories = [
@@ -61,6 +62,7 @@ export const Menu: React.FC<MenuProps> = ({
   isMercadoPagoReturnFlow, // Nova prop
   menuMobileColumns, // Nova prop para controlar colunas no mobile
   onTriggerValentine,
+  isValentineThemeActive = false, // Nova prop
 }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
@@ -243,7 +245,7 @@ export const Menu: React.FC<MenuProps> = ({
           {/* Store Status - Premium Badge with Glassmorphism */}
           <div className="absolute top-4 left-4 z-10">
             <div 
-              className="inline-flex items-center font-semibold px-5 py-2.5 rounded-full text-sm"
+              className={`inline-flex items-center font-semibold px-5 py-2.5 rounded-full text-sm ${isStoreOpen ? 'animate-pulse-fade' : ''}`}
               style={{
                 backgroundColor: isStoreOpen ? '#D1FAE5' : '#0A0A0A',
                 color: isStoreOpen ? '#065F46' : '#FFFFFF',
@@ -258,7 +260,7 @@ export const Menu: React.FC<MenuProps> = ({
                   backgroundColor: isStoreOpen ? '#10B981' : '#FFFFFF'
                 }}
               ></div>
-              <span>{isStoreOpen ? 'Atendendo' : 'Fechado'}</span>
+              <span>{isStoreOpen ? (isValentineThemeActive ? 'Plantão Dia dos namorados' : 'Atendendo') : 'Fechado'}</span>
             </div>
           </div>
         </div>
