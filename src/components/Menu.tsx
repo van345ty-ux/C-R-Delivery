@@ -321,10 +321,10 @@ export const Menu: React.FC<MenuProps> = ({
               <button
                 key={category}
                 onClick={() => onCategoryChange(category)}
-                className={`${btnClass} ${isMercadoPagoReturnFlow ? 'opacity-50 cursor-not-allowed' : ''} focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2`}
+                className={`${btnClass} ${isMercadoPagoReturnFlow ? 'opacity-50 cursor-not-allowed' : ''} focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2`}
                 style={{
                   backgroundColor: !isOvos && isActive ? 'var(--accent-primary)' : undefined,
-                  color: !isOvos && isActive ? 'var(--text-inverse)' : undefined
+                  color: !isOvos && isActive ? '#FFFFFF' : undefined
                 }}
                 disabled={isMercadoPagoReturnFlow}
                 role="tab"
