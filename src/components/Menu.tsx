@@ -342,7 +342,7 @@ export const Menu: React.FC<MenuProps> = ({
       </div>
 
       {/* Highlights Section - Premium Styling */}
-      {highlights.length > 0 && (
+      {false && highlights.length > 0 && (
         <div className="mb-10">
           <h3 className="text-2xl font-bold mb-6" style={{ fontFamily: 'var(--font-display)', color: '#0A0A0A' }}>Destaques</h3>
           <div className="flex overflow-x-auto space-x-6 pb-4 no-scrollbar">
