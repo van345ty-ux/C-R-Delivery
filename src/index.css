@@ -361,6 +361,10 @@ body.cart-open::-webkit-scrollbar {
     animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  .animate-slide-down {
+    animation: slideDownAlert 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
   /* Store Status Animation */
   .animate-pulse-fade {
     animation: pulseFade 1s ease-in-out infinite;
@@ -469,6 +473,25 @@ body.cart-open::-webkit-scrollbar {
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes slideDownAlert {
+  0% {
+    transform: translateY(-50px) scale(0.9);
+    opacity: 0;
+  }
+  15% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  85% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-20px) scale(0.95);
+    opacity: 0;
   }
 }
 
