@@ -266,8 +266,8 @@ export const Menu: React.FC<MenuProps> = ({
 
       {/* Pre-order Banner */}
       {showPreOrderBanner && (
-        <div className="bg-red-50 border-l-4 border-red-500 text-red-800 p-4 rounded-lg mb-6">
-          <p className="text-sm font-medium">
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg mb-6">
+          <p className="text-sm font-semibold" style={{ color: '#000000' }}>
             Estaremos atendendo a partir das 18h, mas você pode deixar seu pedido agendado em nosso sistema.
           </p>
         </div>
