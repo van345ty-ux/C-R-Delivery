@@ -41,7 +41,6 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     }
     onAddToCart(product, quantity, observations.trim() || undefined);
     onClose();
-    toast.success(`${quantity}x ${product.name} adicionado ao carrinho!`);
   };
 
   return (
