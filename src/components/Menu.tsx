@@ -296,7 +296,7 @@ export const Menu: React.FC<MenuProps> = ({
         </div>
 
         {/* Category Filters - Premium Button Styling with Smooth Transitions */}
-        <div className="flex gap-3 overflow-x-auto pb-4 items-center no-scrollbar scroll-smooth" role="tablist" aria-label="Categorias de produtos">
+        <div className="flex gap-3 overflow-x-auto px-2 pb-4 items-center no-scrollbar scroll-smooth" role="tablist" aria-label="Categorias de produtos">
           {categories.map((category) => {
             const isOvos = category === 'Ovos de Sushi';
             const isActive = selectedCategory === category;
