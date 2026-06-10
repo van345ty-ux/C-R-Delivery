@@ -241,9 +241,34 @@ export const HomePage: React.FC<HomePageProps> = ({
       </main>
 
       {cartAnimation && (
-        <div className="fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg cart-toast-alert z-50">
-          ✅ Adicionado ao carrinho
-        </div>
+        <>
+          <style>{`
+            @keyframes slideDownAlertV2 {
+              0% {
+                transform: translateY(-50px) scale(0.9);
+                opacity: 0;
+              }
+              15% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+              }
+              85% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+              }
+              100% {
+                transform: translateY(-20px) scale(0.95);
+                opacity: 0;
+              }
+            }
+            .cart-toast-alert-v2 {
+              animation: slideDownAlertV2 2.0s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+            }
+          `}</style>
+          <div className="fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg cart-toast-alert-v2 z-50">
+            ✅ Adicionado ao carrinho
+          </div>
+        </>
       )}
 
       {showCart && (

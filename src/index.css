@@ -473,25 +473,6 @@ body.cart-open::-webkit-scrollbar {
   }
 }
 
-@keyframes slideDownAlert {
-  0% {
-    transform: translateY(-50px) scale(0.9);
-    opacity: 0;
-  }
-  15% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-  85% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-20px) scale(0.95);
-    opacity: 0;
-  }
-}
-
 @keyframes scaleIn {
   from {
     transform: scale(0.95);
@@ -927,9 +908,4 @@ body.cart-open::-webkit-scrollbar {
   .seigaiha-pattern .absolute.bottom-4.right-4 {
     display: none !important;
   }
-}
-
-/* Custom Cart Toast Alert */
-.cart-toast-alert {
-  animation: slideDownAlert 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
