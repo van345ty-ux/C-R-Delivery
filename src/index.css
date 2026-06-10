@@ -361,9 +361,6 @@ body.cart-open::-webkit-scrollbar {
     animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .animate-slide-down {
-    animation: slideDownAlert 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
 
   /* Store Status Animation */
   .animate-pulse-fade {
@@ -930,4 +927,9 @@ body.cart-open::-webkit-scrollbar {
   .seigaiha-pattern .absolute.bottom-4.right-4 {
     display: none !important;
   }
+}
+
+/* Custom Cart Toast Alert */
+.cart-toast-alert {
+  animation: slideDownAlert 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

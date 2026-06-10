@@ -241,7 +241,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       </main>
 
       {cartAnimation && (
-        <div className="fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-slide-down z-50">
+        <div className="fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg cart-toast-alert z-50">
           ✅ Adicionado ao carrinho
         </div>
       )}
