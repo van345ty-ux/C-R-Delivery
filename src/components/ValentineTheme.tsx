@@ -26,7 +26,7 @@ export const ValentineTheme: React.FC = () => {
   }, []);
 
   const hearts = useMemo<Heart[]>(() => {
-    return Array.from({ length: 440 }, (_, i) => {
+    return Array.from({ length: 350 }, (_, i) => {
       const left = Math.random() * 100;
       const size = 15 + Math.random() * 25; // 15px a 40px
       
@@ -217,11 +217,11 @@ export const ValentineTheme: React.FC = () => {
               style={{
                 '--sway-duration': heart.swayDuration,
                 '--sway-delay': heart.swayDelay,
+                userSelect: 'none',
+                lineHeight: 1,
               } as React.CSSProperties}
             >
-              <span className="heart-pulse-emoji-v7">
-                {heart.emoji}
-              </span>
+              {heart.emoji}
             </div>
           </div>
         ))}
