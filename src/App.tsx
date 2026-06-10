@@ -214,6 +214,58 @@ function App() {
     }
   }, [isLoading]);
 
+  // Verifica se há novas atualizações na Vercel ao retornar para o app
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Captura os scripts carregados no início da sessão
+    const currentScripts = Array.from(document.querySelectorAll('script[src]'))
+      .map(s => s.getAttribute('src'))
+      .filter(Boolean) as string[];
+
+    const checkForUpdates = async () => {
+      try {
+        const response = await fetch('/index.html?t=' + Date.now());
+        if (!response.ok) return;
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const newScripts = Array.from(doc.querySelectorAll('script[src]'))
+          .map(s => s.getAttribute('src'))
+          .filter(Boolean) as string[];
+
+        // Se houver algum script novo no HTML da Vercel que não está carregado atualmente
+        const hasUpdate = newScripts.some(src => !currentScripts.includes(src));
+        if (hasUpdate) {
+          console.log('App: Nova atualização detectada na Vercel. Recarregando...');
+          window.location.reload();
+        }
+      } catch (error) {
+        console.error('App: Erro ao verificar atualizações:', error);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkForUpdates();
+      }
+    };
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        checkForUpdates();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pageshow', handlePageShow);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
+  }, []);
+
 
   // Debugging logs for App state
   useEffect(() => {
