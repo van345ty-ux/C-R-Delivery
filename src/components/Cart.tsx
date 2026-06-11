@@ -242,7 +242,8 @@ export const Cart: React.FC<CartProps> = ({
   const subtotal = items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   const isComandatuba = selectedCity ? selectedCity.toLowerCase().includes('comandatuba') : false;
   const currentFeeValue = isComandatuba ? comandatubaDeliveryFeeValue : deliveryFeeValue;
-  const deliveryFee = (deliveryType === 'delivery' && !isValentineThemeActive) ? currentFeeValue : 0;
+  const isFreeDelivery = isValentineThemeActive && !isComandatuba;
+  const deliveryFee = (deliveryType === 'delivery' && !isFreeDelivery) ? currentFeeValue : 0;
   const discount = appliedCoupon ? (subtotal * appliedCoupon.discount / 100) : 0;
   const total = subtotal + deliveryFee - discount;
 
@@ -777,7 +778,7 @@ export const Cart: React.FC<CartProps> = ({
             Tipo de Entrega
           </h3>
           <div className="space-y-2">
-            {isValentineThemeActive ? (
+            {isFreeDelivery ? (
               <label className="flex flex-col text-left">
                 <div className="flex items-center">
                   <input 
@@ -1039,8 +1040,8 @@ export const Cart: React.FC<CartProps> = ({
           {deliveryType === 'delivery' && (
             <div className="flex justify-between">
               <span style={{ color: 'var(--text-primary)' }}>Taxa de entrega:</span>
-              <span style={isValentineThemeActive ? { color: '#ef4444', fontWeight: 'bold' } : { color: 'var(--text-primary)' }}>
-                {isValentineThemeActive ? 'Grátis' : `R$ ${deliveryFee.toFixed(2)}`}
+              <span style={isFreeDelivery ? { color: '#ef4444', fontWeight: 'bold' } : { color: 'var(--text-primary)' }}>
+                {isFreeDelivery ? 'Grátis' : `R$ ${deliveryFee.toFixed(2)}`}
               </span>
             </div>
           )}
