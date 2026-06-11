@@ -121,16 +121,27 @@ export const AdminCities: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-4">
+                <span className="text-sm font-semibold" style={{ color: city.active ? '#10B981' : '#EF4444' }}>
+                  {city.active ? 'Ativa' : 'Inativa'}
+                </span>
+                
+                {/* Visual Toggle Switch */}
                 <button
                   onClick={() => toggleCityStatus(city)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    city.active
-                      ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                      : 'bg-green-100 text-green-700 hover:bg-green-200'
-                  }`}
+                  className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  style={{
+                    backgroundColor: city.active ? '#10B981' : '#D1D5DB'
+                  }}
+                  role="switch"
+                  aria-checked={city.active}
+                  title={city.active ? 'Desativar cidade' : 'Ativar cidade'}
                 >
-                  {city.active ? 'Desativar' : 'Ativar'}
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      city.active ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
                 </button>
                 
                 <button

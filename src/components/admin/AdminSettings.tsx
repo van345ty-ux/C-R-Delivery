@@ -21,6 +21,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved })
   const [settings, setSettings] = useState<Settings>({
     promotion_modal_title: 'Promoções do Dia',
     delivery_fee: '3.00',
+    comandatuba_delivery_fee: '8.00',
     app_logo_url: '/assets/logo.png',
     pix_key: '',
     hero_image_url: 'https://images.pexels.com/photos/2641886/pexels-photo-2641886.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
@@ -374,24 +375,45 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved })
 
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Entrega</h2>
-        <div>
-          <label htmlFor="deliveryFee" className="block text-sm font-medium text-gray-700 mb-2">
-            Taxa de Entrega (R$)
-          </label>
-          <input
-            id="deliveryFee"
-            type="number"
-            step="0.01"
-            min="0"
-            value={settings.delivery_fee}
-            onChange={(e) => handleInputChange('delivery_fee', e.target.value)}
-            className="w-full max-w-xs p-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
-            placeholder="Ex: 3.00"
-            style={{ colorScheme: 'light' }}
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Este valor será cobrado para todos os pedidos do tipo "Delivery".
-          </p>
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="deliveryFee" className="block text-sm font-medium text-gray-700 mb-2">
+              Taxa de Entrega - Una (R$)
+            </label>
+            <input
+              id="deliveryFee"
+              type="number"
+              step="0.01"
+              min="0"
+              value={settings.delivery_fee}
+              onChange={(e) => handleInputChange('delivery_fee', e.target.value)}
+              className="w-full max-w-xs p-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
+              placeholder="Ex: 3.00"
+              style={{ colorScheme: 'light' }}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Este valor será cobrado para todos os pedidos com entrega em Una (R$ 3,00 padrão).
+            </p>
+          </div>
+          <div>
+            <label htmlFor="comandatubaDeliveryFee" className="block text-sm font-medium text-gray-700 mb-2">
+              Taxa de Entrega - Comandatuba (R$)
+            </label>
+            <input
+              id="comandatubaDeliveryFee"
+              type="number"
+              step="0.01"
+              min="0"
+              value={settings.comandatuba_delivery_fee || '8.00'}
+              onChange={(e) => handleInputChange('comandatuba_delivery_fee', e.target.value)}
+              className="w-full max-w-xs p-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
+              placeholder="Ex: 8.00"
+              style={{ colorScheme: 'light' }}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Este valor será cobrado para todos os pedidos com entrega em Comandatuba (R$ 8,00 padrão).
+            </p>
+          </div>
         </div>
       </div>
 

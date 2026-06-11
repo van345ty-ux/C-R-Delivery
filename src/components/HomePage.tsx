@@ -323,6 +323,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           isMercadoPagoReturnFlow={isMercadoPagoReturnFlow}
           isPixReturnFlow={isPixReturnFlow}
           isValentineThemeActive={isValentineThemeActive}
+          selectedCity={selectedCity}
         />
       )}
 

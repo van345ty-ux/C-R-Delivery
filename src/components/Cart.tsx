@@ -20,6 +20,7 @@ interface CartProps {
   isMercadoPagoReturnFlow: boolean;
   isPixReturnFlow: boolean;
   isValentineThemeActive?: boolean; // Nova prop
+  selectedCity?: string;
 }
 
 export const Cart: React.FC<CartProps> = ({
@@ -34,6 +35,7 @@ export const Cart: React.FC<CartProps> = ({
   isMercadoPagoReturnFlow,
   isPixReturnFlow,
   isValentineThemeActive = false, // Nova prop
+  selectedCity = '',
 }) => {
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>(() => {
     return localStorage.getItem('cartDeliveryType') as 'delivery' | 'pickup' || 'delivery';
@@ -48,6 +50,7 @@ export const Cart: React.FC<CartProps> = ({
   const [loadingCoupon, setLoadingCoupon] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deliveryFeeValue, setDeliveryFeeValue] = useState(3.00);
+  const [comandatubaDeliveryFeeValue, setComandatubaDeliveryFeeValue] = useState(8.00);
   const [pixKeyValue, setPixKeyValue] = useState('');
   const [mercadoPagoLink, setMercadoPagoLink] = useState('https://link.mercadopago.com.br/sushicr');
   const [firstAvailableCoupon, setFirstAvailableCoupon] = useState<Coupon | null>(null);
@@ -177,6 +180,7 @@ export const Cart: React.FC<CartProps> = ({
             return acc;
           }, {});
           if (!isNaN(parseFloat(settingsMap.delivery_fee))) setDeliveryFeeValue(parseFloat(settingsMap.delivery_fee));
+          if (!isNaN(parseFloat(settingsMap.comandatuba_delivery_fee))) setComandatubaDeliveryFeeValue(parseFloat(settingsMap.comandatuba_delivery_fee));
           setPixKeyValue(settingsMap.pix_key || '');
           setMercadoPagoLink(settingsMap.mercado_pago_link || 'https://link.mercadopago.com.br/sushicr');
         }
@@ -236,7 +240,9 @@ export const Cart: React.FC<CartProps> = ({
   }, [user?.id]);
 
   const subtotal = items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  const deliveryFee = (deliveryType === 'delivery' && !isValentineThemeActive) ? deliveryFeeValue : 0;
+  const isComandatuba = selectedCity ? selectedCity.toLowerCase().includes('comandatuba') : false;
+  const currentFeeValue = isComandatuba ? comandatubaDeliveryFeeValue : deliveryFeeValue;
+  const deliveryFee = (deliveryType === 'delivery' && !isValentineThemeActive) ? currentFeeValue : 0;
   const discount = appliedCoupon ? (subtotal * appliedCoupon.discount / 100) : 0;
   const total = subtotal + deliveryFee - discount;
 
@@ -804,10 +810,10 @@ export const Cart: React.FC<CartProps> = ({
                   onChange={() => setDeliveryType('delivery')} 
                   className="mr-2" 
                   disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}
-                  aria-label={`Delivery com taxa de R$ ${deliveryFeeValue.toFixed(2)}`}
+                  aria-label={`Delivery com taxa de R$ ${currentFeeValue.toFixed(2)}`}
                 />
                 <span style={{ color: 'var(--text-primary)' }}>
-                  Delivery (+R$ {deliveryFeeValue.toFixed(2)})
+                  Delivery (+R$ {currentFeeValue.toFixed(2)})
                 </span>
               </label>
             )}
