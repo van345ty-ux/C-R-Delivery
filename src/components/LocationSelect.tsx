@@ -37,8 +37,18 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({ cities, onCitySe
     onCitySelect(city.name);
   };
 
-  // Sort cities to show active ones first
-  const sortedCities = [...cities].sort((a, b) => Number(b.active) - Number(a.active));
+  // Sort cities with custom order: Una first, Comandatuba below it, and Arataca last
+  const getCityPriority = (name: string) => {
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes('una')) return 1;
+    if (lowerName.includes('comandatuba')) return 2;
+    if (lowerName.includes('arataca')) return 3;
+    return 4;
+  };
+
+  const sortedCities = [...cities].sort((a, b) => {
+    return getCityPriority(a.name) - getCityPriority(b.name);
+  });
 
   return (
     <div 
