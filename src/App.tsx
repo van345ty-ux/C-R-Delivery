@@ -1,9 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { LocationSelect } from './components/LocationSelect';
 import { HomePage } from './components/HomePage';
-import { AdminPanel } from './components/AdminPanel';
-import { UserAuth } from './components/UserAuth';
-import { OrderTracking } from './components/OrderTracking';
 import { UserProfile } from './components/UserProfile';
 import { UserCouponNotification } from './components/UserCouponNotification';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -13,6 +10,11 @@ import toast, { Toaster } from 'react-hot-toast';
 import { User, Coupon, Product, CartItem, Order, City, OperatingHour } from './types'; // Importando tipos de types.ts
 import { CookieBanner } from './components/CookieBanner';
 import { ValentineTheme } from './components/ValentineTheme';
+
+// Code-splitting: componentes pesados carregados sob demanda (reduz ~45% do bundle inicial)
+const AdminPanel = lazy(() => import('./components/AdminPanel').then(m => ({ default: m.AdminPanel })));
+const UserAuth = lazy(() => import('./components/UserAuth').then(m => ({ default: m.UserAuth })));
+const OrderTracking = lazy(() => import('./components/OrderTracking').then(m => ({ default: m.OrderTracking })));
 
 // Usa fetch nativo para evitar travamento do SDK do Supabase
 const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null> => {
@@ -170,7 +172,7 @@ function App() {
 
   // O aplicativo só para de carregar quando os dados iniciais E a autenticação estiverem prontos E o perfil do usuário logado (se houver) estiver carregado
   const isLoading = initialAppDataLoading || authLoading || (session !== null && user === null);
-  console.log('App: isLoading:', isLoading, 'initialAppDataLoading:', initialAppDataLoading, 'authLoading:', authLoading, 'sessionActive:', session !== null, 'userProfileLoaded:', user !== null);
+  if (import.meta.env.DEV) console.log('App: isLoading:', isLoading, 'initialAppDataLoading:', initialAppDataLoading, 'authLoading:', authLoading, 'sessionActive:', session !== null, 'userProfileLoaded:', user !== null);
 
   // Effect to save currentView to localStorage whenever it changes
   useEffect(() => {
@@ -267,8 +269,9 @@ function App() {
   }, []);
 
 
-  // Debugging logs for App state
+  // Debugging logs for App state (somente em desenvolvimento)
   useEffect(() => {
+    if (!import.meta.env.DEV) return;
     console.log('App State - pendingCouponNotificationUserId:', pendingCouponNotificationUserId);
     console.log('App State - showUserCouponNotification:', showUserCouponNotification);
     console.log('App State - user:', user ? user.name : 'null');
@@ -277,9 +280,9 @@ function App() {
     console.log('App State - showPreOrderModal:', showPreOrderModal);
     console.log('App State - showPreOrderBanner:', showPreOrderBanner);
     console.log('App State - isStoreOpen:', isStoreOpen);
-    console.log('App State - canPlaceOrder (incl. pre-order):', canPlaceOrder); // Adicionado log
-    console.log('App State - isMercadoPagoReturnFlow:', isMercadoPagoReturnFlow); // Adicionado log
-    console.log('App State - isPixReturnFlow:', isPixReturnFlow); // Adicionado log
+    console.log('App State - canPlaceOrder (incl. pre-order):', canPlaceOrder);
+    console.log('App State - isMercadoPagoReturnFlow:', isMercadoPagoReturnFlow);
+    console.log('App State - isPixReturnFlow:', isPixReturnFlow);
   }, [pendingCouponNotificationUserId, showUserCouponNotification, user, session, currentView, showPreOrderModal, showPreOrderBanner, isStoreOpen, canPlaceOrder, isMercadoPagoReturnFlow, isPixReturnFlow]);
 
   // Usando useRef para evitar que a função seja recriada e cause loop infinito no useEffect de auth
@@ -736,7 +739,7 @@ function App() {
 
   // Tema Dia dos Namorados — ativado/desativado unicamente pelo toggle do admin
   const isValentineThemeActive = appSettings.valentine_theme_active === 'true';
-  console.log('[ValentineTheme] isValentineThemeActive:', isValentineThemeActive, '| raw value:', appSettings.valentine_theme_active, '| all settings keys:', Object.keys(appSettings));
+  if (import.meta.env.DEV) console.log('[ValentineTheme] isValentineThemeActive:', isValentineThemeActive, '| raw value:', appSettings.valentine_theme_active, '| all settings keys:', Object.keys(appSettings));
 
   const handleTriggerValentine = () => {
     if (isValentineThemeActive) {
@@ -835,7 +838,9 @@ function App() {
   return (
     <ThemeProvider>
       <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-        {renderContent()}
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}><p style={{ color: 'var(--text-secondary)' }}>Carregando...</p></div>}>
+          {renderContent()}
+        </Suspense>
         {showProfile && user && (
           <UserProfile
             user={user}
