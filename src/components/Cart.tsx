@@ -21,6 +21,10 @@ interface CartProps {
   isPixReturnFlow: boolean;
   isValentineThemeActive?: boolean; // Nova prop
   selectedCity?: string;
+  deliveryFee?: number;
+  comandatubaDeliveryFee?: number;
+  pixKey?: string;
+  mercadoPagoLink?: string;
 }
 
 export const Cart: React.FC<CartProps> = ({
@@ -36,6 +40,10 @@ export const Cart: React.FC<CartProps> = ({
   isPixReturnFlow,
   isValentineThemeActive = false, // Nova prop
   selectedCity = '',
+  deliveryFee: deliveryFeeValue = 3.00,
+  comandatubaDeliveryFee: comandatubaDeliveryFeeValue = 8.00,
+  pixKey: pixKeyValue = '',
+  mercadoPagoLink = 'https://link.mercadopago.com.br/sushicr',
 }) => {
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>(() => {
     return localStorage.getItem('cartDeliveryType') as 'delivery' | 'pickup' || 'delivery';
@@ -49,10 +57,6 @@ export const Cart: React.FC<CartProps> = ({
   });
   const [loadingCoupon, setLoadingCoupon] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deliveryFeeValue, setDeliveryFeeValue] = useState(3.00);
-  const [comandatubaDeliveryFeeValue, setComandatubaDeliveryFeeValue] = useState(8.00);
-  const [pixKeyValue, setPixKeyValue] = useState('');
-  const [mercadoPagoLink, setMercadoPagoLink] = useState('https://link.mercadopago.com.br/sushicr');
   const [firstAvailableCoupon, setFirstAvailableCoupon] = useState<Coupon | null>(null);
   const couponInputRef = useRef<HTMLInputElement>(null);
   const [showMercadoPagoWarning, setShowMercadoPagoWarning] = useState(false);
@@ -158,39 +162,6 @@ export const Cart: React.FC<CartProps> = ({
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const data = await withRetry(() =>
-          withTimeout(
-            supabase
-              .from('settings')
-              .select('key, value')
-              .then(({ data, error }) => {
-                if (error) throw error;
-                return data;
-              }),
-            TIMEOUT_MS
-          )
-        );
-
-        if (data) {
-          const settingsMap = data.reduce((acc: { [key: string]: string }, { key, value }: { key: string, value: string }) => {
-            acc[key] = value;
-            return acc;
-          }, {});
-          if (!isNaN(parseFloat(settingsMap.delivery_fee))) setDeliveryFeeValue(parseFloat(settingsMap.delivery_fee));
-          if (!isNaN(parseFloat(settingsMap.comandatuba_delivery_fee))) setComandatubaDeliveryFeeValue(parseFloat(settingsMap.comandatuba_delivery_fee));
-          setPixKeyValue(settingsMap.pix_key || '');
-          setMercadoPagoLink(settingsMap.mercado_pago_link || 'https://link.mercadopago.com.br/sushicr');
-        }
-      } catch (error) {
-        console.error('Error fetching settings:', error);
-        toast.error('Erro ao carregar configurações. Verifique sua conexão.');
-      }
-    };
-    fetchSettings();
-  }, []);
 
   useEffect(() => {
     const checkAvailableCoupons = async () => {
@@ -411,16 +382,9 @@ export const Cart: React.FC<CartProps> = ({
       return;
     }
     if (appliedCoupon) {
-      const { data: currentCoupon, error: fetchError } = await supabase
-        .from('coupons')
-        .select('usage_count')
-        .eq('id', appliedCoupon.id)
-        .single();
-      if (!fetchError && currentCoupon) {
-        await supabase
-          .from('coupons')
-          .update({ usage_count: currentCoupon.usage_count + 1 })
-          .eq('id', appliedCoupon.id);
+      const { error: rpcError } = await supabase.rpc('increment_coupon_usage', { p_coupon_id: appliedCoupon.id });
+      if (rpcError) {
+        console.error('Error incrementing coupon usage:', rpcError);
       }
     }
     const formattedOrder: Order = {

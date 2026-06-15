@@ -47,6 +47,10 @@ interface HomePageProps {
   menuMobileColumns: string; // Nova prop para controlar colunas no mobile
   onTriggerValentine: () => void;
   isValentineThemeActive: boolean; // Nova prop
+  deliveryFee: number;
+  comandatubaDeliveryFee: number;
+  pixKey: string;
+  mercadoPagoLink: string;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -86,6 +90,10 @@ export const HomePage: React.FC<HomePageProps> = ({
   menuMobileColumns, // Nova prop para controlar colunas no mobile
   onTriggerValentine,
   isValentineThemeActive, // Nova prop
+  deliveryFee,
+  comandatubaDeliveryFee,
+  pixKey,
+  mercadoPagoLink,
 }) => {
   const [showCart, setShowCart] = useState(isMercadoPagoReturnFlow || isPixReturnFlow);
   const [showPromotions, setShowPromotions] = useState(false);
@@ -324,6 +332,10 @@ export const HomePage: React.FC<HomePageProps> = ({
           isPixReturnFlow={isPixReturnFlow}
           isValentineThemeActive={isValentineThemeActive}
           selectedCity={selectedCity}
+          deliveryFee={deliveryFee}
+          comandatubaDeliveryFee={comandatubaDeliveryFee}
+          pixKey={pixKey}
+          mercadoPagoLink={mercadoPagoLink}
         />
       )}
 

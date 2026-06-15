@@ -831,6 +831,10 @@ function App() {
         menuMobileColumns={menuMobileColumns} // Nova prop para controlar colunas no mobile
         onTriggerValentine={handleTriggerValentine}
         isValentineThemeActive={isValentineThemeActive}
+        deliveryFee={parseFloat(appSettings.delivery_fee) || 0}
+        comandatubaDeliveryFee={parseFloat(appSettings.comandatuba_delivery_fee) || 0}
+        pixKey={appSettings.pix_key || ''}
+        mercadoPagoLink={appSettings.mercado_pago_link || 'https://link.mercadopago.com.br/sushicr'}
       />
     );
   };
