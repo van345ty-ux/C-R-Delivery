@@ -245,7 +245,7 @@ export const Menu: React.FC<MenuProps> = ({
           {/* Store Status - Premium Badge with Glassmorphism */}
           <div className="absolute top-4 left-4 z-10">
             <div 
-              className={`inline-flex items-center font-semibold px-5 py-2.5 rounded-full text-sm ${isStoreOpen ? 'animate-pulse-fade' : ''}`}
+              className="inline-flex items-center font-semibold px-5 py-2.5 rounded-full text-sm"
               style={{
                 backgroundColor: isStoreOpen ? '#D1FAE5' : '#0A0A0A',
                 color: isStoreOpen ? '#065F46' : '#FFFFFF',
