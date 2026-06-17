@@ -578,6 +578,38 @@ function App() {
     }
   }, [session]);
 
+  // Efeito para Rastreamento Online (Presence)
+  useEffect(() => {
+    if (!user || user.role !== 'customer') return;
+
+    const presenceChannel = supabase.channel('online-users', {
+      config: {
+        presence: {
+          key: user.id,
+        },
+      },
+    });
+
+    presenceChannel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await presenceChannel.track({ 
+          user_id: user.id, 
+          online_at: new Date().toISOString() 
+        });
+        
+        // Dispara a notificação de login para o toast do admin e para o histórico de acessos
+        supabase.from('login_notifications').insert({
+          user_id: user.id,
+          user_name: user.full_name || user.name || 'Usuário',
+        }).then(() => {});
+      }
+    });
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+    };
+  }, [user]);
+
   // Redireciona para a home se o usuário estiver logado e a view atual for auth
   useEffect(() => {
     console.log('useEffect [user, currentView]: User:', user ? user.name : 'null', 'CurrentView:', currentView);

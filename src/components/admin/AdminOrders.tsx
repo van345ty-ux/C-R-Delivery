@@ -31,6 +31,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [onlineCount, setOnlineCount] = useState(0);
   const itemsPerPage = 10;
 
   const fetchOrders = useCallback(async () => {
@@ -95,6 +96,27 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
       supabase.removeChannel(orderChannel);
     };
   }, [fetchOrders]);
+
+  useEffect(() => {
+    const presenceChannel = supabase.channel('online-users');
+
+    presenceChannel.on('presence', { event: 'sync' }, () => {
+      const newState = presenceChannel.presenceState();
+      let count = 0;
+      for (const id in newState) {
+        if (newState[id] && newState[id].length > 0) {
+          count++;
+        }
+      }
+      setOnlineCount(count);
+    });
+
+    presenceChannel.subscribe();
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+    };
+  }, []);
 
   const getDeliverySteps = () => [
     'Pedido recebido',
@@ -308,9 +330,17 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Gestão de Pedidos</h1>
-        <div className="bg-red-600 text-white font-bold px-3 py-1 rounded-full text-sm flex items-center">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Gestão de Pedidos</h1>
+          {onlineCount > 0 && (
+            <div className="mt-2 bg-green-50 text-green-700 border border-green-200 font-bold px-3 py-1 rounded-full text-xs flex items-center shadow-sm animate-pulse w-fit transition-all">
+              <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+              <span>{onlineCount} {onlineCount === 1 ? 'cliente online' : 'clientes online'}</span>
+            </div>
+          )}
+        </div>
+        <div className="bg-red-600 text-white font-bold px-3 py-1 rounded-full text-sm flex items-center h-fit">
           <span>{activeOrdersCount}</span>
           <span className="ml-1.5">{activeOrdersCount === 1 ? 'pedido ativo' : 'pedidos ativos'}</span>
         </div>
