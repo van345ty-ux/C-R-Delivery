@@ -264,16 +264,18 @@ export const Menu: React.FC<MenuProps> = ({
             {showWcText && (
               <>
                 <style>{`
-                  @keyframes wcTextFadeIn {
+                  @keyframes wcTextFadeInOut {
                     0% { opacity: 0; transform: translateY(20px) scale(0.9); }
-                    100% { opacity: 1; transform: translateY(0) scale(1); }
+                    10% { opacity: 1; transform: translateY(0) scale(1); }
+                    90% { opacity: 1; transform: translateY(0) scale(1); }
+                    100% { opacity: 0; transform: translateY(20px) scale(0.9); }
                   }
                 `}</style>
                 <div 
                   key={worldCupTriggerKey}
                   className="mt-4 sm:mt-6 text-center select-none w-[95%] pointer-events-none z-20"
                   style={{
-                    animation: 'wcTextFadeIn 0.8s ease-out forwards'
+                    animation: 'wcTextFadeInOut 5s ease-in-out forwards'
                   }}
                 >
                 <h3 className="text-4xl sm:text-6xl md:text-7xl font-black leading-tight" style={{ 
