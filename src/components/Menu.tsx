@@ -247,6 +247,7 @@ export const Menu: React.FC<MenuProps> = ({
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <div 
               className={`text-center p-6 md:p-8 rounded-2xl max-w-2xl mx-4 animate-fade-in pointer-events-auto ${heroTextBackgroundEnabled ? 'glass-effect' : ''}`}
+              style={{ transform: 'translateY(40px)' }}
             >
               {heroTitleText && (
                 <h2
