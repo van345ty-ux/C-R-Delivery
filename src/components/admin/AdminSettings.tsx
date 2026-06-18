@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
+import { Trash2 } from 'lucide-react';
 
 interface Settings {
   [key: string]: string;
@@ -37,6 +38,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved })
     hero_text_background_enabled: 'true', // Nova configuração para habilitar/desabilitar fundo do texto
     is_festive_mode_enabled: 'false',
     valentine_theme_active: 'false', // Tema Dia dos Namorados
+    world_cup_theme_active: 'false', // Tema Copa do Mundo
     menu_mobile_columns: '1', // Nova configuração: '1' ou '2' colunas no mobile
     // Configurações de Tema
     default_theme: 'light',
@@ -116,6 +118,40 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved })
     return publicUrl;
   };
 
+  const handleDeleteHeroImage = async () => {
+    if (!settings.hero_image_url) return;
+    if (!window.confirm('Tem certeza que deseja excluir a imagem principal do servidor? Esta ação não pode ser desfeita.')) return;
+    
+    setIsSaving(true);
+    
+    // Tenta extrair o caminho do arquivo na storage (supondo bucket app_hero_images)
+    const url = settings.hero_image_url;
+    if (url.includes('app_hero_images/')) {
+      const filePath = url.split('app_hero_images/')[1];
+      if (filePath) {
+        const { error } = await supabase.storage.from('app_hero_images').remove([filePath]);
+        if (error) {
+          console.error('Error deleting image from storage:', error);
+          toast.error('Aviso: Não foi possível remover o arquivo físico, mas o link será removido.');
+        }
+      }
+    }
+    
+    // Atualiza o banco de dados para remover o link
+    const { error: dbError } = await supabase.from('settings').upsert({ key: 'hero_image_url', value: '' });
+    
+    setIsSaving(false);
+    
+    if (dbError) {
+      toast.error('Erro ao atualizar configuração no banco.');
+    } else {
+      toast.success('Imagem excluída com sucesso!');
+      handleInputChange('hero_image_url', '');
+      setSelectedHeroFile(null);
+      onSettingsSaved?.();
+    }
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
 
@@ -160,6 +196,9 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved })
       console.error('Hours Error:', hoursResult.error);
     } else {
       toast.success('Configurações salvas com sucesso!');
+      if (settingsToSave.world_cup_theme_active === 'true') {
+        sessionStorage.removeItem('hasTriggeredWorldCupAnimationV3');
+      }
       setSettings(settingsToSave);
       setSelectedLogoFile(null);
       setSelectedHeroFile(null);
@@ -248,7 +287,23 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved })
             Imagem Principal do Cardápio (Hero Section)
           </label>
           <div className="flex items-center gap-4 mb-2">
-            <img src={settings.hero_image_url} alt="Imagem principal atual" className="w-32 h-20 object-cover border rounded-lg" />
+            <div className="relative group">
+              {settings.hero_image_url ? (
+                <img src={settings.hero_image_url} alt="Imagem principal atual" className="w-32 h-20 object-cover border rounded-lg" />
+              ) : (
+                <div className="w-32 h-20 bg-gray-100 border rounded-lg flex items-center justify-center text-xs text-gray-400">Sem imagem</div>
+              )}
+              {settings.hero_image_url && (
+                <button
+                  onClick={handleDeleteHeroImage}
+                  disabled={isSaving}
+                  className="absolute -top-2 -right-2 bg-white rounded-full p-1.5 shadow-md border hover:bg-red-50 text-red-600 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                  title="Excluir imagem do servidor"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
             <input
               id="heroImageUpload"
               type="file"
@@ -512,6 +567,59 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved })
                 className="absolute top-0.5 h-6 w-6 rounded-full bg-white border border-gray-300 shadow transition-all duration-300"
                 style={{
                   left: settings.valentine_theme_active === 'true' ? 'calc(100% - 28px)' : '4px',
+                }}
+              />
+            </div>
+          </label>
+        </div>
+      </div>
+
+      {/* Seção Tema Copa do Mundo 2026 */}
+      <div
+        className="rounded-lg shadow-sm border p-6"
+        style={{
+          background: 'linear-gradient(135deg, #f0fdf4 0%, #fef9c3 100%)',
+          borderColor: '#86efac',
+        }}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 flex-wrap">
+              ⚽ Tema Copa do Mundo 2026 (Verde e Amarelo)
+              <span
+                className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-800 border border-green-200"
+              >
+                Sazonal
+              </span>
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Ative para aplicar as cores do Brasil (Verde e Amarelo) no cardápio online do cliente, juntamente com detalhes comemorativos, bandeiras e um banner especial.
+            </p>
+            {settings.world_cup_theme_active === 'true' && (
+              <p className="text-xs mt-2 font-medium text-green-700 flex items-center gap-1">
+                🇧🇷 Tema ativo — o cardápio está verde e amarelo para os clientes agora!
+              </p>
+            )}
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
+            <input
+              type="checkbox"
+              id="world-cup-theme-toggle"
+              className="sr-only peer"
+              checked={settings.world_cup_theme_active === 'true'}
+              onChange={(e) => handleInputChange('world_cup_theme_active', e.target.checked ? 'true' : 'false')}
+            />
+            <div
+              className="w-14 h-7 rounded-full peer transition-all duration-300"
+              style={{
+                background: settings.world_cup_theme_active === 'true' ? '#16a34a' : '#d1d5db',
+                boxShadow: settings.world_cup_theme_active === 'true' ? '0 0 12px rgba(22, 163, 74, 0.4)' : 'none',
+              }}
+            >
+              <div
+                className="absolute top-0.5 h-6 w-6 rounded-full bg-white border border-gray-300 shadow transition-all duration-300"
+                style={{
+                  left: settings.world_cup_theme_active === 'true' ? 'calc(100% - 28px)' : '4px',
                 }}
               />
             </div>

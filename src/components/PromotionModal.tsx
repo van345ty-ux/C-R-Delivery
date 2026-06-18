@@ -2,6 +2,7 @@ import React from 'react';
 import { Product } from '../types'; // Corrected import path
 import { X, Plus } from 'lucide-react'; // Importando Plus
 import { Button } from './ui/button'; // Importando Button
+import { useTheme } from '../contexts/ThemeContext';
 
 interface PromotionModalProps {
   promotions: Product[];
@@ -12,6 +13,7 @@ interface PromotionModalProps {
 }
 
 export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onClose, title, onViewPromotion, onAddToCart }) => {
+  const { isWorldCupMode } = useTheme();
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
       <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col animate-scale-in">
@@ -29,7 +31,15 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({ promotions, onCl
               <div className="mt-4">
                 <h3 className="font-semibold text-gray-900 mb-1">{promo.name}</h3>
                 {promo.badge_text && (
-                  <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full block w-fit mb-1">
+                  <span 
+                    className="text-xs font-bold px-3 py-1 rounded-full block w-fit mb-1"
+                    style={{
+                      color: isWorldCupMode ? '#FFFFFF' : '#FFFFFF',
+                      background: isWorldCupMode
+                        ? 'linear-gradient(to right, #15803d, #facc15, #15803d)'
+                        : '#DC2626'
+                    }}
+                  >
                     {promo.badge_text}
                   </span>
                 )}

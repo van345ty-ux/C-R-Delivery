@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 import { Header } from './Header';
 import { Menu } from './Menu';
 import { Cart } from './Cart';
@@ -9,6 +10,8 @@ import { supabase } from '../integrations/supabase/client';
 import { PreOrderModal } from './PreOrderModal'; // Importando o novo modal
 import { EasterPopup } from './EasterPopup'; // Importando o novo popup de Páscoa
 import { ValentinePopup } from './ValentinePopup'; // Importando o novo popup de Dia dos Namorados
+import { WorldCupTheme } from './WorldCupTheme';
+import { WorldCupPreOrderPopup } from './WorldCupPreOrderPopup';
 
 interface HomePageProps {
   selectedCity: string;
@@ -53,6 +56,37 @@ interface HomePageProps {
   mercadoPagoLink: string;
 }
 
+const BRAZIL_GAMES = [
+  // Fase de Grupos
+  '2026-06-13', // Brasil vs Marrocos
+  '2026-06-19', // Brasil vs Haiti (Amanhã - considerando o dia atual como 18 de Junho de 2026)
+  '2026-06-24', // Escócia vs Brasil
+
+  // Fases Eliminatórias (caso o Brasil avance)
+  '2026-06-28',
+  '2026-06-29',
+  '2026-06-30',
+  '2026-07-01',
+  '2026-07-04',
+  '2026-07-05',
+  '2026-07-06',
+  '2026-07-07',
+  '2026-07-09',
+  '2026-07-10',
+  '2026-07-11',
+  '2026-07-14',
+  '2026-07-15',
+  '2026-07-18',
+  '2026-07-19'
+];
+
+const getLocalDateString = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const HomePage: React.FC<HomePageProps> = ({
   selectedCity,
   user,
@@ -95,6 +129,27 @@ export const HomePage: React.FC<HomePageProps> = ({
   pixKey,
   mercadoPagoLink,
 }) => {
+  const { isWorldCupMode } = useTheme();
+  const [worldCupTriggerKey, setWorldCupTriggerKey] = useState(0);
+  const hasTriggeredRef = useRef(false);
+
+  const bannerMessage = useMemo(() => {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    const todayStr = getLocalDateString(today);
+    const tomorrowStr = getLocalDateString(tomorrow);
+
+    if (BRAZIL_GAMES.includes(todayStr)) {
+      return '🇧🇷 HOJE TEM BRASIL! Rumo ao Hexa! ⚽ Peça seu combo da Seleção agora e garanta a torcida mais saborosa com o melhor sushi! 🍣';
+    } else if (BRAZIL_GAMES.includes(tomorrowStr)) {
+      return '🇧🇷 AMANHÃ TEM BRASIL! A caminhada rumo ao Hexa continua! ⚽ Garanta ou agende seu combo de sushi hoje e prepare a festa de amanhã! 🍣';
+    } else {
+      return '🇧🇷 RUMO AO HEXA! Entre no clima da Copa e apoie o Brasil saboreando nossos deliciosos combos de sushi! ⚽🍣';
+    }
+  }, []);
+
   const [showCart, setShowCart] = useState(isMercadoPagoReturnFlow || isPixReturnFlow);
   const [showPromotions, setShowPromotions] = useState(false);
   const [cartAnimation, setCartAnimation] = useState(false);
@@ -105,6 +160,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [loadingPromotions, setLoadingPromotions] = useState(true);
   const [hasTriggeredOnLoad, setHasTriggeredOnLoad] = useState(false);
   const [showValentinePopup, setShowValentinePopup] = useState(false);
+  const [showWorldCupPreOrderPopup, setShowWorldCupPreOrderPopup] = useState(false);
   const [pendingShowPromotions, setPendingShowPromotions] = useState(false);
   const [pendingShowPreOrder, setPendingShowPreOrder] = useState(false);
 
@@ -164,8 +220,18 @@ export const HomePage: React.FC<HomePageProps> = ({
 
           const willShowPromotions = (shouldShowOnLoadFromLocation || !isCooldownActive) && promotionsData.length > 0;
           const hasSeenValentine = sessionStorage.getItem('hasSeenValentinePopup') === 'true';
+          const hasSeenWorldCupPreOrder = sessionStorage.getItem('hasSeenWorldCupPreOrder') === 'true';
 
-          if (isValentineThemeActive && !hasSeenValentine) {
+          if (isWorldCupMode && !hasSeenWorldCupPreOrder) {
+            setShowWorldCupPreOrderPopup(true);
+            if (showPreOrderModal) {
+              setPendingShowPreOrder(true);
+              setShowPreOrderModal(false); // Esconde temporariamente para dar prioridade ao pop-up da Copa
+            }
+            if (willShowPromotions) {
+              setPendingShowPromotions(true);
+            }
+          } else if (isValentineThemeActive && !hasSeenValentine) {
             setShowValentinePopup(true);
             if (showPreOrderModal) {
               setPendingShowPreOrder(true);
@@ -192,13 +258,14 @@ export const HomePage: React.FC<HomePageProps> = ({
     };
 
     fetchPromotionsData();
-  }, [isMercadoPagoReturnFlow, isPixReturnFlow, showPreOrderModal, isValentineThemeActive]);
+  }, [isMercadoPagoReturnFlow, isPixReturnFlow, showPreOrderModal, isValentineThemeActive, isWorldCupMode]);
 
   // Efeito secundário: dispara a animação do Dia dos Namorados assim que o cliente fechar todos os modais iniciais
   useEffect(() => {
     const hasTriggeredAnim = sessionStorage.getItem('hasTriggeredValentineAnimation') === 'true';
     if (
       !showValentinePopup &&
+      !showWorldCupPreOrderPopup &&
       !showPreOrderModal &&
       !showPromotions &&
       !showEasterPopup &&
@@ -210,7 +277,34 @@ export const HomePage: React.FC<HomePageProps> = ({
       setHasTriggeredOnLoad(true);
       sessionStorage.setItem('hasTriggeredValentineAnimation', 'true');
     }
-  }, [showValentinePopup, showPreOrderModal, showPromotions, showEasterPopup, loadingPromotions, hasTriggeredOnLoad, onTriggerValentine]);
+  }, [showValentinePopup, showWorldCupPreOrderPopup, showPreOrderModal, showPromotions, showEasterPopup, loadingPromotions, hasTriggeredOnLoad, onTriggerValentine]);
+
+  // Efeito secundário para Copa do Mundo: dispara a animação assim que o cliente fechar todos os modais iniciais
+  useEffect(() => {
+    if (!isWorldCupMode) return;
+    console.log('[WorldCup] Checking animation trigger:', {
+      showValentinePopup,
+      showWorldCupPreOrderPopup,
+      showPreOrderModal,
+      showPromotions,
+      showEasterPopup,
+      loadingPromotions,
+      hasTriggered: hasTriggeredRef.current
+    });
+    if (
+      !showValentinePopup &&
+      !showWorldCupPreOrderPopup &&
+      !showPreOrderModal &&
+      !showPromotions &&
+      !showEasterPopup &&
+      !loadingPromotions &&
+      !hasTriggeredRef.current
+    ) {
+      console.log('[WorldCup] All checks passed, triggering animation locally!');
+      hasTriggeredRef.current = true;
+      setWorldCupTriggerKey(prev => prev + 1);
+    }
+  }, [showValentinePopup, showWorldCupPreOrderPopup, showPreOrderModal, showPromotions, showEasterPopup, loadingPromotions, isWorldCupMode]);
 
   const handleAddToCart = (product: Product, quantity = 1, observations?: string) => {
     onAddToCart(product, quantity, observations || undefined);
@@ -241,6 +335,20 @@ export const HomePage: React.FC<HomePageProps> = ({
     }
   };
 
+  const handleCloseWorldCupPreOrderPopup = () => {
+    setShowWorldCupPreOrderPopup(false);
+    sessionStorage.setItem('hasSeenWorldCupPreOrder', 'true');
+
+    if (pendingShowPreOrder) {
+      setShowPreOrderModal(true);
+      setPendingShowPreOrder(false);
+    } else if (pendingShowPromotions) {
+      setShowPromotions(true);
+      setPendingShowPromotions(false);
+      localStorage.setItem('promotionModalLastShown', Date.now().toString());
+    }
+  };
+
   const handleCloseCart = () => {
     setShowCart(false);
     if (isPixReturnFlow) {
@@ -249,7 +357,12 @@ export const HomePage: React.FC<HomePageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col"> {/* Adicionado flex flex-col */}
+    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${isWorldCupMode ? 'bg-white text-gray-900' : 'bg-gray-50 text-gray-900'}`}> {/* Adicionado flex flex-col */}
+      {isWorldCupMode && (
+        <div className="bg-gradient-to-r from-green-700 via-yellow-400 to-green-700 text-zinc-950 font-bold text-center py-2.5 px-4 text-xs sm:text-sm shadow-lg z-50 select-none flex items-center justify-center gap-2 border-b border-yellow-500">
+          <span>{bannerMessage}</span>
+        </div>
+      )}
       <Header
         selectedCity={selectedCity}
         user={user}
@@ -339,8 +452,10 @@ export const HomePage: React.FC<HomePageProps> = ({
         />
       )}
 
-      {/* ValentinePopup takes precedence, then PreOrderModal */}
-      {showValentinePopup ? (
+      {/* WorldCupPreOrderPopup takes precedence, then ValentinePopup, then PreOrderModal */}
+      {showWorldCupPreOrderPopup ? (
+        <WorldCupPreOrderPopup onClose={handleCloseWorldCupPreOrderPopup} />
+      ) : showValentinePopup ? (
         <ValentinePopup onClose={handleCloseValentinePopup} />
       ) : showPreOrderModal ? (
         <PreOrderModal onClose={() => {
@@ -374,6 +489,9 @@ export const HomePage: React.FC<HomePageProps> = ({
             onAddToCart={handleAddToCart}
           />
         )
+      )}
+      {isWorldCupMode && worldCupTriggerKey > 0 && (
+        <WorldCupTheme key={worldCupTriggerKey} />
       )}
       <Footer /> {/* Adicionando o Footer aqui */}
     </div>

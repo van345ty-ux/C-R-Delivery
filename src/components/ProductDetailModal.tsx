@@ -3,6 +3,7 @@ import { Plus, Minus } from 'lucide-react';
 import { Product } from '../types';
 import toast from 'react-hot-toast';
 import { cn } from '../utils/cn';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface ProductDetailModalProps {
   product: Product;
@@ -19,6 +20,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   canPlaceOrder, // Nova prop
   isMercadoPagoReturnFlow, // Nova prop
 }) => {
+  const { isWorldCupMode } = useTheme();
   const [quantity, setQuantity] = useState(1);
   const [observations, setObservations] = useState('');
 
@@ -126,9 +128,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 className="absolute top-3 right-3 font-bold px-3 py-1.5 text-xs"
                 style={{
                   borderRadius: '100px',
-                  color: '#FFFFFF',
-                  background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',
-                  boxShadow: '0 4px 12px rgba(220, 38, 38, 0.6)'
+                  color: isWorldCupMode ? '#FFFFFF' : '#FFFFFF',
+                  background: isWorldCupMode
+                    ? 'linear-gradient(to right, #15803d, #facc15, #15803d)'
+                    : 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',
+                  boxShadow: isWorldCupMode
+                    ? '0 4px 12px rgba(21, 128, 61, 0.4)'
+                    : '0 4px 12px rgba(220, 38, 38, 0.6)'
                 }}
               >
                 {product.badge_text}

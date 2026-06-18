@@ -108,13 +108,7 @@ function App() {
     return '';
   });
 
-  const [currentView, setCurrentView] = useState<'location' | 'home' | 'admin' | 'auth' | 'tracking'>(() => {
-    if (typeof window !== 'undefined') {
-      const savedView = localStorage.getItem('lastView');
-      return getInitialView(savedView || 'location', selectedCity);
-    }
-    return 'location';
-  });
+  const [currentView, setCurrentView] = useState<'location' | 'home' | 'admin' | 'auth' | 'tracking'>('location');
 
   const [valentineTriggerKey, setValentineTriggerKey] = useState(0);
 
@@ -215,6 +209,8 @@ function App() {
       localStorage.setItem(LAST_ACCESS_KEY, Date.now().toString());
     }
   }, [isLoading]);
+
+
 
   // Verifica se há novas atualizações na Vercel ao retornar para o app
   useEffect(() => {

@@ -908,3 +908,168 @@ body.cart-open::-webkit-scrollbar {
     display: none !important;
   }
 }
+
+/* ============================================
+   SOCCER BALL BOUNCING & SHADOW ANIMATIONS
+   ============================================ */
+@keyframes ball-bounce {
+  /* Rest on ground / Launch */
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  10% {
+    transform: translateY(-140px) scaleY(1.05) scaleX(0.95);
+    animation-timing-function: cubic-bezier(0.1, 0.8, 0.3, 1);
+  }
+  /* First Rebound (highest) */
+  25% {
+    transform: translateY(0) scaleY(1) scaleX(1);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  27% {
+    transform: translateY(0) scaleY(0.7) scaleX(1.3); /* squash */
+  }
+  29% {
+    transform: translateY(0) scale(1);
+  }
+  40% {
+    transform: translateY(-75px) scaleY(1.03) scaleX(0.97);
+    animation-timing-function: cubic-bezier(0.1, 0.8, 0.3, 1);
+  }
+  /* Second Rebound */
+  52% {
+    transform: translateY(0) scaleY(1) scaleX(1);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  54% {
+    transform: translateY(0) scaleY(0.8) scaleX(1.2); /* squash */
+  }
+  56% {
+    transform: translateY(0) scale(1);
+  }
+  65% {
+    transform: translateY(-35px) scaleY(1.02) scaleX(0.98);
+    animation-timing-function: cubic-bezier(0.1, 0.8, 0.3, 1);
+  }
+  /* Third Rebound */
+  74% {
+    transform: translateY(0) scaleY(1) scaleX(1);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  76% {
+    transform: translateY(0) scaleY(0.9) scaleX(1.1); /* squash */
+  }
+  78% {
+    transform: translateY(0) scale(1);
+  }
+  85% {
+    transform: translateY(-15px) scaleY(1.01) scaleX(0.99);
+    animation-timing-function: cubic-bezier(0.1, 0.8, 0.3, 1);
+  }
+  /* Fourth Rebound & Coming to rest */
+  92% {
+    transform: translateY(0) scaleY(1) scaleX(1);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  93% {
+    transform: translateY(0) scaleY(0.95) scaleX(1.05); /* squash */
+  }
+  94% {
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    transform: translateY(0) scale(1); /* rest before loop */
+  }
+}
+
+@keyframes shadow-scale {
+  0% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  10% {
+    transform: scale(0.3);
+    opacity: 0.1;
+    animation-timing-function: cubic-bezier(0.1, 0.8, 0.3, 1);
+  }
+  25% {
+    transform: scale(1);
+    opacity: 0.4;
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  27% {
+    transform: scale(1.3);
+    opacity: 0.55;
+  }
+  29% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(0.5);
+    opacity: 0.2;
+    animation-timing-function: cubic-bezier(0.1, 0.8, 0.3, 1);
+  }
+  52% {
+    transform: scale(1);
+    opacity: 0.4;
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  54% {
+    transform: scale(1.2);
+    opacity: 0.5;
+  }
+  56% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  65% {
+    transform: scale(0.7);
+    opacity: 0.28;
+    animation-timing-function: cubic-bezier(0.1, 0.8, 0.3, 1);
+  }
+  74% {
+    transform: scale(1);
+    opacity: 0.4;
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  76% {
+    transform: scale(1.1);
+    opacity: 0.45;
+  }
+  78% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  85% {
+    transform: scale(0.85);
+    opacity: 0.34;
+    animation-timing-function: cubic-bezier(0.1, 0.8, 0.3, 1);
+  }
+  92% {
+    transform: scale(1);
+    opacity: 0.4;
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  93% {
+    transform: scale(1.05);
+    opacity: 0.42;
+  }
+  94% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+}
+
+.animate-ball-bounce {
+  animation: ball-bounce 3.2s infinite !important;
+}
+
+.animate-shadow-scale {
+  animation: shadow-scale 3.2s infinite !important;
+}
+

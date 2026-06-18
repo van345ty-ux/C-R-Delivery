@@ -1,6 +1,7 @@
 import React from 'react';
 import { Product } from '../types';
 import { Plus } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
 import { cn } from '../utils/cn';
 
 interface ProductCardProps {
@@ -13,6 +14,8 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick, isPromotion = false, isMercadoPagoReturnFlow, isCompactMode = false, isHorizontalMode = false }) => {
+  const { isWorldCupMode } = useTheme();
+
   // Layout horizontal: imagem pequena à esquerda, detalhes ao lado
   if (isHorizontalMode) {
     return (
@@ -23,7 +26,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
         )}
         style={{
           backgroundColor: isPromotion ? 'var(--promo-card-bg)' : 'var(--bg-elevated)',
-          borderLeft: `4px solid ${isPromotion ? 'var(--promo-left-border)' : '#DC2626'}`,
+          borderLeft: `4px solid ${
+            isWorldCupMode
+              ? (isPromotion ? '#fbbf24' : '#16a34a')
+              : (isPromotion ? 'var(--promo-left-border)' : '#DC2626')
+          }`,
           borderRadius: '24px',
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)'
         }}
@@ -35,8 +42,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
             className="absolute top-2 right-2 font-bold backdrop-blur-md animate-scale-in text-xs px-2 py-0.5 z-10"
             style={{
               borderRadius: 'var(--radius-full)',
-              color: isPromotion ? 'var(--promo-badge-text)' : '#FFFFFF',
-              background: isPromotion ? 'var(--promo-badge-bg)' : 'var(--accent-primary)',
+              color: isWorldCupMode ? '#FFFFFF' : (isPromotion ? 'var(--promo-badge-text)' : '#FFFFFF'),
+              background: isWorldCupMode 
+                ? 'linear-gradient(to right, #15803d, #facc15, #15803d)' 
+                : (isPromotion ? 'var(--promo-badge-bg)' : 'var(--accent-primary)'),
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -165,8 +174,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
                 isMercadoPagoReturnFlow && "opacity-50 cursor-not-allowed"
               )}
               style={{
-                background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
-                color: 'var(--text-inverse)',
+                background: isWorldCupMode
+                  ? 'linear-gradient(135deg, #fbbf24, #f59e0b)'
+                  : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                color: isWorldCupMode ? '#000000' : 'var(--text-inverse)',
                 borderRadius: 'var(--radius-full)',
                 boxShadow: 'var(--shadow-md)',
                 border: isPromotion ? 'var(--promo-button-border)' : 'none'
@@ -191,9 +202,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
       )}
       style={{
         backgroundColor: isPromotion ? 'var(--promo-card-bg)' : 'var(--bg-elevated)',
-        border: `1px solid ${isPromotion ? 'var(--border-accent)' : 'var(--border-primary)'}`,
-        borderLeft: `4px solid ${isPromotion ? 'var(--promo-left-border)' : 'var(--accent-primary)'}`,
-        borderRight: `4px solid ${isPromotion ? 'var(--promo-left-border)' : 'var(--accent-primary)'}`,
+        border: isPromotion ? '1px solid var(--border-accent)' : '1px solid var(--border-primary)',
+        borderLeft: `4px solid ${
+          isWorldCupMode
+            ? (isPromotion ? '#fbbf24' : '#16a34a')
+            : (isPromotion ? 'var(--promo-left-border)' : 'var(--accent-primary)')
+        }`,
+        borderRight: `4px solid ${
+          isWorldCupMode
+            ? (isPromotion ? '#fbbf24' : '#16a34a')
+            : (isPromotion ? 'var(--promo-left-border)' : 'var(--accent-primary)')
+        }`,
         borderRadius: 'var(--radius-xl)',
         boxShadow: 'var(--shadow-md)'
       }}
@@ -226,8 +245,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
             )}
             style={{
               borderRadius: 'var(--radius-full)',
-              color: isPromotion ? 'var(--promo-badge-text)' : '#FFFFFF',
-              background: isPromotion ? 'var(--promo-badge-bg)' : 'var(--accent-primary)',
+              color: isWorldCupMode ? '#FFFFFF' : (isPromotion ? 'var(--promo-badge-text)' : '#FFFFFF'),
+              background: isWorldCupMode 
+                ? 'linear-gradient(to right, #15803d, #facc15, #15803d)' 
+                : (isPromotion ? 'var(--promo-badge-bg)' : 'var(--accent-primary)'),
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -254,7 +275,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
             color: isPromotion ? 'var(--promo-name-text)' : 'var(--text-primary)',
             fontFamily: 'var(--font-body)'
           }}
-
         >
           {product.name}
         </h3>
@@ -347,8 +367,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClic
               isMercadoPagoReturnFlow && "opacity-50 cursor-not-allowed"
             )}
             style={{
-              background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
-              color: 'var(--text-inverse)',
+              background: isWorldCupMode
+                ? 'linear-gradient(135deg, #fbbf24, #f59e0b)'
+                : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+              color: isWorldCupMode ? '#000000' : 'var(--text-inverse)',
               borderRadius: 'var(--radius-full)',
               boxShadow: 'var(--shadow-md)',
               border: isPromotion ? 'var(--promo-button-border)' : 'none'

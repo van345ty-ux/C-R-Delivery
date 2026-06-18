@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
 import { ProductCard, ProductCardSkeleton } from './ProductCard';
 import { HighlightCard } from './HighlightCard';
 import { ProductDetailModal } from './ProductDetailModal'; // Importando o novo modal
@@ -64,6 +65,7 @@ export const Menu: React.FC<MenuProps> = ({
   onTriggerValentine,
   isValentineThemeActive = false, // Nova prop
 }) => {
+  const { isWorldCupMode } = useTheme();
   const [products, setProducts] = useState<Product[]>([]);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [loading, setLoading] = useState(true);
@@ -260,7 +262,7 @@ export const Menu: React.FC<MenuProps> = ({
                   backgroundColor: isStoreOpen ? '#10B981' : '#FFFFFF'
                 }}
               ></div>
-              <span>{isStoreOpen ? (isValentineThemeActive ? 'Plantão Dia dos namorados' : 'Atendendo') : 'Fechado'}</span>
+              <span>{isStoreOpen ? (isWorldCupMode ? 'Plantão rumo ao hexa' : isValentineThemeActive ? 'Plantão Dia dos namorados' : 'Atendendo') : 'Fechado'}</span>
             </div>
           </div>
         </div>
@@ -279,18 +281,22 @@ export const Menu: React.FC<MenuProps> = ({
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-4 h-5 w-5 text-gray-400" aria-hidden="true" />
+            <Search className={`absolute left-4 top-4 h-5 w-5 ${isWorldCupMode ? 'text-green-600' : 'text-gray-400'}`} aria-hidden="true" />
             <input
               type="text"
               placeholder="Buscar produtos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 placeholder:text-gray-400 transition-all duration-300 bg-white shadow-sm hover:shadow-md"
-              style={{
+              className={`w-full pl-12 pr-4 py-3.5 border-2 rounded-xl placeholder:text-gray-400 transition-all duration-300 shadow-sm hover:shadow-md ${
+                isWorldCupMode 
+                  ? 'border-green-600 bg-white text-gray-900 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400' 
+                  : 'border-gray-200 bg-white focus:ring-2 focus:ring-red-500 focus:border-red-500'
+              }`}
+              style={!isWorldCupMode ? {
                 backgroundColor: 'var(--bg-elevated)',
                 borderColor: 'var(--border-primary)',
                 color: 'var(--text-primary)'
-              }}
+              } : {}}
               disabled={isMercadoPagoReturnFlow}
               aria-label="Buscar produtos no cardápio"
             />
@@ -302,6 +308,10 @@ export const Menu: React.FC<MenuProps> = ({
           {categories.map((category) => {
             const isOvos = category === 'Ovos de Sushi';
             const isActive = selectedCategory === category;
+            
+            const emojiIndex = categories.indexOf(category);
+            const worldCupEmoji = ['⚽', '🇧🇷'][emojiIndex % 2];
+            const displayCategory = isWorldCupMode ? `${worldCupEmoji} ${category}` : category;
 
             let btnClass = "";
 
@@ -314,8 +324,8 @@ export const Menu: React.FC<MenuProps> = ({
             } else {
               // Premium styling for other categories with enhanced transitions
               btnClass = `px-5 py-3 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 shadow-sm hover:shadow-md ${isActive
-                  ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg scale-105'
-                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                  ? (isWorldCupMode ? 'bg-gradient-to-r from-green-600 to-green-700 border-2 border-yellow-400 text-white shadow-lg scale-105' : 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg scale-105')
+                  : (isWorldCupMode ? 'bg-white text-green-700 hover:bg-green-50 border border-green-300' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200')
                 }`;
             }
 
@@ -325,8 +335,8 @@ export const Menu: React.FC<MenuProps> = ({
                 onClick={() => onCategoryChange(category)}
                 className={`${btnClass} ${isMercadoPagoReturnFlow ? 'opacity-50 cursor-not-allowed' : ''} focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2`}
                 style={{
-                  backgroundColor: !isOvos && isActive ? 'var(--accent-primary)' : undefined,
-                  color: !isOvos && isActive ? '#FFFFFF' : undefined
+                  backgroundColor: !isWorldCupMode && !isOvos && isActive ? 'var(--accent-primary)' : undefined,
+                  color: !isWorldCupMode && !isOvos && isActive ? '#FFFFFF' : undefined
                 }}
                 disabled={isMercadoPagoReturnFlow}
                 role="tab"
@@ -334,7 +344,7 @@ export const Menu: React.FC<MenuProps> = ({
                 aria-label={`Filtrar por categoria ${category}`}
               >
                 {isOvos && <span className="text-xl" aria-hidden="true">🍣</span>}
-                {category}
+                {displayCategory}
               </button>
             );
           })}
@@ -364,7 +374,7 @@ export const Menu: React.FC<MenuProps> = ({
       {/* Promotions Grid (3 cards on desktop) - Premium Spacing */}
       {productsToDisplayIn3ColGrid.length > 0 && (
         <div className="mb-10">
-          {selectedCategory === 'Todos' && <h3 className="text-2xl font-bold mb-6" style={{ fontFamily: 'var(--font-display)', color: '#0A0A0A' }}>Promoções/Recomendações</h3>}
+          {selectedCategory === 'Todos' && <h3 className="text-2xl font-bold mb-6" style={{ fontFamily: 'var(--font-display)', color: isWorldCupMode ? '#15803d' : '#0A0A0A' }}>Promoções/Recomendações</h3>}
           <div className={`grid ${menuMobileColumns === '2' ? 'grid-cols-2' : 'grid-cols-1'} sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8`}>
             {productsToDisplayIn3ColGrid.map((product) => (
               <ProductCard
@@ -384,7 +394,7 @@ export const Menu: React.FC<MenuProps> = ({
       {/* Regular Products Grid (4 cards on desktop) - Premium Spacing */}
       {productsToDisplayIn5ColGrid.length > 0 && (
         <div className="mb-10">
-          {selectedCategory === 'Todos' && <h3 className="text-2xl font-bold mb-6" style={{ fontFamily: 'var(--font-display)', color: '#0A0A0A' }}>Cardápio</h3>}
+          {selectedCategory === 'Todos' && <h3 className="text-2xl font-bold mb-6" style={{ fontFamily: 'var(--font-display)', color: isWorldCupMode ? '#15803d' : '#0A0A0A' }}>Cardápio</h3>}
           <div className={`grid ${menuMobileColumns === '2' ? 'grid-cols-2' : 'grid-cols-1'} sm:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8`}>
             {productsToDisplayIn5ColGrid.map((product) => (
               <ProductCard

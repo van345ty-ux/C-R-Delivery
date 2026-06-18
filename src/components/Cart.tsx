@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Plus, Minus, CreditCard, Smartphone, DollarSign, Gift, ExternalLink, Copy, Heart } from 'lucide-react';
 import { CartItem, Order, User, Coupon } from '../types';
+import { useTheme } from '../contexts/ThemeContext';
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
 import { withRetry, withTimeout, TIMEOUT_MS } from '../hooks/useQuery';
@@ -45,6 +46,7 @@ export const Cart: React.FC<CartProps> = ({
   pixKey: pixKeyValue = '',
   mercadoPagoLink = 'https://link.mercadopago.com.br/sushicr',
 }) => {
+  const { isWorldCupMode } = useTheme();
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>(() => {
     return localStorage.getItem('cartDeliveryType') as 'delivery' | 'pickup' || 'delivery';
   });
@@ -72,6 +74,8 @@ export const Cart: React.FC<CartProps> = ({
   const [hasAcknowledgedPixReturnConfirmation, setHasAcknowledgedPixReturnConfirmation] = useState(() => JSON.parse(localStorage.getItem('hasAcknowledgedPixReturnConfirmation') || 'false'));
   const [showValentineWarning, setShowValentineWarning] = useState(false);
   const [isValentineWarningAcknowledged, setIsValentineWarningAcknowledged] = useState(false);
+  const [showWorldCupWarning, setShowWorldCupWarning] = useState(false);
+  const [isWorldCupWarningAcknowledged, setIsWorldCupWarningAcknowledged] = useState(false);
 
   // Novos estados para o troco
   const [needsChange, setNeedsChange] = useState<boolean | null>(null);
@@ -308,6 +312,12 @@ export const Cart: React.FC<CartProps> = ({
       return;
     }
 
+    // Intercepta para o aviso da Copa do Mundo (Agendamento Sexta-Feira)
+    if (isWorldCupMode && !isWorldCupWarningAcknowledged) {
+      setShowWorldCupWarning(true);
+      return;
+    }
+
     // Intercepta para o aviso de Dia dos Namorados (Agendamento Sexta-Feira)
     if (isValentineThemeActive && !isValentineWarningAcknowledged) {
       setShowValentineWarning(true);
@@ -493,7 +503,7 @@ export const Cart: React.FC<CartProps> = ({
           <div className="text-center">
             <p 
               className="text-base mb-4"
-              style={{ color: 'var(--text-secondary)' }}
+              style={{ color: isWorldCupMode ? '#a1a1aa' : 'var(--text-secondary)' }}
             >
               Seu carrinho está vazio
             </p>
@@ -501,8 +511,10 @@ export const Cart: React.FC<CartProps> = ({
               onClick={onClose} 
               className="px-6 py-2 rounded-lg transition-all duration-300 hover:scale-105"
               style={{
-                background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
-                color: 'var(--text-inverse)',
+                background: isWorldCupMode 
+                  ? 'linear-gradient(135deg, #fbbf24, #f59e0b)'
+                  : 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                color: isWorldCupMode ? '#000000' : 'var(--text-inverse)',
                 boxShadow: 'var(--shadow-md)'
               }}
             >
@@ -561,7 +573,7 @@ export const Cart: React.FC<CartProps> = ({
           <div 
             key={item.product.id} 
             className="rounded-lg p-4"
-            style={{ backgroundColor: 'var(--bg-secondary)' }}
+            style={{ backgroundColor: isWorldCupMode ? 'rgba(16, 185, 129, 0.08)' : 'var(--bg-secondary)' }}
           >
             <div className="flex justify-between items-start mb-2">
               <h4 
@@ -594,8 +606,8 @@ export const Cart: React.FC<CartProps> = ({
                   onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)} 
                   className="rounded-full p-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
                   style={{ 
-                    backgroundColor: 'var(--bg-tertiary)',
-                    color: 'var(--text-primary)'
+                    backgroundColor: isWorldCupMode ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-tertiary)',
+                    color: isWorldCupMode ? '#15803d' : 'var(--text-primary)'
                   }}
                   disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}
                   aria-label={`Diminuir quantidade de ${item.product.name}`}
@@ -613,8 +625,8 @@ export const Cart: React.FC<CartProps> = ({
                   onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)} 
                   className="rounded-full p-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
                   style={{ 
-                    backgroundColor: 'var(--bg-tertiary)',
-                    color: 'var(--text-primary)'
+                    backgroundColor: isWorldCupMode ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-tertiary)',
+                    color: isWorldCupMode ? '#15803d' : 'var(--text-primary)'
                   }}
                   disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}
                   aria-label={`Aumentar quantidade de ${item.product.name}`}
@@ -624,7 +636,7 @@ export const Cart: React.FC<CartProps> = ({
               </div>
               <span 
                 className="font-medium text-base"
-                style={{ color: 'var(--text-primary)' }}
+                style={{ color: isWorldCupMode ? '#15803d' : 'var(--text-primary)' }}
               >
                 R$ {(item.product.price * item.quantity).toFixed(2)}
               </span>
@@ -849,7 +861,7 @@ export const Cart: React.FC<CartProps> = ({
             {paymentMethod === 'pix' && hasSeenPixInstructions && pixKeyValue && (
               <div 
                 className="ml-6 mt-2 p-3 rounded-lg flex items-center justify-between"
-                style={{ backgroundColor: 'var(--bg-secondary)' }}
+                style={{ backgroundColor: isWorldCupMode ? 'rgba(16, 185, 129, 0.08)' : 'var(--bg-secondary)' }}
               >
                 <div>
                   <p 
@@ -860,7 +872,7 @@ export const Cart: React.FC<CartProps> = ({
                   </p>
                   <p 
                     className="font-mono text-sm break-all"
-                    style={{ color: 'var(--text-primary)' }}
+                    style={{ color: isWorldCupMode ? '#15803d' : 'var(--text-primary)' }}
                   >
                     {pixKeyValue}
                   </p>
@@ -872,8 +884,8 @@ export const Cart: React.FC<CartProps> = ({
                   }}
                   className="ml-4 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
                   style={{
-                    backgroundColor: 'var(--bg-tertiary)',
-                    color: 'var(--text-primary)'
+                    backgroundColor: isWorldCupMode ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-tertiary)',
+                    color: isWorldCupMode ? '#15803d' : 'var(--text-primary)'
                   }}
                   aria-label="Copiar chave PIX"
                 >
@@ -928,7 +940,7 @@ export const Cart: React.FC<CartProps> = ({
             <div className="flex gap-2 mb-3">
               <button
                 onClick={() => setNeedsChange(true)}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${needsChange === true ? 'bg-red-600 text-white border-red-600' : 'border-gray-300 hover:bg-gray-50'}`}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${needsChange === true ? (isWorldCupMode ? 'bg-green-600 text-white border-green-600 shadow-sm' : 'bg-red-600 text-white border-red-600') : 'border-gray-300 hover:bg-gray-50'}`}
                 style={needsChange !== true ? { 
                   backgroundColor: 'var(--bg-primary)',
                   color: 'var(--text-primary)',
@@ -941,7 +953,7 @@ export const Cart: React.FC<CartProps> = ({
               </button>
               <button
                 onClick={() => { setNeedsChange(false); setChangeForAmount(''); }}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${needsChange === false ? 'bg-red-600 text-white border-red-600' : 'border-gray-300 hover:bg-gray-50'}`}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${needsChange === false ? (isWorldCupMode ? 'bg-green-600 text-white border-green-600 shadow-sm' : 'bg-red-600 text-white border-red-600') : 'border-gray-300 hover:bg-gray-50'}`}
                 style={needsChange !== false ? { 
                   backgroundColor: 'var(--bg-primary)',
                   color: 'var(--text-primary)',
@@ -1004,7 +1016,7 @@ export const Cart: React.FC<CartProps> = ({
           {deliveryType === 'delivery' && (
             <div className="flex justify-between">
               <span style={{ color: 'var(--text-primary)' }}>Taxa de entrega:</span>
-              <span style={isFreeDelivery ? { color: '#ef4444', fontWeight: 'bold' } : { color: 'var(--text-primary)' }}>
+              <span style={isFreeDelivery ? { color: '#ef4444', fontStyle: 'italic', fontWeight: 'bold' } : { color: 'var(--text-primary)' }}>
                 {isFreeDelivery ? 'Grátis' : `R$ ${deliveryFee.toFixed(2)}`}
               </span>
             </div>
@@ -1020,7 +1032,7 @@ export const Cart: React.FC<CartProps> = ({
             style={{ borderColor: 'var(--border-primary)' }}
           >
             <span style={{ color: 'var(--text-primary)' }}>Total:</span>
-            <span style={{ color: 'var(--text-primary)' }}>R$ {total.toFixed(2)}</span>
+            <span style={{ color: isWorldCupMode ? '#15803d' : 'var(--text-primary)' }}>R$ {total.toFixed(2)}</span>
           </div>
         </div>
 
@@ -1048,12 +1060,18 @@ export const Cart: React.FC<CartProps> = ({
             !paymentMethod || 
             (paymentMethod === 'pix' && (!pixKeyValue || !hasSeenPixInstructions))
           }
-          className={`w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
-            isValentineWarningAcknowledged
-              ? 'animate-pulse ring-4 ring-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.6)]'
-              : (paymentMethod === 'card' && isMercadoPagoAcknowledged)
-                ? 'animate-pulse ring-4 ring-red-300'
-                : ''
+          className={`w-full py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+            isWorldCupMode
+              ? 'bg-yellow-400 text-zinc-950 hover:bg-yellow-500 focus:ring-yellow-400'
+              : 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500'
+          } ${
+            isWorldCupWarningAcknowledged
+              ? 'animate-pulse ring-4 ring-green-500 shadow-[0_0_15px_rgba(34,197,94,0.6)]'
+              : isValentineWarningAcknowledged
+                ? 'animate-pulse ring-4 ring-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.6)]'
+                : (paymentMethod === 'card' && isMercadoPagoAcknowledged)
+                  ? 'animate-pulse ring-4 ring-red-300'
+                  : ''
           }`}
           aria-label={isSubmitting ? 'Finalizando pedido, aguarde' : 'Finalizar pedido'}
         >
@@ -1109,6 +1127,30 @@ export const Cart: React.FC<CartProps> = ({
               className="w-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-extrabold py-3 rounded-xl transition-all duration-300 shadow-md shadow-pink-500/10 hover:shadow-pink-500/20 active:scale-[0.98] cursor-pointer text-sm"
             >
               Estou ciente ❤️
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showWorldCupWarning && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[100000] p-4 animate-fade-in">
+          <div className="bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center border border-green-100 dark:border-green-950 animate-scale-in">
+            <div className="inline-flex items-center justify-center p-3 bg-green-50 dark:bg-green-950/30 rounded-full mb-3 border border-green-100 dark:border-green-900/30">
+              <span className="text-3xl animate-bounce">⚽</span>
+            </div>
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">Aviso Importante</h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6 leading-relaxed font-medium">
+              Aviso: seu pedido será agendado para entrega na sexta-feira a partir das 18h.
+            </p>
+            <button
+              onClick={() => {
+                setIsWorldCupWarningAcknowledged(true);
+                setShowWorldCupWarning(false);
+                toast.success('Aviso confirmado! Clique em Finalizar Pedido novamente.');
+              }}
+              className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-extrabold py-3 rounded-xl transition-all duration-300 shadow-md shadow-green-500/10 hover:shadow-green-500/20 active:scale-[0.98] cursor-pointer text-sm"
+            >
+              Estou ciente ⚽
             </button>
           </div>
         </div>

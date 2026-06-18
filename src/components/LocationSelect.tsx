@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapPin, AlertTriangle } from 'lucide-react';
 import { City } from '../types'; // Corrected import path
+import { useTheme } from '../contexts/ThemeContext';
 
 /**
  * LocationSelect Component
@@ -27,6 +28,78 @@ interface LocationSelectProps {
 
 export const LocationSelect: React.FC<LocationSelectProps> = ({ cities, onCitySelect, logoUrl }) => {
   const [showAlert, setShowAlert] = useState<string | null>(null);
+  const { isWorldCupMode } = useTheme();
+
+  useEffect(() => {
+    if (!isWorldCupMode) return;
+
+    // Carrega efeitos sonoros da Copa
+    const whistleAudio = new Audio('/assets/referee-whistle.mp3');
+    const crowdAudio = new Audio('/assets/crowd-cheering.mp3');
+
+    whistleAudio.volume = 0.3;
+    crowdAudio.volume = 0.25;
+
+    let whistlePlayed = false;
+    let crowdPlayed = false;
+
+    const playAudio = async () => {
+      try {
+        if (!whistlePlayed) {
+          await whistleAudio.play();
+          whistlePlayed = true;
+        }
+      } catch (err) {
+        console.log('[WorldCup] Autoplay whistle blocked:', err);
+      }
+      try {
+        if (!crowdPlayed) {
+          await crowdAudio.play();
+          crowdPlayed = true;
+        }
+      } catch (err) {
+        console.log('[WorldCup] Autoplay crowd blocked:', err);
+      }
+    };
+
+    // Tenta tocar imediatamente
+    playAudio();
+
+    // Tenta novamente após pequenos delays (ajuda no tempo de carregamento)
+    const t1 = setTimeout(playAudio, 100);
+    const t2 = setTimeout(playAudio, 500);
+
+    // Fallback: toca no primeiríssimo gesto do usuário (clique, toque, scroll ou movimento do mouse)
+    const handleFirstInteraction = () => {
+      playAudio();
+      if (whistlePlayed && crowdPlayed) {
+        removeInteractionListeners();
+      }
+    };
+
+    const removeInteractionListeners = () => {
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('touchstart', handleFirstInteraction);
+      document.removeEventListener('keydown', handleFirstInteraction);
+      document.removeEventListener('mousemove', handleFirstInteraction);
+      document.removeEventListener('pointerdown', handleFirstInteraction);
+      document.removeEventListener('scroll', handleFirstInteraction);
+    };
+
+    document.addEventListener('click', handleFirstInteraction);
+    document.addEventListener('touchstart', handleFirstInteraction);
+    document.addEventListener('keydown', handleFirstInteraction);
+    document.addEventListener('mousemove', handleFirstInteraction);
+    document.addEventListener('pointerdown', handleFirstInteraction);
+    document.addEventListener('scroll', handleFirstInteraction);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      removeInteractionListeners();
+      // Permite que o som da torcida e apito continuem tocando até o fim mesmo se a tela desmontar (ex: ir para o cardápio)
+    };
+  }, [isWorldCupMode]);
 
   const handleCityClick = (city: City) => {
     if (!city.active) {
@@ -52,17 +125,49 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({ cities, onCitySe
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center p-4"
+      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
       style={{
-        background: 'linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%)'
+        background: isWorldCupMode 
+          ? 'linear-gradient(135deg, #052e16 0%, #022c22 100%)' 
+          : 'linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%)'
       }}
     >
+      {/* Bouncing Balls */}
+      {isWorldCupMode && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* Esquerda - Desktop */}
+          <div className="hidden md:flex absolute bottom-[15%] left-[12%] flex-col items-center">
+            <div className="w-16 h-16 text-5xl flex items-center justify-center animate-ball-bounce" style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.15))' }}>
+              ⚽
+            </div>
+            <div className="w-12 h-2.5 bg-black/40 rounded-full blur-sm animate-shadow-scale mt-1"></div>
+          </div>
+
+          {/* Direita - Desktop */}
+          <div className="hidden md:flex absolute bottom-[15%] right-[12%] flex-col items-center">
+            <div className="w-16 h-16 text-5xl flex items-center justify-center animate-ball-bounce" style={{ animationDelay: '0.4s', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.15))' }}>
+              ⚽
+            </div>
+            <div className="w-12 h-2.5 bg-black/40 rounded-full blur-sm animate-shadow-scale mt-1" style={{ animationDelay: '0.4s' }}></div>
+          </div>
+
+          {/* Central - Mobile */}
+          <div className="md:hidden absolute bottom-[5%] left-1/2 -translate-x-1/2 flex flex-col items-center">
+            <div className="w-12 h-12 text-4xl flex items-center justify-center animate-ball-bounce" style={{ filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.15))' }}>
+              ⚽
+            </div>
+            <div className="w-9 h-2 bg-black/30 rounded-full blur-sm animate-shadow-scale mt-0.5"></div>
+          </div>
+        </div>
+      )}
+
       <main 
         className="rounded-3xl p-10 max-w-md w-full text-center animate-scale-in seigaiha-pattern relative"
         style={{
-          backgroundColor: '#C41E3A',
-          boxShadow: 'var(--shadow-2xl)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          backgroundColor: isWorldCupMode ? '#15803d' : '#C41E3A',
+          background: isWorldCupMode ? 'linear-gradient(135deg, #15803d 0%, #166534 100%)' : '#C41E3A',
+          boxShadow: isWorldCupMode ? '0 10px 30px rgba(22, 163, 74, 0.15)' : 'var(--shadow-2xl)',
+          border: isWorldCupMode ? '2px solid #facc15' : '1px solid rgba(255, 255, 255, 0.1)',
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)'
         }}
@@ -78,7 +183,7 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({ cities, onCitySe
               className="w-full h-full rounded-full transition-transform duration-300 hover:scale-110" 
               style={{ 
                 boxShadow: 'var(--shadow-lg)',
-                border: '3px solid #FFFFFF',
+                border: isWorldCupMode ? '3px solid #facc15' : '3px solid #FFFFFF',
                 display: 'block'
               }}
             />
@@ -133,7 +238,9 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({ cities, onCitySe
                       : 'cursor-not-allowed opacity-60'
                   }`}
                   style={{
-                    border: city.active ? '2px solid #FFFFFF' : '1px solid rgba(255, 255, 255, 0.3)',
+                    border: city.active 
+                      ? (isWorldCupMode ? '2px solid #facc15' : '2px solid #FFFFFF') 
+                      : (isWorldCupMode ? '1px solid rgba(250, 204, 21, 0.3)' : '1px solid rgba(255, 255, 255, 0.3)'),
                     background: city.active 
                       ? '#0A0A0A' 
                       : 'rgba(0, 0, 0, 0.3)',
@@ -144,13 +251,15 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({ cities, onCitySe
                   }}
                   onMouseEnter={(e) => {
                     if (city.active) {
-                      e.currentTarget.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.6)';
+                      e.currentTarget.style.boxShadow = isWorldCupMode 
+                        ? '0 0 15px rgba(250, 204, 21, 0.5)' 
+                        : '0 8px 16px rgba(0, 0, 0, 0.6)';
                       e.currentTarget.style.transform = 'scale(1.05)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (city.active) {
-                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.5)';
+                      e.currentTarget.style.boxShadow = city.active ? '0 4px 12px rgba(0, 0, 0, 0.5)' : 'none';
                       e.currentTarget.style.transform = 'scale(1)';
                     }
                   }}
