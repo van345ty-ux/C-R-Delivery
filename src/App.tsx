@@ -624,6 +624,9 @@ function App() {
       // Sinaliza que o modal de promoção deve ser exibido ao carregar a HomePage
       localStorage.setItem('showPromotionModalOnLoad', 'true');
 
+      // Reseta o estado do pop-up da Copa do Mundo para que apareça toda vez que selecionar a cidade
+      sessionStorage.removeItem('hasSeenWorldCupPreOrder');
+
       // Atualiza o timestamp de acesso ao selecionar a cidade
       localStorage.setItem(LAST_ACCESS_KEY, Date.now().toString());
 
