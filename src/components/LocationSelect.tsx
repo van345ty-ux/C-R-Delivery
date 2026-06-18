@@ -134,7 +134,7 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({ cities, onCitySe
     >
       {/* Bouncing Balls */}
       {isWorldCupMode && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
           {/* Esquerda - Desktop */}
           <div className="hidden md:flex absolute bottom-[15%] left-[12%] flex-col items-center">
             <div className="w-16 h-16 text-5xl flex items-center justify-center animate-ball-bounce" style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.15))' }}>
