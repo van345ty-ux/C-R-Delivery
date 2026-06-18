@@ -142,11 +142,11 @@ export const HomePage: React.FC<HomePageProps> = ({
     const tomorrowStr = getLocalDateString(tomorrow);
 
     if (BRAZIL_GAMES.includes(todayStr)) {
-      return 'HOJE TEM BRASIL! Rumo ao Hexa! ⚽ Peça seu combo da Seleção agora e garanta a torcida mais saborosa com o melhor sushi! 🍣';
+      return '🇧🇷 HOJE TEM BRASIL! Rumo ao Hexa! ⚽ Peça seu combo da Seleção agora e garanta a torcida mais saborosa com o melhor sushi! 🍣';
     } else if (BRAZIL_GAMES.includes(tomorrowStr)) {
-      return 'AMANHÃ TEM BRASIL! A caminhada rumo ao Hexa continua! ⚽ Garanta ou agende seu combo de sushi hoje e prepare a festa de amanhã! 🍣';
+      return '🇧🇷 AMANHÃ TEM BRASIL! A caminhada rumo ao Hexa continua! ⚽ Garanta ou agende seu combo de sushi hoje e prepare a festa de amanhã! 🍣';
     } else {
-      return 'RUMO AO HEXA! Entre no clima da Copa e apoie o Brasil saboreando nossos deliciosos combos de sushi! ⚽🍣';
+      return '🇧🇷 RUMO AO HEXA! Entre no clima da Copa e apoie o Brasil saboreando nossos deliciosos combos de sushi! ⚽🍣';
     }
   }, []);
 
