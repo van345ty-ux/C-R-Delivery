@@ -290,7 +290,7 @@ export const Menu: React.FC<MenuProps> = ({
                     color: '#15803d',
                     filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.6))'
                   }}>
-                  RUMO AO HEXA! BR
+                  RUMO AO HEXA! 🇧🇷
                 </h3>
                 <p className="text-2xl sm:text-4xl md:text-5xl font-black mt-2" style={{
                   fontFamily: 'system-ui, -apple-system, sans-serif',
