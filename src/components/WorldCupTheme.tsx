@@ -135,20 +135,28 @@ export const WorldCupTheme: React.FC = () => {
         }
 
         .wc-splash-overlay {
-          position: fixed !important;
-          top: 0 !important;
+          position: absolute !important;
+          top: 120px !important;
           left: 0 !important;
           right: 0 !important;
-          bottom: 0 !important;
+          height: 300px !important;
           display: flex !important;
           flex-direction: column !important;
+          justify-content: flex-end !important;
           align-items: center !important;
-          justify-content: center !important;
+          padding-bottom: 24px !important;
           z-index: 9999999 !important;
           pointer-events: none !important;
           opacity: 0;
           animation: wcSplashAnim 4s ease-out 0.4s forwards !important;
-          background: radial-gradient(circle, rgba(21, 128, 61, 0.12) 0%, rgba(255, 255, 255, 0) 75%) !important;
+          background: radial-gradient(circle, rgba(21, 128, 61, 0.08) 0%, rgba(255, 255, 255, 0) 70%) !important;
+        }
+
+        @media (min-width: 768px) {
+          .wc-splash-overlay {
+            height: 400px !important;
+            padding-bottom: 36px !important;
+          }
         }
 
         .wc-splash-title-text {
@@ -174,10 +182,12 @@ export const WorldCupTheme: React.FC = () => {
         }
 
         .wc-splash-content-wrapper {
-          transform: translateY(35px) !important;
           display: flex !important;
           flex-direction: column !important;
           align-items: center !important;
+          width: 100% !important;
+          max-width: 42rem !important;
+          padding: 0 16px !important;
         }
       `}</style>
 
