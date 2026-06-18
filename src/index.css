@@ -1073,3 +1073,30 @@ body.cart-open::-webkit-scrollbar {
   animation: shadow-scale 3.2s infinite !important;
 }
 
+/* Splash do texto Rumo ao Hexa na Copa */
+@keyframes wcSplashAnim {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  85% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.95);
+    visibility: hidden;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+    overflow: hidden;
+  }
+}
+
+

@@ -397,6 +397,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           menuMobileColumns={menuMobileColumns} // Nova prop para controlar colunas no mobile
           onTriggerValentine={onTriggerValentine}
           isValentineThemeActive={isValentineThemeActive}
+          worldCupTriggerKey={worldCupTriggerKey}
         />
       </main>
 
