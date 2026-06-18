@@ -1074,35 +1074,19 @@ body.cart-open::-webkit-scrollbar {
 }
 
 /* Splash do texto Rumo ao Hexa na Copa */
-@keyframes wcSplashAnim {
-  0% {
+@keyframes wcTextBannerAnim {
+  0%, 60% {
     opacity: 0;
-    transform: scale(0.9);
-    max-height: 160px;
+    transform: translateX(-50%) translateY(20px) scale(0.9);
   }
-  15% {
+  65%, 95% {
     opacity: 1;
-    transform: scale(1);
-    max-height: 160px;
-  }
-  85% {
-    opacity: 1;
-    transform: scale(1);
-    max-height: 160px;
-    margin-top: 16px;
-    padding-top: 16px;
-    padding-bottom: 16px;
+    transform: translateX(-50%) translateY(0) scale(1);
   }
   100% {
     opacity: 0;
-    transform: scale(0.95);
+    transform: translateX(-50%) translateY(20px) scale(0.9);
     visibility: hidden;
-    max-height: 0;
-    margin-top: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    overflow: hidden;
   }
 }
-
 

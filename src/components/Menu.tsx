@@ -68,12 +68,31 @@ export const Menu: React.FC<MenuProps> = ({
   worldCupTriggerKey,
 }) => {
   const { isWorldCupMode } = useTheme();
+  console.log('[Menu] Rendering: isWorldCupMode =', isWorldCupMode, 'worldCupTriggerKey =', worldCupTriggerKey);
   const [products, setProducts] = useState<Product[]>([]);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showProductDetailModal, setShowProductDetailModal] = useState(false); // Estado para o modal
   const [selectedProductForDetail, setSelectedProductForDetail] = useState<Product | null>(null); // Produto selecionado
+  const [showWcText, setShowWcText] = useState(false);
+
+  useEffect(() => {
+    if (isWorldCupMode && worldCupTriggerKey !== undefined && worldCupTriggerKey > 0) {
+      setShowWcText(false);
+      // Wait exactly 4.5 seconds for the balls to rise before showing the text (anticipated by 2 more seconds)
+      const showTimer = setTimeout(() => setShowWcText(true), 4500);
+      // Hide the text after 5 seconds of visibility (9.5 seconds total)
+      const hideTimer = setTimeout(() => setShowWcText(false), 9500);
+      
+      return () => {
+        clearTimeout(showTimer);
+        clearTimeout(hideTimer);
+      };
+    } else {
+      setShowWcText(false);
+    }
+  }, [isWorldCupMode, worldCupTriggerKey]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -137,30 +156,28 @@ export const Menu: React.FC<MenuProps> = ({
   };
 
   // Filtra todos os produtos disponíveis e que correspondem ao termo de busca
-  const allAvailableAndSearchedProducts = products.filter(product =>
-    product.available && product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const allAvailableAndSearchedProducts = products.filter(product => {
+    const isAvailable = product.available;
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    return isAvailable && matchesSearch;
+  });
 
-  // Separa promoções (categoria "Promoção") de produtos regulares
-  const promotions = allAvailableAndSearchedProducts.filter(product => product.category === 'Promoção');
-  const regularProducts = allAvailableAndSearchedProducts.filter(product => product.category !== 'Promoção');
+  // Filtra os produtos "Promoção" para as 3 colunas, caso a categoria seja 'Todos'
+  const productsToDisplayIn3ColGrid = selectedCategory === 'Todos' 
+    ? allAvailableAndSearchedProducts.filter(p => p.category === 'Promoção')
+    : (selectedCategory === 'Promoções' ? allAvailableAndSearchedProducts.filter(p => p.category === 'Promoção') : []);
 
-  let productsToDisplayIn3ColGrid: Product[] = [];
-  let productsToDisplayIn5ColGrid: Product[] = [];
-
-  // Distribui produtos nos grids apropriados baseado na categoria selecionada
-  // Grid de 3 colunas: usado para promoções (cards maiores)
-  // Grid de 4 colunas: usado para produtos regulares
-  if (selectedCategory === 'Todos') {
-    productsToDisplayIn3ColGrid = promotions;
-    productsToDisplayIn5ColGrid = regularProducts;
-  } else if (selectedCategory === 'Promoções') {
-    productsToDisplayIn3ColGrid = promotions;
-  } else { // Categoria específica selecionada
-    productsToDisplayIn5ColGrid = regularProducts.filter(product =>
-      product.category && product.category.trim().toLowerCase() === selectedCategory.trim().toLowerCase()
-    );
-  }
+  // Filtra os DEMAIS produtos (não Promoção) ou da categoria específica para as 5 colunas
+  const productsToDisplayIn5ColGrid = allAvailableAndSearchedProducts.filter(p => {
+    if (selectedCategory === 'Todos') {
+      return p.category !== 'Promoção';
+    } else if (selectedCategory === 'Promoções') {
+      return false;
+    } else {
+      return p.category === selectedCategory;
+    }
+  });
 
   if (loading) {
     return (
@@ -193,8 +210,6 @@ export const Menu: React.FC<MenuProps> = ({
     );
   }
 
-  console.log(`Menu: Rendering - Total products: ${products.length}, Available: ${allAvailableAndSearchedProducts.length}, Promotions: ${productsToDisplayIn3ColGrid.length}, Regular: ${productsToDisplayIn5ColGrid.length}, Category: ${selectedCategory}`);
-
   return (
     <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 py-8">
       {/* Hero Section - Premium Design with Gradient Overlay and Glassmorphism */}
@@ -213,10 +228,10 @@ export const Menu: React.FC<MenuProps> = ({
             height="400"
             className="w-full h-full object-cover"
           />
-          {/* Glassmorphism Text Container */}
-          <div className="absolute inset-0 flex items-center justify-center">
+          {/* Glassmorphism Text Container & WC Text (Stacked) */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <div 
-              className={`text-center p-6 md:p-8 rounded-2xl max-w-2xl mx-4 animate-fade-in ${heroTextBackgroundEnabled ? 'glass-effect' : ''}`}
+              className={`text-center p-6 md:p-8 rounded-2xl max-w-2xl mx-4 animate-fade-in pointer-events-auto ${heroTextBackgroundEnabled ? 'glass-effect' : ''}`}
             >
               {heroTitleText && (
                 <h2
@@ -243,24 +258,43 @@ export const Menu: React.FC<MenuProps> = ({
                   {heroSubtitleText}
                 </p>
               )}
-              {isWorldCupMode && worldCupTriggerKey !== undefined && worldCupTriggerKey > 0 && (
+            </div>
+
+            {/* World Cup Pop-up text (Auto-positioned below hero text) */}
+            {showWcText && (
+              <>
+                <style>{`
+                  @keyframes wcTextFadeIn {
+                    0% { opacity: 0; transform: translateY(20px) scale(0.9); }
+                    100% { opacity: 1; transform: translateY(0) scale(1); }
+                  }
+                `}</style>
                 <div 
                   key={worldCupTriggerKey}
-                  className="mt-4 p-4 rounded-xl bg-white/90 backdrop-blur-md border border-white/50 shadow-[0_8px_32px_rgba(255,255,255,0.3)] text-center select-none max-w-sm mx-auto"
+                  className="mt-4 sm:mt-6 text-center select-none w-[95%] pointer-events-none z-20"
                   style={{
-                    animation: 'wcSplashAnim 4s ease-out 0.4s both',
-                    opacity: 0
+                    animation: 'wcTextFadeIn 0.8s ease-out forwards'
                   }}
                 >
-                  <h3 className="text-xl sm:text-2xl font-black text-green-800 drop-shadow-[0_1px_1px_rgba(250,204,21,0.6)]" style={{ fontFamily: 'var(--font-display)' }}>
-                    RUMO AO HEXA! 🇧🇷
-                  </h3>
-                  <p className="text-xs sm:text-sm font-bold text-yellow-700 mt-1">
-                    C&R Sushi na Torcida! ⚽🏆
-                  </p>
-                </div>
-              )}
-            </div>
+                <h3 className="text-4xl sm:text-6xl md:text-7xl font-black leading-tight" style={{ 
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                    WebkitTextStroke: '2px #FACC15', 
+                    color: '#15803d',
+                    filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.6))'
+                  }}>
+                  RUMO AO HEXA! BR
+                </h3>
+                <p className="text-2xl sm:text-4xl md:text-5xl font-black mt-2" style={{
+                  fontFamily: 'system-ui, -apple-system, sans-serif',
+                  color: '#FACC15',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                  WebkitTextStroke: '0.5px rgba(0,0,0,0.5)'
+                }}>
+                  C&R Sushi na Torcida! ⚽ 🏆
+                </p>
+              </div>
+              </>
+            )}
           </div>
 
           {/* Store Status - Premium Badge with Glassmorphism */}
