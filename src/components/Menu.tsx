@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { ProductCard, ProductCardSkeleton } from './ProductCard';
@@ -75,22 +75,37 @@ export const Menu: React.FC<MenuProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [showProductDetailModal, setShowProductDetailModal] = useState(false); // Estado para o modal
   const [selectedProductForDetail, setSelectedProductForDetail] = useState<Product | null>(null); // Produto selecionado
-  const [showWcText, setShowWcText] = useState(false);
+  const wcTextRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isWorldCupMode && worldCupTriggerKey !== undefined && worldCupTriggerKey > 0) {
-      setShowWcText(false);
-      // Wait exactly 4.5 seconds for the balls to rise before showing the text (anticipated by 2 more seconds)
-      const showTimer = setTimeout(() => setShowWcText(true), 4500);
-      // Hide the text after 5 seconds of visibility (9.5 seconds total)
-      const hideTimer = setTimeout(() => setShowWcText(false), 9500);
-      
+      const el = wcTextRef.current;
+      if (!el) return;
+
+      // 1. Reseta: invisível, SEM transição
+      el.setAttribute('style', 'opacity: 0; transform: translateY(20px) scale(0.9);');
+      // Força o navegador a pintar o frame invisível
+      void el.offsetHeight;
+
+      // 2. Após 4.5s: ativa transição e fade in
+      const fadeInTimer = setTimeout(() => {
+        el.setAttribute('style', 'opacity: 1; transform: translateY(0) scale(1); transition-property: opacity, transform !important; transition-duration: 2s !important; transition-timing-function: ease-in-out !important;');
+      }, 4500);
+
+      // 3. Após 9.5s: fade out (2s a mais na tela)
+      const fadeOutTimer = setTimeout(() => {
+        el.setAttribute('style', 'opacity: 0; transform: translateY(20px) scale(0.9); transition-property: opacity, transform !important; transition-duration: 2s !important; transition-timing-function: ease-in-out !important;');
+      }, 9500);
+
       return () => {
-        clearTimeout(showTimer);
-        clearTimeout(hideTimer);
+        clearTimeout(fadeInTimer);
+        clearTimeout(fadeOutTimer);
       };
     } else {
-      setShowWcText(false);
+      const el = wcTextRef.current;
+      if (el) {
+        el.setAttribute('style', 'opacity: 0; transform: translateY(20px) scale(0.9);');
+      }
     }
   }, [isWorldCupMode, worldCupTriggerKey]);
 
@@ -260,23 +275,13 @@ export const Menu: React.FC<MenuProps> = ({
               )}
             </div>
 
-            {/* World Cup Pop-up text (Auto-positioned below hero text) */}
-            {showWcText && (
+            {/* World Cup Pop-up text — SEMPRE no DOM, fade controlado via ref */}
+            {isWorldCupMode && (
               <>
-                <style>{`
-                  @keyframes wcTextFadeInOut {
-                    0% { opacity: 0; transform: translateY(20px) scale(0.9); }
-                    10% { opacity: 1; transform: translateY(0) scale(1); }
-                    90% { opacity: 1; transform: translateY(0) scale(1); }
-                    100% { opacity: 0; transform: translateY(20px) scale(0.9); }
-                  }
-                `}</style>
                 <div 
-                  key={worldCupTriggerKey}
+                  ref={wcTextRef}
                   className="mt-4 sm:mt-6 text-center select-none w-[95%] pointer-events-none z-20"
-                  style={{
-                    animation: 'wcTextFadeInOut 5s ease-in-out forwards'
-                  }}
+                  style={{ opacity: 0, transform: 'translateY(20px) scale(0.9)' }}
                 >
                 <h3 className="text-4xl sm:text-6xl md:text-7xl font-black leading-tight" style={{ 
                     fontFamily: 'system-ui, -apple-system, sans-serif',
