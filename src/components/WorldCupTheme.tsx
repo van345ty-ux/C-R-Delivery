@@ -174,7 +174,7 @@ export const WorldCupTheme: React.FC = () => {
         }
 
         .wc-splash-content-wrapper {
-          transform: translateY(15px) !important;
+          transform: translateY(35px) !important;
           display: flex !important;
           flex-direction: column !important;
           align-items: center !important;
