@@ -246,15 +246,16 @@ export const Menu: React.FC<MenuProps> = ({
               {isWorldCupMode && worldCupTriggerKey !== undefined && worldCupTriggerKey > 0 && (
                 <div 
                   key={worldCupTriggerKey}
-                  className="mt-4 p-4 rounded-xl bg-white/85 dark:bg-black/75 backdrop-blur-md border border-white/40 dark:border-zinc-800/60 shadow-lg text-center select-none max-w-sm mx-auto"
+                  className="mt-4 p-4 rounded-xl bg-white/90 backdrop-blur-md border border-white/50 shadow-[0_8px_32px_rgba(255,255,255,0.3)] text-center select-none max-w-sm mx-auto"
                   style={{
-                    animation: 'wcSplashAnim 4s ease-out 0.4s forwards'
+                    animation: 'wcSplashAnim 4s ease-out 0.4s both',
+                    opacity: 0
                   }}
                 >
-                  <h3 className="text-xl sm:text-3xl font-extrabold text-green-700 dark:text-green-400 drop-shadow-[0_1.5px_1.5px_rgba(250,204,21,0.8)] dark:drop-shadow-[0_1.5px_1.5px_rgba(0,0,0,0.9)]" style={{ fontFamily: 'var(--font-display)' }}>
+                  <h3 className="text-xl sm:text-2xl font-black text-green-800 drop-shadow-[0_1px_1px_rgba(250,204,21,0.6)]" style={{ fontFamily: 'var(--font-display)' }}>
                     RUMO AO HEXA! 🇧🇷
                   </h3>
-                  <p className="text-xs sm:text-base font-bold text-yellow-600 dark:text-yellow-400 mt-1">
+                  <p className="text-xs sm:text-sm font-bold text-yellow-700 mt-1">
                     C&R Sushi na Torcida! ⚽🏆
                   </p>
                 </div>

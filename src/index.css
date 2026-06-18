@@ -1078,23 +1078,29 @@ body.cart-open::-webkit-scrollbar {
   0% {
     opacity: 0;
     transform: scale(0.9);
+    max-height: 160px;
   }
   15% {
     opacity: 1;
     transform: scale(1);
+    max-height: 160px;
   }
   85% {
     opacity: 1;
     transform: scale(1);
+    max-height: 160px;
+    margin-top: 16px;
+    padding-top: 16px;
+    padding-bottom: 16px;
   }
   100% {
     opacity: 0;
     transform: scale(0.95);
     visibility: hidden;
-    height: 0;
-    margin: 0;
-    padding: 0;
-    border: none;
+    max-height: 0;
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: 0;
     overflow: hidden;
   }
 }
