@@ -172,16 +172,25 @@ export const WorldCupTheme: React.FC = () => {
           font-weight: 700 !important;
           letter-spacing: 0.05em;
         }
+
+        .wc-splash-content-wrapper {
+          transform: translateY(15px) !important;
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+        }
       `}</style>
 
       {/* Título de Introdução */}
       <div aria-hidden="true" className="wc-splash-overlay">
-        <h1 className="wc-splash-title-text">
-          RUMO AO HEXA! 🇧🇷
-        </h1>
-        <h2 className="wc-splash-subtitle-text">
-          C&R Sushi na Torcida! ⚽🏆
-        </h2>
+        <div className="wc-splash-content-wrapper">
+          <h1 className="wc-splash-title-text">
+            RUMO AO HEXA! 🇧🇷
+          </h1>
+          <h2 className="wc-splash-subtitle-text">
+            C&R Sushi na Torcida! ⚽🏆
+          </h2>
+        </div>
       </div>
 
       {/* Bolas Subindo e Pulando */}
