@@ -312,11 +312,8 @@ export const Cart: React.FC<CartProps> = ({
       return;
     }
 
-    // Intercepta para o aviso da Copa do Mundo (Agendamento Sexta-Feira)
-    if (isWorldCupMode && !isWorldCupWarningAcknowledged) {
-      setShowWorldCupWarning(true);
-      return;
-    }
+    // [COPA] Aviso de agendamento desativado temporariamente — cliente finaliza pedido sem interrupção
+    // Para reativar: restaurar a condição: if (isWorldCupMode && !isWorldCupWarningAcknowledged) { setShowWorldCupWarning(true); return; }
 
     // Intercepta para o aviso de Dia dos Namorados (Agendamento Sexta-Feira)
     if (isValentineThemeActive && !isValentineWarningAcknowledged) {
@@ -1132,7 +1129,8 @@ export const Cart: React.FC<CartProps> = ({
         </div>
       )}
 
-      {showWorldCupWarning && (
+      {/* WorldCup Warning — desativado temporariamente (código preservado para reativar via settings) */}
+      {false && showWorldCupWarning && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[100000] p-4 animate-fade-in">
           <div className="bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center border border-green-100 dark:border-green-950 animate-scale-in">
             <div className="inline-flex items-center justify-center p-3 bg-green-50 dark:bg-green-950/30 rounded-full mb-3 border border-green-100 dark:border-green-900/30">

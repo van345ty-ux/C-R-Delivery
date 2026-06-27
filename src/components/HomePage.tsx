@@ -59,12 +59,11 @@ interface HomePageProps {
 const BRAZIL_GAMES = [
   // Fase de Grupos
   '2026-06-13', // Brasil vs Marrocos
-  '2026-06-19', // Brasil vs Haiti (Amanhã - considerando o dia atual como 18 de Junho de 2026)
+  '2026-06-19', // Brasil vs Haiti
   '2026-06-24', // Escócia vs Brasil
 
-  // Fases Eliminatórias (caso o Brasil avance)
-  '2026-06-28',
-  '2026-06-29',
+  // Oitavas / Fases Eliminatórias
+  '2026-06-29', // Segunda-feira — próximo jogo confirmado
   '2026-06-30',
   '2026-07-01',
   '2026-07-04',
@@ -222,11 +221,13 @@ export const HomePage: React.FC<HomePageProps> = ({
           const hasSeenValentine = sessionStorage.getItem('hasSeenValentinePopup') === 'true';
           const hasSeenWorldCupPreOrder = sessionStorage.getItem('hasSeenWorldCupPreOrder') === 'true';
 
-          if (isWorldCupMode && !hasSeenWorldCupPreOrder) {
+          // [COPA] WorldCupPreOrderPopup desativado temporariamente — reativar via settings quando necessário
+          // Para reativar: remover o 'false &&' abaixo e adicionar toggle de configuração
+          if (false && isWorldCupMode && !hasSeenWorldCupPreOrder) {
             setShowWorldCupPreOrderPopup(true);
             if (showPreOrderModal) {
               setPendingShowPreOrder(true);
-              setShowPreOrderModal(false); // Esconde temporariamente para dar prioridade ao pop-up da Copa
+              setShowPreOrderModal(false);
             }
             if (willShowPromotions) {
               setPendingShowPromotions(true);
@@ -453,8 +454,9 @@ export const HomePage: React.FC<HomePageProps> = ({
         />
       )}
 
-      {/* WorldCupPreOrderPopup takes precedence, then ValentinePopup, then PreOrderModal */}
-      {showWorldCupPreOrderPopup ? (
+      {/* WorldCupPreOrderPopup — desativado temporariamente; código preservado para reativar via settings */}
+      {/* Para reativar: restaurar a condição abaixo e remover o 'false &&' na lógica de exibição acima */}
+      {false && showWorldCupPreOrderPopup ? (
         <WorldCupPreOrderPopup onClose={handleCloseWorldCupPreOrderPopup} />
       ) : showValentinePopup ? (
         <ValentinePopup onClose={handleCloseValentinePopup} />
