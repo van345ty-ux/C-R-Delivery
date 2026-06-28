@@ -804,6 +804,9 @@ function App() {
     description: appSettings.world_cup_pre_order_popup_description || 'Ao realizar sua compra, você garante sua reserva antecipada para receber seu sushi na sexta-feira e torcer pelo Brasil rumo ao Hexa com muito sabor!',
     footer: appSettings.world_cup_pre_order_popup_footer || 'Programe-se e garanta o seu sushi para o jogo! ⚽🇧🇷',
     buttonText: appSettings.world_cup_pre_order_popup_button || 'Garantir Minha Reserva! ⚽',
+    check1: appSettings.world_cup_pre_order_popup_check_1 || 'Pedido realizado hoje/amanhã',
+    check2: appSettings.world_cup_pre_order_popup_check_2 || 'Entrega agendada para o dia configurado',
+    check3: appSettings.world_cup_pre_order_popup_check_3 || 'Vagas limitadas para produção',
   };
   
   const heroTextBackgroundEnabled = appSettings.hero_text_background_enabled !== 'false'; // Nova configuração

@@ -63,6 +63,9 @@ interface HomePageProps {
     description: string;
     footer: string;
     buttonText: string;
+    check1?: string;
+    check2?: string;
+    check3?: string;
   };
 }
 

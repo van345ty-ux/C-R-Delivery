@@ -21,6 +21,9 @@ export const AdminPreOrderBanners: React.FC<AdminPreOrderBannersProps> = ({ onSe
     world_cup_pre_order_popup_description: 'Ao realizar sua compra, você garante sua reserva antecipada para receber seu sushi na sexta-feira e torcer pelo Brasil rumo ao Hexa com muito sabor!',
     world_cup_pre_order_popup_footer: 'Programe-se e garanta o seu sushi para o jogo! ⚽🇧🇷',
     world_cup_pre_order_popup_button: 'Garantir Minha Reserva! ⚽',
+    world_cup_pre_order_popup_check_1: 'Pedido realizado hoje/amanhã',
+    world_cup_pre_order_popup_check_2: 'Entrega agendada para o dia configurado',
+    world_cup_pre_order_popup_check_3: 'Vagas limitadas para produção',
   });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -39,7 +42,10 @@ export const AdminPreOrderBanners: React.FC<AdminPreOrderBannersProps> = ({ onSe
           'world_cup_pre_order_popup_warning_description',
           'world_cup_pre_order_popup_description',
           'world_cup_pre_order_popup_footer',
-          'world_cup_pre_order_popup_button'
+          'world_cup_pre_order_popup_button',
+          'world_cup_pre_order_popup_check_1',
+          'world_cup_pre_order_popup_check_2',
+          'world_cup_pre_order_popup_check_3'
         ]);
 
       if (error) {
@@ -168,6 +174,42 @@ export const AdminPreOrderBanners: React.FC<AdminPreOrderBannersProps> = ({ onSe
                   className="w-full p-3 border rounded-lg text-sm text-gray-900 bg-white"
                   rows={2}
                   placeholder="Ex: Os atendimentos e entregas da C&R Sushi acontecerão exclusivamente na sexta-feira..."
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t space-y-4">
+            <h3 className="text-sm font-semibold text-gray-800 mb-2">Lista de Benefícios/Checklist</h3>
+            <div className="grid grid-cols-1 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Item 1 da Lista</label>
+                <input
+                  type="text"
+                  value={settings.world_cup_pre_order_popup_check_1 || ''}
+                  onChange={(e) => handleInputChange('world_cup_pre_order_popup_check_1', e.target.value)}
+                  className="w-full p-3 border rounded-lg text-sm text-gray-900 bg-white"
+                  placeholder="Ex: Pedido realizado hoje/amanhã"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Item 2 da Lista</label>
+                <input
+                  type="text"
+                  value={settings.world_cup_pre_order_popup_check_2 || ''}
+                  onChange={(e) => handleInputChange('world_cup_pre_order_popup_check_2', e.target.value)}
+                  className="w-full p-3 border rounded-lg text-sm text-gray-900 bg-white"
+                  placeholder="Ex: Entrega agendada para o dia configurado"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Item 3 da Lista (Destacado em Verde)</label>
+                <input
+                  type="text"
+                  value={settings.world_cup_pre_order_popup_check_3 || ''}
+                  onChange={(e) => handleInputChange('world_cup_pre_order_popup_check_3', e.target.value)}
+                  className="w-full p-3 border rounded-lg text-sm text-gray-900 bg-white"
+                  placeholder="Ex: Vagas limitadas para produção"
                 />
               </div>
             </div>

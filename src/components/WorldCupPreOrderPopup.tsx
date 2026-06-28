@@ -11,6 +11,9 @@ interface WorldCupPreOrderPopupProps {
     description: string;
     footer: string;
     buttonText: string;
+    check1?: string;
+    check2?: string;
+    check3?: string;
   };
 }
 
@@ -106,15 +109,15 @@ export const WorldCupPreOrderPopup: React.FC<WorldCupPreOrderPopupProps> = ({ on
           <div className="space-y-3 bg-green-50/30 dark:bg-zinc-900/40 p-4 rounded-xl border border-green-100/50 dark:border-zinc-800/80">
             <div className="flex items-center gap-3 text-zinc-800 dark:text-zinc-200">
               <span className="flex items-center justify-center w-6 h-6 bg-green-100 dark:bg-green-950/50 rounded-full text-green-700 dark:text-green-400 font-bold text-sm shrink-0">✓</span>
-              <span className="text-xs md:text-sm font-semibold">Pedido realizado hoje/amanhã</span>
+              <span className="text-xs md:text-sm font-semibold">{renderBoldText(settings?.check1 || 'Pedido realizado hoje/amanhã')}</span>
             </div>
             <div className="flex items-center gap-3 text-zinc-800 dark:text-zinc-200">
               <span className="flex items-center justify-center w-6 h-6 bg-green-100 dark:bg-green-950/50 rounded-full text-green-700 dark:text-green-400 font-bold text-sm shrink-0">✓</span>
-              <span className="text-xs md:text-sm font-semibold">Entrega agendada para o dia configurado</span>
+              <span className="text-xs md:text-sm font-semibold">{renderBoldText(settings?.check2 || 'Entrega agendada para o dia configurado')}</span>
             </div>
             <div className="flex items-center gap-3 text-zinc-800 dark:text-zinc-200">
               <span className="flex items-center justify-center w-6 h-6 bg-green-100 dark:bg-green-950/50 rounded-full text-green-700 dark:text-green-400 font-bold text-sm shrink-0">✓</span>
-              <span className="text-xs md:text-sm font-semibold text-green-600 dark:text-green-400">Vagas limitadas para produção</span>
+              <span className="text-xs md:text-sm font-semibold text-green-600 dark:text-green-400">{renderBoldText(settings?.check3 || 'Vagas limitadas para produção')}</span>
             </div>
           </div>
 
