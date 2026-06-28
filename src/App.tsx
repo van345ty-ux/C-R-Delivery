@@ -431,24 +431,27 @@ function App() {
     let shouldShowPreOrderModal = false;
     let shouldShowPreOrderBanner = false;
 
+    // 1. Calcula se a loja física está aberta no momento (apenas se configurado como aberto no banco)
     if (todayHours && todayHours.is_open) {
       storeCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
+    }
       
-      // O pré-agendamento (pedido agendado) é ativo exclusivamente para a rota de Comandatuba
-      if (isComandatuba) {
-        canPreOrder = !storeCurrentlyOpen && currentTime >= '07:00' && currentTime <= '17:00';
+    // 2. O pré-agendamento (pedido agendado) é ativo exclusivamente para a rota de Comandatuba
+    if (isComandatuba) {
+      // Se a loja não está aberta (seja porque está fora do horário ou porque o dia está fechado na tabela),
+      // mas estamos no horário de pré-pedido (07:00 às 17:00), ativamos o pré-agendamento.
+      canPreOrder = !storeCurrentlyOpen && currentTime >= '07:00' && currentTime <= '17:00';
 
-        const todayDateString = now.toISOString().split('T')[0];
-        const lastSeenPreOrderModalDate = localStorage.getItem('preOrderModalLastSeenDate');
-        const hasSeenPreOrderModalToday = lastSeenPreOrderModalDate === todayDateString;
+      const todayDateString = now.toISOString().split('T')[0];
+      const lastSeenPreOrderModalDate = localStorage.getItem('preOrderModalLastSeenDate');
+      const hasSeenPreOrderModalToday = lastSeenPreOrderModalDate === todayDateString;
 
-        if (canPreOrder && !hasSeenPreOrderModalToday) {
-          shouldShowPreOrderModal = true;
-          localStorage.setItem('preOrderModalLastSeenDate', todayDateString);
-        }
-        if (canPreOrder) {
-          shouldShowPreOrderBanner = true;
-        }
+      if (canPreOrder && !hasSeenPreOrderModalToday) {
+        shouldShowPreOrderModal = true;
+        localStorage.setItem('preOrderModalLastSeenDate', todayDateString);
+      }
+      if (canPreOrder) {
+        shouldShowPreOrderBanner = true;
       }
     }
 
