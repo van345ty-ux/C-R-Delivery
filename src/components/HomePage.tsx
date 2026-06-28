@@ -131,6 +131,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   const { isWorldCupMode } = useTheme();
   const [worldCupTriggerKey, setWorldCupTriggerKey] = useState(0);
   const hasTriggeredRef = useRef(false);
+  const isComandatuba = selectedCity ? selectedCity.toLowerCase().includes('comandatuba') : false;
 
   const bannerMessage = useMemo(() => {
     const today = new Date();
@@ -143,11 +144,15 @@ export const HomePage: React.FC<HomePageProps> = ({
     if (BRAZIL_GAMES.includes(todayStr)) {
       return '🇧🇷 HOJE TEM BRASIL! Rumo ao Hexa! ⚽ Peça seu combo da Seleção agora e garanta a torcida mais saborosa com o melhor sushi! 🍣';
     } else if (BRAZIL_GAMES.includes(tomorrowStr)) {
-      return '🇧🇷 AMANHÃ TEM BRASIL! A caminhada rumo ao Hexa continua! ⚽ Garanta ou agende seu combo de sushi hoje e prepare a festa de amanhã! 🍣';
+      if (isComandatuba) {
+        return '🇧🇷 AMANHÃ TEM BRASIL! A caminhada rumo ao Hexa continua! ⚽ Garanta ou agende seu combo de sushi hoje e prepare a festa de amanhã! 🍣';
+      } else {
+        return '🇧🇷 AMANHÃ TEM BRASIL! A caminhada rumo ao Hexa continua! ⚽ Garanta seu combo de sushi hoje e prepare a festa de amanhã! 🍣';
+      }
     } else {
       return '🇧🇷 RUMO AO HEXA! Entre no clima da Copa e apoie o Brasil saboreando nossos deliciosos combos de sushi! ⚽🍣';
     }
-  }, []);
+  }, [selectedCity]);
 
   const [showCart, setShowCart] = useState(isMercadoPagoReturnFlow || isPixReturnFlow);
   const [showPromotions, setShowPromotions] = useState(false);
@@ -221,9 +226,8 @@ export const HomePage: React.FC<HomePageProps> = ({
           const hasSeenValentine = sessionStorage.getItem('hasSeenValentinePopup') === 'true';
           const hasSeenWorldCupPreOrder = sessionStorage.getItem('hasSeenWorldCupPreOrder') === 'true';
 
-          // [COPA] WorldCupPreOrderPopup desativado temporariamente — reativar via settings quando necessário
-          // Para reativar: remover o 'false &&' abaixo e adicionar toggle de configuração
-          if (false && isWorldCupMode && !hasSeenWorldCupPreOrder) {
+          // [COPA] WorldCupPreOrderPopup ativo apenas para a rota de Comandatuba
+          if (isComandatuba && isWorldCupMode && !hasSeenWorldCupPreOrder) {
             setShowWorldCupPreOrderPopup(true);
             if (showPreOrderModal) {
               setPendingShowPreOrder(true);
@@ -383,6 +387,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           isStoreOpen={isStoreOpen}
           canPlaceOrder={canPlaceOrder} // Passando o novo estado
           heroImageUrl={heroImageUrl}
+          selectedCity={selectedCity} // Passando selectedCity
           // Passando as novas props
           heroTitleText={heroTitleText}
           heroTitleFontSize={heroTitleFontSize}
@@ -454,9 +459,8 @@ export const HomePage: React.FC<HomePageProps> = ({
         />
       )}
 
-      {/* WorldCupPreOrderPopup — desativado temporariamente; código preservado para reativar via settings */}
-      {/* Para reativar: restaurar a condição abaixo e remover o 'false &&' na lógica de exibição acima */}
-      {false && showWorldCupPreOrderPopup ? (
+      {/* WorldCupPreOrderPopup — ativo apenas para Comandatuba */}
+      {isComandatuba && showWorldCupPreOrderPopup ? (
         <WorldCupPreOrderPopup onClose={handleCloseWorldCupPreOrderPopup} />
       ) : showValentinePopup ? (
         <ValentinePopup onClose={handleCloseValentinePopup} />

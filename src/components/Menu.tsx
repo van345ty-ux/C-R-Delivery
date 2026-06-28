@@ -31,6 +31,7 @@ interface MenuProps {
   onTriggerValentine: () => void;
   isValentineThemeActive?: boolean; // Nova prop
   worldCupTriggerKey?: number; // Nova prop
+  selectedCity?: string; // Cidade selecionada
 }
 
 const categories = [
@@ -66,7 +67,9 @@ export const Menu: React.FC<MenuProps> = ({
   onTriggerValentine,
   isValentineThemeActive = false, // Nova prop
   worldCupTriggerKey,
+  selectedCity = '',
 }) => {
+  const isComandatuba = selectedCity ? selectedCity.toLowerCase().includes('comandatuba') : false;
   const { isWorldCupMode } = useTheme();
   console.log('[Menu] Rendering: isWorldCupMode =', isWorldCupMode, 'worldCupTriggerKey =', worldCupTriggerKey);
   const [products, setProducts] = useState<Product[]>([]);
@@ -323,7 +326,7 @@ export const Menu: React.FC<MenuProps> = ({
                   backgroundColor: isStoreOpen ? '#10B981' : '#FFFFFF'
                 }}
               ></div>
-              <span>{isStoreOpen ? (isWorldCupMode ? 'Plantão rumo ao hexa' : isValentineThemeActive ? 'Plantão Dia dos namorados' : 'Atendendo') : 'Fechado'}</span>
+              <span>{isStoreOpen ? (isWorldCupMode && isComandatuba ? 'Plantão rumo ao hexa' : isValentineThemeActive ? 'Plantão Dia dos namorados' : 'Atendendo') : 'Fechado'}</span>
             </div>
           </div>
         </div>

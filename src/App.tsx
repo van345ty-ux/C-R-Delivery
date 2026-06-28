@@ -403,38 +403,6 @@ function App() {
         setOperatingHours(fetchedOperatingHours);
         console.log('fetchInitialAppData: Hours loaded.', fetchedOperatingHours.length, 'entries');
 
-        const now = new Date();
-        const currentDay = now.getDay();
-        const currentTime = now.toTimeString().slice(0, 5);
-        const todayHours = fetchedOperatingHours.find(h => h.day_of_week === currentDay);
-
-        let storeCurrentlyOpen = false;
-        let canPreOrder = false;
-        let showPreOrderModalOnLoad = false;
-        let showPreOrderBannerOnLoad = false;
-
-        if (todayHours && todayHours.is_open) {
-          storeCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
-          canPreOrder = !storeCurrentlyOpen && currentTime >= '07:00' && currentTime <= '17:00';
-
-          const todayDateString = now.toISOString().split('T')[0];
-          const lastSeenPreOrderModalDate = localStorage.getItem('preOrderModalLastSeenDate');
-          const hasSeenPreOrderModalToday = lastSeenPreOrderModalDate === todayDateString;
-
-          if (canPreOrder && !hasSeenPreOrderModalToday) {
-            showPreOrderModalOnLoad = true;
-            localStorage.setItem('preOrderModalLastSeenDate', todayDateString);
-          }
-          if (canPreOrder) showPreOrderBannerOnLoad = true;
-        }
-
-        setIsStoreOpen(storeCurrentlyOpen);
-        setCanPlaceOrder(storeCurrentlyOpen || canPreOrder);
-        setShowPreOrderModal(showPreOrderModalOnLoad);
-        setShowPreOrderBanner(showPreOrderBannerOnLoad);
-
-        console.log('fetchInitialAppData: Store open:', storeCurrentlyOpen, '| Can pre-order:', canPreOrder);
-
       } catch (error: any) {
         console.error('fetchInitialAppData: Error fetching data:', error);
         toast.error('Erro ao carregar dados. Verifique sua conexão.');
@@ -446,6 +414,58 @@ function App() {
 
     fetchInitialAppData();
   }, []); // Empty dependency array means this runs once on mount
+
+  // Efeito reativo para recalcular o status de funcionamento e o pré-agendamento da Copa
+  useEffect(() => {
+    if (operatingHours.length === 0) return;
+
+    const isComandatuba = selectedCity ? selectedCity.toLowerCase().includes('comandatuba') : false;
+
+    const now = new Date();
+    const currentDay = now.getDay();
+    const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
+    const todayHours = operatingHours.find(h => h.day_of_week === currentDay);
+
+    let storeCurrentlyOpen = false;
+    let canPreOrder = false;
+    let shouldShowPreOrderModal = false;
+    let shouldShowPreOrderBanner = false;
+
+    if (todayHours && todayHours.is_open) {
+      storeCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
+      
+      // O pré-agendamento (pedido agendado) é ativo exclusivamente para a rota de Comandatuba
+      if (isComandatuba) {
+        canPreOrder = !storeCurrentlyOpen && currentTime >= '07:00' && currentTime <= '17:00';
+
+        const todayDateString = now.toISOString().split('T')[0];
+        const lastSeenPreOrderModalDate = localStorage.getItem('preOrderModalLastSeenDate');
+        const hasSeenPreOrderModalToday = lastSeenPreOrderModalDate === todayDateString;
+
+        if (canPreOrder && !hasSeenPreOrderModalToday) {
+          shouldShowPreOrderModal = true;
+          localStorage.setItem('preOrderModalLastSeenDate', todayDateString);
+        }
+        if (canPreOrder) {
+          shouldShowPreOrderBanner = true;
+        }
+      }
+    }
+
+    setIsStoreOpen(storeCurrentlyOpen);
+    setCanPlaceOrder(storeCurrentlyOpen || canPreOrder);
+    setShowPreOrderModal(shouldShowPreOrderModal);
+    setShowPreOrderBanner(shouldShowPreOrderBanner);
+
+    console.log('recalculateStoreStatus (App.tsx):', {
+      selectedCity,
+      isComandatuba,
+      isStoreOpen: storeCurrentlyOpen,
+      canPlaceOrder: storeCurrentlyOpen || canPreOrder,
+      showPreOrderModal: shouldShowPreOrderModal,
+      showPreOrderBanner: shouldShowPreOrderBanner
+    });
+  }, [selectedCity, operatingHours]);
 
 
   // Effect for Supabase Auth Session and User Profile
@@ -630,25 +650,7 @@ function App() {
       // Atualiza o timestamp de acesso ao selecionar a cidade
       localStorage.setItem(LAST_ACCESS_KEY, Date.now().toString());
 
-      const now = new Date();
-      const currentDay = now.getDay();
-      const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
-      const todayHours = operatingHours.find(h => h.day_of_week === currentDay);
-
-      let shouldShowPreOrderModal = false;
-      if (todayHours && todayHours.is_open) {
-        const isCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
-        // Show pre-order modal if:
-        // 1. Store is open today
-        // 2. Store is NOT currently open
-        // 3. Current time is between 07:00 and 17:00
-        if (todayHours.is_open && !isCurrentlyOpen && currentTime >= '07:00' && currentTime <= '17:00') {
-          shouldShowPreOrderModal = true;
-        }
-      }
-
       setCurrentView('home'); // Always go to home
-      setShowPreOrderModal(shouldShowPreOrderModal); // Show modal based on conditions
     }
   };
 
