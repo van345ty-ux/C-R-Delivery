@@ -24,6 +24,7 @@ export const AdminPreOrderBanners: React.FC<AdminPreOrderBannersProps> = ({ onSe
     world_cup_pre_order_popup_check_1: 'Pedido realizado hoje/amanhã',
     world_cup_pre_order_popup_check_2: 'Entrega agendada para o dia configurado',
     world_cup_pre_order_popup_check_3: 'Vagas limitadas para produção',
+    world_cup_pre_order_checkout_warning: 'Aviso: seu pedido será agendado para entrega na quarta-feira a partir das 20:30.',
   });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -45,7 +46,8 @@ export const AdminPreOrderBanners: React.FC<AdminPreOrderBannersProps> = ({ onSe
           'world_cup_pre_order_popup_button',
           'world_cup_pre_order_popup_check_1',
           'world_cup_pre_order_popup_check_2',
-          'world_cup_pre_order_popup_check_3'
+          'world_cup_pre_order_popup_check_3',
+          'world_cup_pre_order_checkout_warning'
         ]);
 
       if (error) {
@@ -175,6 +177,19 @@ export const AdminPreOrderBanners: React.FC<AdminPreOrderBannersProps> = ({ onSe
                   rows={2}
                   placeholder="Ex: Os atendimentos e entregas da C&R Sushi acontecerão exclusivamente na sexta-feira..."
                 />
+              </div>
+              <div className="mt-4 pt-4 border-t border-dashed">
+                <label className="block text-sm font-medium text-gray-700 mb-1 font-bold text-red-600">Aviso de Confirmação do Carrinho (Finalizar Pedido)</label>
+                <textarea
+                  value={settings.world_cup_pre_order_checkout_warning || ''}
+                  onChange={(e) => handleInputChange('world_cup_pre_order_checkout_warning', e.target.value)}
+                  className="w-full p-3 border rounded-lg text-sm text-gray-900 bg-white"
+                  rows={2}
+                  placeholder="Ex: Aviso: seu pedido será agendado para entrega na quarta-feira a partir das 20:30."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Este aviso é mostrado em um popup quando o cliente clica para finalizar o pedido no carrinho.
+                </p>
               </div>
             </div>
           </div>

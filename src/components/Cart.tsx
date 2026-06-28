@@ -9,6 +9,17 @@ import { PixInstructionsModal } from './PixInstructionsModal';
 import { PixReturnConfirmationModal } from './PixReturnConfirmationModal';
 import { sendWhatsappNotification } from '../utils/whatsapp';
 
+const renderBoldText = (text: string) => {
+  if (!text) return null;
+  const parts = text.split('**');
+  return parts.map((part, index) => {
+    if (index % 2 === 1) {
+      return <strong key={index} className="font-extrabold text-yellow-500 dark:text-yellow-400">{part}</strong>;
+    }
+    return part;
+  });
+};
+
 interface CartProps {
   items: CartItem[];
   onClose: () => void;
@@ -26,6 +37,9 @@ interface CartProps {
   comandatubaDeliveryFee?: number;
   pixKey?: string;
   mercadoPagoLink?: string;
+  worldCupPopupSettings?: {
+    checkoutWarning?: string;
+  };
 }
 
 export const Cart: React.FC<CartProps> = ({
@@ -45,6 +59,7 @@ export const Cart: React.FC<CartProps> = ({
   comandatubaDeliveryFee: comandatubaDeliveryFeeValue = 8.00,
   pixKey: pixKeyValue = '',
   mercadoPagoLink = 'https://link.mercadopago.com.br/sushicr',
+  worldCupPopupSettings,
 }) => {
   const { isWorldCupMode } = useTheme();
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>(() => {
@@ -1141,7 +1156,7 @@ export const Cart: React.FC<CartProps> = ({
             </div>
             <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">Aviso Importante</h3>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6 leading-relaxed font-medium">
-              Aviso: seu pedido será agendado para entrega na sexta-feira a partir das 18h.
+              {renderBoldText(worldCupPopupSettings?.checkoutWarning || 'Aviso: seu pedido será agendado para entrega na sexta-feira a partir das 18h.')}
             </p>
             <button
               onClick={() => {

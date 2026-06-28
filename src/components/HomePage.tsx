@@ -66,6 +66,7 @@ interface HomePageProps {
     check1?: string;
     check2?: string;
     check3?: string;
+    checkoutWarning?: string;
   };
 }
 
@@ -472,6 +473,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           comandatubaDeliveryFee={comandatubaDeliveryFee}
           pixKey={pixKey}
           mercadoPagoLink={mercadoPagoLink}
+          worldCupPopupSettings={worldCupPopupSettings}
         />
       )}
 

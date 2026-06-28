@@ -806,6 +806,7 @@ function App() {
     check1: appSettings.world_cup_pre_order_popup_check_1 || 'Pedido realizado hoje/amanhã',
     check2: appSettings.world_cup_pre_order_popup_check_2 || 'Entrega agendada para o dia configurado',
     check3: appSettings.world_cup_pre_order_popup_check_3 || 'Vagas limitadas para produção',
+    checkoutWarning: appSettings.world_cup_pre_order_checkout_warning || 'Aviso: seu pedido será agendado para entrega na quarta-feira a partir das 20:30.',
   };
   
   const heroTextBackgroundEnabled = appSettings.hero_text_background_enabled !== 'false'; // Nova configuração
