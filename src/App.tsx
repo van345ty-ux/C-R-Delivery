@@ -441,14 +441,9 @@ function App() {
       // O pré-agendamento para Comandatuba fica ativo 24h por dia sempre que a loja física estiver fechada
       canPreOrder = !storeCurrentlyOpen;
 
-      const todayDateString = now.toISOString().split('T')[0];
-      const lastSeenPreOrderModalDate = localStorage.getItem('preOrderModalLastSeenDate');
-      const hasSeenPreOrderModalToday = lastSeenPreOrderModalDate === todayDateString;
+      // O modal de pré-agendamento (PreOrderModal) foi ocultado a pedido do cliente
+      shouldShowPreOrderModal = false;
 
-      if (canPreOrder && !hasSeenPreOrderModalToday) {
-        shouldShowPreOrderModal = true;
-        localStorage.setItem('preOrderModalLastSeenDate', todayDateString);
-      }
       if (canPreOrder) {
         shouldShowPreOrderBanner = true;
       }
