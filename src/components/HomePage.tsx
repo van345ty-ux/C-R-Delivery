@@ -55,6 +55,15 @@ interface HomePageProps {
   pixKey: string;
   mercadoPagoLink: string;
   preOrderBannerText?: string; // Novo texto do banner
+  worldCupPopupSettings?: {
+    title: string;
+    subtitle: string;
+    warningTitle: string;
+    warningDescription: string;
+    description: string;
+    footer: string;
+    buttonText: string;
+  };
 }
 
 const BRAZIL_GAMES = [
@@ -129,6 +138,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   pixKey,
   mercadoPagoLink,
   preOrderBannerText,
+  worldCupPopupSettings,
 }) => {
   const { isWorldCupMode } = useTheme();
   const [worldCupTriggerKey, setWorldCupTriggerKey] = useState(0);
@@ -464,7 +474,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
       {/* WorldCupPreOrderPopup — ativo apenas para Comandatuba */}
       {isComandatuba && showWorldCupPreOrderPopup ? (
-        <WorldCupPreOrderPopup onClose={handleCloseWorldCupPreOrderPopup} />
+        <WorldCupPreOrderPopup onClose={handleCloseWorldCupPreOrderPopup} settings={worldCupPopupSettings} />
       ) : showValentinePopup ? (
         <ValentinePopup onClose={handleCloseValentinePopup} />
       ) : showPreOrderModal ? (

@@ -3,9 +3,18 @@ import { X, Calendar, Clock, Sparkles, AlertCircle } from 'lucide-react';
 
 interface WorldCupPreOrderPopupProps {
   onClose: () => void;
+  settings?: {
+    title: string;
+    subtitle: string;
+    warningTitle: string;
+    warningDescription: string;
+    description: string;
+    footer: string;
+    buttonText: string;
+  };
 }
 
-export const WorldCupPreOrderPopup: React.FC<WorldCupPreOrderPopupProps> = ({ onClose }) => {
+export const WorldCupPreOrderPopup: React.FC<WorldCupPreOrderPopupProps> = ({ onClose, settings }) => {
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-[999999] animate-fade-in">
       {/* Estilos e animações locais de futebol e pulsação */}
@@ -54,10 +63,10 @@ export const WorldCupPreOrderPopup: React.FC<WorldCupPreOrderPopupProps> = ({ on
           </div>
 
           <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-wide uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] leading-tight">
-            🇧🇷 Atendimento Especial
+            {settings?.title || '🇧🇷 Atendimento Especial'}
           </h2>
           <h3 className="text-lg md:text-xl font-bold text-yellow-100 mt-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.2)]">
-            Copa do Mundo 2026 🏆
+            {settings?.subtitle || 'Copa do Mundo 2026 🏆'}
           </h3>
         </div>
 
@@ -69,17 +78,17 @@ export const WorldCupPreOrderPopup: React.FC<WorldCupPreOrderPopupProps> = ({ on
             <AlertCircle className="w-6 h-6 text-green-700 dark:text-green-400 shrink-0 mt-0.5" />
             <div>
               <h4 className="font-extrabold text-green-800 dark:text-green-300 text-sm md:text-base">
-                Atenção: este é um pedido agendado!
+                {settings?.warningTitle || 'Atenção: este é um pedido agendado!'}
               </h4>
               <p className="text-xs md:text-sm text-green-700 dark:text-green-400 mt-1 leading-snug">
-                Os atendimentos e entregas da C&R Sushi para esta promoção especial acontecerão exclusivamente na <strong>sexta-feira a partir das 18h</strong>.
+                {settings?.warningDescription || 'Os atendimentos e entregas da C&R Sushi para esta promoção especial acontecerão exclusivamente na sexta-feira a partir das 18h.'}
               </p>
             </div>
           </div>
 
           {/* Texto de Explicação */}
           <p className="text-zinc-700 dark:text-zinc-300 text-sm md:text-base leading-relaxed text-center font-medium">
-            Ao realizar sua compra, você garante sua reserva antecipada para receber seu sushi na sexta-feira e torcer pelo Brasil rumo ao Hexa com muito sabor!
+            {settings?.description || 'Ao realizar sua compra, você guarantees sua reserva antecipada para receber seu sushi na sexta-feira e torcer pelo Brasil rumo ao Hexa com muito sabor!'}
           </p>
 
           {/* Lista com Checkmarks da Copa */}
@@ -90,7 +99,7 @@ export const WorldCupPreOrderPopup: React.FC<WorldCupPreOrderPopupProps> = ({ on
             </div>
             <div className="flex items-center gap-3 text-zinc-800 dark:text-zinc-200">
               <span className="flex items-center justify-center w-6 h-6 bg-green-100 dark:bg-green-950/50 rounded-full text-green-700 dark:text-green-400 font-bold text-sm shrink-0">✓</span>
-              <span className="text-xs md:text-sm font-semibold">Entrega agendada para sexta-feira (a partir das 18h)</span>
+              <span className="text-xs md:text-sm font-semibold">Entrega agendada para o dia configurado</span>
             </div>
             <div className="flex items-center gap-3 text-zinc-800 dark:text-zinc-200">
               <span className="flex items-center justify-center w-6 h-6 bg-green-100 dark:bg-green-950/50 rounded-full text-green-700 dark:text-green-400 font-bold text-sm shrink-0">✓</span>
@@ -100,7 +109,7 @@ export const WorldCupPreOrderPopup: React.FC<WorldCupPreOrderPopupProps> = ({ on
 
           <div className="text-center">
             <p className="text-xs text-zinc-500 dark:text-zinc-400 font-bold italic tracking-wide">
-              Programe-se e garanta o seu sushi para o jogo! ⚽🇧🇷
+              {settings?.footer || 'Programe-se e garanta o seu sushi para o jogo! ⚽🇧🇷'}
             </p>
           </div>
 
@@ -110,7 +119,7 @@ export const WorldCupPreOrderPopup: React.FC<WorldCupPreOrderPopupProps> = ({ on
             className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-extrabold text-base md:text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 shadow-lg shadow-green-500/20 hover:shadow-green-500/40 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
           >
             <Sparkles className="w-5 h-5 fill-white" />
-            Garantir Minha Reserva! ⚽
+            {settings?.buttonText || 'Garantir Minha Reserva! ⚽'}
           </button>
 
         </div>

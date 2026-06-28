@@ -11,6 +11,7 @@ import { AdminSettings } from './admin/AdminSettings';
 import { AdminHighlights } from './admin/AdminHighlights';
 import { AdminBonificationCoupons } from './admin/AdminBonificationCoupons';
 import { AdminMarketing } from './admin/AdminMarketing';
+import { AdminPreOrderBanners } from './admin/AdminPreOrderBanners';
 import { LoginNotification } from './LoginNotification';
 import { supabase } from '../integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
@@ -199,6 +200,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate, on
     { id: 'coupons', label: 'Cupons', icon: Tag },
     { id: 'promotions', label: 'Promoções', icon: Tag },
     { id: 'marketing', label: 'Marketing', icon: Megaphone },
+    { id: 'pre_order_banners', label: 'Banners de Agendamento', icon: Megaphone },
     { id: 'customers', label: 'Clientes', icon: Users },
     { id: 'settings', label: 'Configurações', icon: SlidersHorizontal }
   ];
@@ -227,6 +229,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onUserUpdate, on
         return <AdminCustomers />;
       case 'settings':
         return <AdminSettings onSettingsSaved={onSettingsSaved} />;
+      case 'pre_order_banners':
+        return <AdminPreOrderBanners onSettingsSaved={onSettingsSaved} />;
       default:
         return <AdminDashboard />;
     }

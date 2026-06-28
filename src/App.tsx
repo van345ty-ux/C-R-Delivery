@@ -796,6 +796,16 @@ function App() {
   
   const preOrderBannerText = appSettings.pre_order_banner_text || 'Estaremos atendendo a partir das 18h, mas você pode deixar seu pedido agendado em nosso sistema.';
   
+  const worldCupPopupSettings = {
+    title: appSettings.world_cup_pre_order_popup_title || 'ATENDIMENTO ESPECIAL',
+    subtitle: appSettings.world_cup_pre_order_popup_subtitle || 'Copa do Mundo 2026 🏆',
+    warningTitle: appSettings.world_cup_pre_order_popup_warning_title || 'Atenção: este é um pedido agendado!',
+    warningDescription: appSettings.world_cup_pre_order_popup_warning_description || 'Os atendimentos e entregas da C&R Sushi para esta promoção especial acontecerão exclusivamente na sexta-feira a partir das 18h.',
+    description: appSettings.world_cup_pre_order_popup_description || 'Ao realizar sua compra, você garante sua reserva antecipada para receber seu sushi na sexta-feira e torcer pelo Brasil rumo ao Hexa com muito sabor!',
+    footer: appSettings.world_cup_pre_order_popup_footer || 'Programe-se e garanta o seu sushi para o jogo! ⚽🇧🇷',
+    buttonText: appSettings.world_cup_pre_order_popup_button || 'Garantir Minha Reserva! ⚽',
+  };
+  
   const heroTextBackgroundEnabled = appSettings.hero_text_background_enabled !== 'false'; // Nova configuração
 
   // Nova configuração para colunas do menu mobile
@@ -864,6 +874,7 @@ function App() {
         setShowPreOrderModal={setShowPreOrderModal} // Nova prop
         showPreOrderBanner={showPreOrderBanner} // Nova prop
         preOrderBannerText={preOrderBannerText} // Passando o texto customizável do banner
+        worldCupPopupSettings={worldCupPopupSettings} // Passando os textos do pop-up da Copa
         isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
         isPixReturnFlow={isPixReturnFlow} // Passando a nova prop
         setIsPixReturnFlow={setIsPixReturnFlow} // Passando a nova prop
