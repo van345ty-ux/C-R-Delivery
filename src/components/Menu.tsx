@@ -8,6 +8,17 @@ import { Product, Highlight } from '../types'; // Corrected import path
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
 
+const renderBoldText = (text: string) => {
+  if (!text) return null;
+  const parts = text.split('**');
+  return parts.map((part, index) => {
+    if (index % 2 === 1) {
+      return <strong key={index} className="font-extrabold text-red-600 dark:text-red-400">{part}</strong>;
+    }
+    return part;
+  });
+};
+
 interface MenuProps {
   onAddToCart: (product: Product, quantity?: number, observations?: string) => void;
   selectedCategory: string;
@@ -341,9 +352,9 @@ export const Menu: React.FC<MenuProps> = ({
 
       {/* Pre-order Banner */}
       {showPreOrderBanner && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg mb-6">
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg mb-6 animate-fade-in">
           <p className="text-sm font-semibold" style={{ color: '#000000' }}>
-            {preOrderBannerText}
+            {renderBoldText(preOrderBannerText)}
           </p>
         </div>
       )}

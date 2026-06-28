@@ -14,6 +14,17 @@ interface WorldCupPreOrderPopupProps {
   };
 }
 
+const renderBoldText = (text: string) => {
+  if (!text) return null;
+  const parts = text.split('**');
+  return parts.map((part, index) => {
+    if (index % 2 === 1) {
+      return <strong key={index} className="font-extrabold text-yellow-300 dark:text-yellow-400">{part}</strong>;
+    }
+    return part;
+  });
+};
+
 export const WorldCupPreOrderPopup: React.FC<WorldCupPreOrderPopupProps> = ({ onClose, settings }) => {
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-[999999] animate-fade-in">
@@ -63,10 +74,10 @@ export const WorldCupPreOrderPopup: React.FC<WorldCupPreOrderPopupProps> = ({ on
           </div>
 
           <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-wide uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] leading-tight">
-            {settings?.title || '🇧🇷 Atendimento Especial'}
+            {renderBoldText(settings?.title || '🇧🇷 Atendimento Especial')}
           </h2>
           <h3 className="text-lg md:text-xl font-bold text-yellow-100 mt-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.2)]">
-            {settings?.subtitle || 'Copa do Mundo 2026 🏆'}
+            {renderBoldText(settings?.subtitle || 'Copa do Mundo 2026 🏆')}
           </h3>
         </div>
 
@@ -78,17 +89,17 @@ export const WorldCupPreOrderPopup: React.FC<WorldCupPreOrderPopupProps> = ({ on
             <AlertCircle className="w-6 h-6 text-green-700 dark:text-green-400 shrink-0 mt-0.5" />
             <div>
               <h4 className="font-extrabold text-green-800 dark:text-green-300 text-sm md:text-base">
-                {settings?.warningTitle || 'Atenção: este é um pedido agendado!'}
+                {renderBoldText(settings?.warningTitle || 'Atenção: este é um pedido agendado!')}
               </h4>
               <p className="text-xs md:text-sm text-green-700 dark:text-green-400 mt-1 leading-snug">
-                {settings?.warningDescription || 'Os atendimentos e entregas da C&R Sushi para esta promoção especial acontecerão exclusivamente na sexta-feira a partir das 18h.'}
+                {renderBoldText(settings?.warningDescription || 'Os atendimentos e entregas da C&R Sushi para esta promoção especial acontecerão exclusivamente na sexta-feira a partir das 18h.')}
               </p>
             </div>
           </div>
 
           {/* Texto de Explicação */}
           <p className="text-zinc-700 dark:text-zinc-300 text-sm md:text-base leading-relaxed text-center font-medium">
-            {settings?.description || 'Ao realizar sua compra, você guarantees sua reserva antecipada para receber seu sushi na sexta-feira e torcer pelo Brasil rumo ao Hexa com muito sabor!'}
+            {renderBoldText(settings?.description || 'Ao realizar sua compra, você guarantees sua reserva antecipada para receber seu sushi na sexta-feira e torcer pelo Brasil rumo ao Hexa com muito sabor!')}
           </p>
 
           {/* Lista com Checkmarks da Copa */}
@@ -109,7 +120,7 @@ export const WorldCupPreOrderPopup: React.FC<WorldCupPreOrderPopupProps> = ({ on
 
           <div className="text-center">
             <p className="text-xs text-zinc-500 dark:text-zinc-400 font-bold italic tracking-wide">
-              {settings?.footer || 'Programe-se e garanta o seu sushi para o jogo! ⚽🇧🇷'}
+              {renderBoldText(settings?.footer || 'Programe-se e garanta o seu sushi para o jogo! ⚽🇧🇷')}
             </p>
           </div>
 
@@ -119,7 +130,7 @@ export const WorldCupPreOrderPopup: React.FC<WorldCupPreOrderPopupProps> = ({ on
             className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-extrabold text-base md:text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 shadow-lg shadow-green-500/20 hover:shadow-green-500/40 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
           >
             <Sparkles className="w-5 h-5 fill-white" />
-            {settings?.buttonText || 'Garantir Minha Reserva! ⚽'}
+            {renderBoldText(settings?.buttonText || 'Garantir Minha Reserva! ⚽')}
           </button>
 
         </div>
