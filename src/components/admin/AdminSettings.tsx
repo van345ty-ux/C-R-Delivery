@@ -45,6 +45,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved })
     allow_theme_toggle: 'true',
     accent_color_light: '#D4AF37',
     accent_color_dark: '#F4D03F',
+    pre_order_banner_text: 'Estaremos atendendo a partir das 18h, mas você pode deixar seu pedido agendado em nosso sistema.',
   });
   const [operatingHours, setOperatingHours] = useState<OperatingHour[]>([]);
   const [loading, setLoading] = useState(true);
@@ -258,6 +259,24 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved })
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Campo para edição do texto do banner de pré-agendamento */}
+        <div className="mt-6 pt-6 border-t">
+          <label htmlFor="preOrderBannerText" className="block text-sm font-medium text-gray-700 mb-2">
+            Texto do Banner de Pré-agendamento (Plantão)
+          </label>
+          <textarea
+            id="preOrderBannerText"
+            value={settings.pre_order_banner_text || ''}
+            onChange={(e) => handleInputChange('pre_order_banner_text', e.target.value)}
+            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
+            rows={2}
+            placeholder="Ex: Estaremos atendendo a partir das 18h, mas você pode deixar seu pedido agendado em nosso sistema."
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Este texto será exibido no banner vermelho de aviso de pré-agendamento quando o plantão de agendamento estiver ativo.
+          </p>
         </div>
       </div>
 
