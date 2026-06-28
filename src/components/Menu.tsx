@@ -313,20 +313,25 @@ export const Menu: React.FC<MenuProps> = ({
             <div 
               className="inline-flex items-center font-semibold px-5 py-2.5 rounded-full text-sm"
               style={{
-                backgroundColor: isStoreOpen ? '#D1FAE5' : '#0A0A0A',
-                color: isStoreOpen ? '#065F46' : '#FFFFFF',
-                border: isStoreOpen ? 'none' : '2px solid #FFFFFF',
+                backgroundColor: canPlaceOrder ? '#D1FAE5' : '#0A0A0A',
+                color: canPlaceOrder ? '#065F46' : '#FFFFFF',
+                border: canPlaceOrder ? 'none' : '2px solid #FFFFFF',
                 backdropFilter: 'blur(12px)',
                 WebkitBackdropFilter: 'blur(12px)'
               }}
             >
               <div 
-                className={`w-2.5 h-2.5 rounded-full mr-2 ${isStoreOpen ? 'animate-green-pulse' : ''}`}
+                className={`w-2.5 h-2.5 rounded-full mr-2 ${canPlaceOrder ? 'animate-green-pulse' : ''}`}
                 style={{
-                  backgroundColor: isStoreOpen ? '#10B981' : '#FFFFFF'
+                  backgroundColor: canPlaceOrder ? '#10B981' : '#FFFFFF'
                 }}
               ></div>
-              <span>{isStoreOpen ? (isWorldCupMode && isComandatuba ? 'Plantão rumo ao hexa' : isValentineThemeActive ? 'Plantão Dia dos namorados' : 'Atendendo') : 'Fechado'}</span>
+              <span>
+                {canPlaceOrder 
+                  ? (isWorldCupMode && isComandatuba ? 'Plantão rumo ao hexa' : isValentineThemeActive ? 'Plantão Dia dos namorados' : 'Atendendo') 
+                  : 'Fechado'
+                }
+              </span>
             </div>
           </div>
         </div>
