@@ -794,6 +794,8 @@ function App() {
   const heroSubtitleFontColor = appSettings.hero_subtitle_font_color || '#ffffff';
   const heroSubtitleBorderColor = appSettings.hero_subtitle_border_color || '#000000';
   
+  const preOrderBannerText = appSettings.pre_order_banner_text || 'Estaremos atendendo a partir das 18h, mas você pode deixar seu pedido agendado em nosso sistema.';
+  
   const heroTextBackgroundEnabled = appSettings.hero_text_background_enabled !== 'false'; // Nova configuração
 
   // Nova configuração para colunas do menu mobile
@@ -861,6 +863,7 @@ function App() {
         showPreOrderModal={showPreOrderModal} // Nova prop
         setShowPreOrderModal={setShowPreOrderModal} // Nova prop
         showPreOrderBanner={showPreOrderBanner} // Nova prop
+        preOrderBannerText={preOrderBannerText} // Passando o texto customizável do banner
         isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
         isPixReturnFlow={isPixReturnFlow} // Passando a nova prop
         setIsPixReturnFlow={setIsPixReturnFlow} // Passando a nova prop

@@ -54,6 +54,7 @@ interface HomePageProps {
   comandatubaDeliveryFee: number;
   pixKey: string;
   mercadoPagoLink: string;
+  preOrderBannerText?: string; // Novo texto do banner
 }
 
 const BRAZIL_GAMES = [
@@ -127,6 +128,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   comandatubaDeliveryFee,
   pixKey,
   mercadoPagoLink,
+  preOrderBannerText,
 }) => {
   const { isWorldCupMode } = useTheme();
   const [worldCupTriggerKey, setWorldCupTriggerKey] = useState(0);
@@ -399,6 +401,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           heroSubtitleBorderColor={heroSubtitleBorderColor}
           heroTextBackgroundEnabled={heroTextBackgroundEnabled} // Nova prop
           showPreOrderBanner={showPreOrderBanner} // Nova prop
+          preOrderBannerText={preOrderBannerText} // Texto customizado do banner
           isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
           menuMobileColumns={menuMobileColumns} // Nova prop para controlar colunas no mobile
           onTriggerValentine={onTriggerValentine}

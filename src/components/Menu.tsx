@@ -32,6 +32,7 @@ interface MenuProps {
   isValentineThemeActive?: boolean; // Nova prop
   worldCupTriggerKey?: number; // Nova prop
   selectedCity?: string; // Cidade selecionada
+  preOrderBannerText?: string; // Texto customizado do banner
 }
 
 const categories = [
@@ -68,6 +69,7 @@ export const Menu: React.FC<MenuProps> = ({
   isValentineThemeActive = false, // Nova prop
   worldCupTriggerKey,
   selectedCity = '',
+  preOrderBannerText = 'Estaremos atendendo a partir das 18h, mas você pode deixar seu pedido agendado em nosso sistema.',
 }) => {
   const isComandatuba = selectedCity ? selectedCity.toLowerCase().includes('comandatuba') : false;
   const { isWorldCupMode } = useTheme();
@@ -341,7 +343,7 @@ export const Menu: React.FC<MenuProps> = ({
       {showPreOrderBanner && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg mb-6">
           <p className="text-sm font-semibold" style={{ color: '#000000' }}>
-            Estaremos atendendo a partir das 18h, mas você pode deixar seu pedido agendado em nosso sistema.
+            {preOrderBannerText}
           </p>
         </div>
       )}
