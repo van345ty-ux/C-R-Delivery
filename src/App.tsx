@@ -438,15 +438,14 @@ function App() {
       
     // 2. O pré-agendamento (pedido agendado) é ativo exclusivamente para a rota de Comandatuba
     if (isComandatuba) {
-      // O pré-agendamento para Comandatuba fica ativo 24h por dia sempre que a loja física estiver fechada
-      canPreOrder = !storeCurrentlyOpen;
+      // O pré-agendamento para Comandatuba fica ativo 24h por dia, mesmo que Una esteja aberta
+      canPreOrder = true;
 
       // O modal de pré-agendamento (PreOrderModal) foi ocultado a pedido do cliente
       shouldShowPreOrderModal = false;
 
-      if (canPreOrder) {
-        shouldShowPreOrderBanner = true;
-      }
+      // O aviso de pré-agendamento para Comandatuba sempre deve ser exibido
+      shouldShowPreOrderBanner = true;
     }
 
     setIsStoreOpen(storeCurrentlyOpen);
