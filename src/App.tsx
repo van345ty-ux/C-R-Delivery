@@ -108,7 +108,14 @@ function App() {
     return '';
   });
 
-  const [currentView, setCurrentView] = useState<'location' | 'home' | 'admin' | 'auth' | 'tracking'>('location');
+  const [currentView, setCurrentView] = useState<'location' | 'home' | 'admin' | 'auth' | 'tracking'>(() => {
+    if (typeof window !== 'undefined') {
+      const savedCity = localStorage.getItem('selectedCity') || '';
+      const savedView = localStorage.getItem('lastView') || '';
+      return getInitialView(savedView, savedCity);
+    }
+    return 'location';
+  });
 
   const [valentineTriggerKey, setValentineTriggerKey] = useState(0);
 
