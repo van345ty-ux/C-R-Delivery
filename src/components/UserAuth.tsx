@@ -119,10 +119,14 @@ export const UserAuth: React.FC<UserAuthProps> = ({ onBack, onGoToMenu, onAdminA
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {isRecovering ? (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                E-mail
-              </label>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Insira seu e-mail cadastrado abaixo e enviaremos um link seguro para você redefinir a sua senha.
+              </p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  E-mail
+                </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <input
@@ -135,6 +139,7 @@ export const UserAuth: React.FC<UserAuthProps> = ({ onBack, onGoToMenu, onAdminA
                   required
                 />
               </div>
+            </div>
             </div>
           ) : (
             <>
