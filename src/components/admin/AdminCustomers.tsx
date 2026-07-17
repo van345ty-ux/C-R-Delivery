@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Phone, Calendar, ShoppingBag, Trash2, Gift } from 'lucide-react';
+import { User, Phone, Calendar, ShoppingBag, Trash2, Gift, Pencil, Check, X } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
 
@@ -22,6 +22,8 @@ export const AdminCustomers: React.FC = () => {
   const [onlineUsersMap, setOnlineUsersMap] = useState<Map<string, string>>(new Map());
   const [todayLoginsMap, setTodayLoginsMap] = useState<Map<string, string>>(new Map());
   const [filter, setFilter] = useState<'all' | 'online' | 'today'>('all');
+  const [editingCustomerId, setEditingCustomerId] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState({ full_name: '', phone: '' });
 
   // Efeito 1: Apenas para verificar a role do usuário
   useEffect(() => {
@@ -154,6 +156,28 @@ export const AdminCustomers: React.FC = () => {
     }
   };
 
+  const handleSaveCustomer = async (id: string) => {
+    try {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          full_name: editFormData.full_name,
+          phone: editFormData.phone,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (updateError) throw updateError;
+
+      toast.success('Cliente atualizado com sucesso!');
+      setEditingCustomerId(null);
+      await fetchCustomers();
+    } catch (err: any) {
+      console.error('Erro ao atualizar cliente:', err);
+      toast.error('Erro ao atualizar cliente: ' + err.message);
+    }
+  };
+
   const handleDeleteCustomer = async (id: string, name: string) => {
     const confirmMessage = `ATENÇÃO (Conformidade LGPD - Art. 18):\n\n` +
       `Tem certeza que deseja apagar o cliente "${name}" permanentemente?\n\n` +
@@ -274,19 +298,30 @@ export const AdminCustomers: React.FC = () => {
             
             const onlineAtStr = isOnline ? onlineUsersMap.get(customer.id) : (isToday ? todayLoginsMap.get(customer.id) : null);
             const onlineAt = onlineAtStr ? new Date(onlineAtStr).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : null;
+            const isEditing = editingCustomerId === customer.id;
             
             return (
             <div key={customer.id} className={`bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-shadow relative ${isOnline ? 'border-green-300 shadow-green-100 ring-1 ring-green-400' : (isToday ? 'border-gray-300 bg-gray-50' : '')}`}>
               <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center">
+                <div className="flex items-center w-full">
                   <div className="bg-red-100 p-2 rounded-full mr-3">
                     <User className="w-5 h-5 text-red-600" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-lg text-gray-900 line-clamp-1" title={customer.full_name}>
-                        {customer.full_name || 'Nome não informado'}
-                      </h3>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editFormData.full_name}
+                          onChange={(e) => setEditFormData({ ...editFormData, full_name: e.target.value })}
+                          className="font-bold text-lg text-gray-900 border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-red-500"
+                          placeholder="Nome do cliente"
+                        />
+                      ) : (
+                        <h3 className="font-bold text-lg text-gray-900 line-clamp-1" title={customer.full_name}>
+                          {customer.full_name || 'Nome não informado'}
+                        </h3>
+                      )}
                     </div>
                     {filter !== 'today' && (
                       <p className="text-sm text-gray-500">ID: {customer.id.substring(0, 6)}...</p>
@@ -313,19 +348,62 @@ export const AdminCustomers: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={() => handleDeleteCustomer(customer.id, customer.full_name || 'Nome não informado')}
-                  className="text-gray-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors ml-2 flex-shrink-0"
-                  title="Excluir cliente e anonimizar pedidos (LGPD)"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
+                <div className="flex items-center ml-2 flex-shrink-0">
+                  {isEditing ? (
+                    <>
+                      <button
+                        onClick={() => handleSaveCustomer(customer.id)}
+                        className="text-green-600 hover:text-green-700 p-1.5 rounded-lg hover:bg-green-50 transition-colors"
+                        title="Salvar"
+                      >
+                        <Check className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => setEditingCustomerId(null)}
+                        className="text-gray-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                        title="Cancelar"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setEditingCustomerId(customer.id);
+                          setEditFormData({ full_name: customer.full_name || '', phone: customer.phone || '' });
+                        }}
+                        className="text-gray-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+                        title="Editar cliente"
+                      >
+                        <Pencil className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCustomer(customer.id, customer.full_name || 'Nome não informado')}
+                        className="text-gray-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                        title="Excluir cliente e anonimizar pedidos (LGPD)"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
               {filter !== 'today' && (
                 <div className="space-y-3 text-sm text-gray-600 mt-2">
                   <div className="flex items-center">
                     <Phone className="w-4 h-4 mr-2 text-gray-500" />
-                    <span>{customer.phone || 'Não informado'}</span>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editFormData.phone}
+                        onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                        className="border border-gray-300 rounded px-2 py-0.5 text-sm w-full focus:outline-none focus:ring-1 focus:ring-red-500"
+                        placeholder="Telefone"
+                      />
+                    ) : (
+                      <span>{customer.phone || 'Não informado'}</span>
+                    )}
                   </div>
                   
                   <div className="flex items-center">
