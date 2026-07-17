@@ -15,6 +15,7 @@ import { ValentineTheme } from './components/ValentineTheme';
 const AdminPanel = lazy(() => import('./components/AdminPanel').then(m => ({ default: m.AdminPanel })));
 const UserAuth = lazy(() => import('./components/UserAuth').then(m => ({ default: m.UserAuth })));
 const OrderTracking = lazy(() => import('./components/OrderTracking').then(m => ({ default: m.OrderTracking })));
+const ResetPasswordModal = lazy(() => import('./components/ResetPasswordModal').then(m => ({ default: m.ResetPasswordModal })));
 
 // Usa fetch nativo para evitar travamento do SDK do Supabase
 const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null> => {
@@ -158,6 +159,7 @@ function App() {
   const [operatingHours, setOperatingHours] = useState<OperatingHour[]>([]); // Novo estado para operatingHours
   const [showPreOrderModal, setShowPreOrderModal] = useState(false); // Novo estado para o modal de pré-pedido
   const [showPreOrderBanner, setShowPreOrderBanner] = useState(false); // Novo estado para o banner de pré-pedido
+  const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
   const [isMercadoPagoReturnFlow, setIsMercadoPagoReturnFlow] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return JSON.parse(localStorage.getItem('isMercadoPagoReturnFlow') || 'false');
@@ -498,6 +500,11 @@ function App() {
         toast.success('Você foi desconectado.');
         lastProcessedUserId = null;
         return;
+      }
+
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log('handleAuthChange: PASSWORD_RECOVERY event detected.');
+        setShowPasswordResetModal(true);
       }
 
       // Ignora TOKEN_REFRESHED - não precisa fazer nada
@@ -918,6 +925,11 @@ function App() {
         {/* Overlay do Tema Dia dos Namorados — Apenas no cardápio e quando ativado por clique */}
         {isValentineThemeActive && currentView === 'home' && valentineTriggerKey > 0 && (
           <ValentineTheme key={valentineTriggerKey} />
+        )}
+        {showPasswordResetModal && (
+          <Suspense fallback={null}>
+            <ResetPasswordModal onClose={() => setShowPasswordResetModal(false)} />
+          </Suspense>
         )}
       </div>
     </ThemeProvider>

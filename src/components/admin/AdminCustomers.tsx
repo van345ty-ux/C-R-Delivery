@@ -23,7 +23,7 @@ export const AdminCustomers: React.FC = () => {
   const [todayLoginsMap, setTodayLoginsMap] = useState<Map<string, string>>(new Map());
   const [filter, setFilter] = useState<'all' | 'online' | 'today'>('all');
   const [editingCustomerId, setEditingCustomerId] = useState<string | null>(null);
-  const [editFormData, setEditFormData] = useState({ full_name: '', phone: '' });
+  const [editFormData, setEditFormData] = useState({ full_name: '', phone: '', birth_date: '' });
 
   // Efeito 1: Apenas para verificar a role do usuário
   useEffect(() => {
@@ -163,6 +163,7 @@ export const AdminCustomers: React.FC = () => {
         .update({
           full_name: editFormData.full_name,
           phone: editFormData.phone,
+          birth_date: editFormData.birth_date,
           updated_at: new Date().toISOString()
         })
         .eq('id', id);
@@ -371,7 +372,11 @@ export const AdminCustomers: React.FC = () => {
                       <button
                         onClick={() => {
                           setEditingCustomerId(customer.id);
-                          setEditFormData({ full_name: customer.full_name || '', phone: customer.phone || '' });
+                          setEditFormData({ 
+                            full_name: customer.full_name || '', 
+                            phone: customer.phone || '',
+                            birth_date: customer.birth_date || ''
+                          });
                         }}
                         className="text-gray-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50 transition-colors"
                         title="Editar cliente"
@@ -408,7 +413,16 @@ export const AdminCustomers: React.FC = () => {
                   
                   <div className="flex items-center">
                     <Calendar className="w-4 h-4 mr-2 text-gray-500" />
-                    <span>{formatDate(customer.birth_date)}</span>
+                    {isEditing ? (
+                      <input
+                        type="date"
+                        value={editFormData.birth_date}
+                        onChange={(e) => setEditFormData({ ...editFormData, birth_date: e.target.value })}
+                        className="border border-gray-300 rounded px-2 py-0.5 text-sm w-full focus:outline-none focus:ring-1 focus:ring-red-500"
+                      />
+                    ) : (
+                      <span>{formatDate(customer.birth_date)}</span>
+                    )}
                   </div>
                   
                   <div className="flex items-center">

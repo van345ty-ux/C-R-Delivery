@@ -23,6 +23,37 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, onLogou
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Estados para redefinição de senha
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmNewPassword) {
+      toast.error('As senhas não coincidem!');
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+    setPasswordLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast.success('Senha atualizada com sucesso!');
+      setIsChangingPassword(false);
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (err: any) {
+      console.error('Erro ao mudar senha:', err);
+      toast.error(err.message || 'Erro ao redefinir a senha.');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   useEffect(() => {
     setEditableUser(user); // Atualiza editableUser se o prop user mudar
   }, [user]);
@@ -161,7 +192,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, onLogou
 
         <div className="p-6 overflow-y-auto">
           {activeTab === 'profile' && (
-            <div className="space-y-4">
+            <>
+              <div className="space-y-4">
               {error && <p className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</p>}
               
               <div className="flex items-center justify-between">
@@ -276,6 +308,64 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, onLogou
                 </div>
               )}
             </div>
+
+            {/* Segurança Block */}
+            <div className="mt-8 pt-8 border-t space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Segurança</h3>
+              
+              {!isChangingPassword ? (
+                <button
+                  onClick={() => setIsChangingPassword(true)}
+                  className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium flex items-center justify-center gap-2"
+                >
+                  Alterar Minha Senha
+                </button>
+              ) : (
+                <div className="space-y-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Nova Senha
+                    </label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full p-2 border rounded-md text-gray-800 focus:ring-2 focus:ring-red-500 outline-none"
+                      placeholder="Mínimo de 6 caracteres"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Confirmar Nova Senha
+                    </label>
+                    <input
+                      type="password"
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      className="w-full p-2 border rounded-md text-gray-800 focus:ring-2 focus:ring-red-500 outline-none"
+                      placeholder="Repita a nova senha"
+                    />
+                  </div>
+                  <div className="flex space-x-3 mt-4">
+                    <button
+                      onClick={() => { setIsChangingPassword(false); setNewPassword(''); setConfirmNewPassword(''); }}
+                      className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                      disabled={passwordLoading}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleChangePassword}
+                      className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50"
+                      disabled={passwordLoading}
+                    >
+                      {passwordLoading ? 'Salvando...' : 'Salvar Senha'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            </>
           )}
 
           {activeTab === 'orders' && (
