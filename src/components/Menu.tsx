@@ -480,10 +480,13 @@ export const Menu: React.FC<MenuProps> = ({
                   <div>
                     <div className="flex items-center gap-1.5 justify-center sm:justify-start">
                       <Sparkles className="h-4 w-4 text-amber-500 animate-spin" style={{ animationDuration: '6s' }} />
-                      <h4 className="font-extrabold text-gray-900 dark:text-white text-sm sm:text-base tracking-tight">
-                        🎉 PARABÉNS! Tem cupom disponível para você!
+                      <h4 className="font-extrabold text-gray-900 dark:text-white text-base sm:text-lg tracking-tight">
+                        🎉 PARABÉNS!
                       </h4>
                     </div>
+                    <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 mt-0.5">
+                      Tem cupom disponível para você!
+                    </p>
                     <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 font-medium mt-0.5">
                       Aproveite <strong className="text-red-600 dark:text-red-400">{availableCoupons[0].discount}% OFF</strong> com o código:{' '}
                       <span className="font-mono font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 px-2 py-0.5 rounded border border-red-200 dark:border-red-800 inline-block">
