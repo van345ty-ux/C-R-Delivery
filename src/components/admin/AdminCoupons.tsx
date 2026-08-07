@@ -15,6 +15,7 @@ interface Coupon extends CouponType {
 interface Profile {
   id: string;
   full_name: string;
+  phone?: string;
 }
 
 export const AdminCoupons: React.FC = () => {
@@ -73,12 +74,11 @@ export const AdminCoupons: React.FC = () => {
   };
 
   const fetchAllCustomers = async () => {
-    // Removendo a busca de email via supabase.auth.admin.getUserById por questões de segurança.
-    // Apenas o full_name do perfil será usado para identificação.
     const { data: profilesData, error: profilesError } = await supabase
       .from('profiles')
-      .select('id, full_name')
-      .order('full_name', { ascending: true });
+      .select('id, full_name, phone')
+      .order('full_name', { ascending: true, nullsFirst: false })
+      .range(0, 4999);
 
     if (profilesError) {
       console.error('Error fetching customers:', profilesError);
@@ -197,9 +197,13 @@ export const AdminCoupons: React.FC = () => {
     return endDate < new Date();
   };
 
-  const filteredCustomers = allCustomers.filter(customer =>
-    customer.full_name?.toLowerCase().includes(customerSearchTerm.toLowerCase())
-  );
+  const filteredCustomers = allCustomers.filter(customer => {
+    if (!customerSearchTerm.trim()) return true;
+    const term = customerSearchTerm.toLowerCase().trim();
+    const nameMatch = customer.full_name ? customer.full_name.toLowerCase().includes(term) : false;
+    const phoneMatch = customer.phone ? customer.phone.includes(term) : false;
+    return nameMatch || phoneMatch;
+  });
 
   if (loading) return <div>Carregando cupons...</div>;
 
@@ -280,25 +284,94 @@ export const AdminCoupons: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Atribuir a um Cliente Específico (opcional)
                 </label>
-                <input
-                  type="text"
-                  value={customerSearchTerm}
-                  onChange={(e) => setCustomerSearchTerm(e.target.value)}
-                  placeholder="Buscar cliente por nome"
-                  className="w-full p-3 border rounded-lg mb-2"
-                />
-                <select
-                  value={formData.user_id || ''}
-                  onChange={(e) => setFormData({ ...formData, user_id: e.target.value || undefined })}
-                  className="w-full p-3 border rounded-lg"
-                >
-                  <option value="">Atribuir a nenhum cliente (Universal - Válido para qualquer cliente, inclusive futuros cadastros)</option>
-                  {filteredCustomers.map(customer => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.full_name}
-                    </option>
-                  ))}
-                </select>
+
+                {formData.user_id ? (
+                  <div className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <UserIcon className="w-5 h-5 text-red-600 flex-shrink-0" />
+                      <div>
+                        <span className="font-semibold text-gray-900 block">
+                          {allCustomers.find(c => c.id === formData.user_id)?.full_name || 
+                           editingCoupon?.profiles?.full_name || 
+                           'Cliente Selecionado'}
+                        </span>
+                        <span className="text-xs text-gray-500 block">
+                          {allCustomers.find(c => c.id === formData.user_id)?.phone 
+                            ? `Telefone: ${allCustomers.find(c => c.id === formData.user_id)?.phone}`
+                            : `ID: ${formData.user_id.substring(0, 8)}...`}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData({ ...formData, user_id: undefined });
+                        setCustomerSearchTerm('');
+                      }}
+                      className="text-xs font-semibold text-red-600 hover:text-red-800 bg-white border border-red-300 px-3 py-1.5 rounded-md shadow-sm transition-colors"
+                    >
+                      Remover (Tornar Universal)
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={customerSearchTerm}
+                      onChange={(e) => setCustomerSearchTerm(e.target.value)}
+                      placeholder="Buscar cliente por nome ou telefone..."
+                      className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    />
+                    
+                    {/* Resultados filtrados clicáveis para rápida seleção */}
+                    {customerSearchTerm.trim() !== '' && filteredCustomers.length > 0 && (
+                      <div className="max-h-40 overflow-y-auto border rounded-lg divide-y bg-gray-50 mb-2">
+                        {filteredCustomers.map(customer => {
+                          const displayName = customer.full_name || 'Cliente sem nome';
+                          return (
+                            <button
+                              key={customer.id}
+                              type="button"
+                              onClick={() => {
+                                setFormData({ ...formData, user_id: customer.id });
+                                setCustomerSearchTerm('');
+                              }}
+                              className="w-full text-left p-2.5 hover:bg-red-50 transition-colors flex items-center justify-between text-sm"
+                            >
+                              <span className="font-medium text-gray-900">{displayName}</span>
+                              <span className="text-xs text-gray-500 font-mono">
+                                {customer.phone || customer.id.substring(0, 6)}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    <select
+                      value={formData.user_id || ''}
+                      onChange={(e) => {
+                        const val = e.target.value || undefined;
+                        setFormData({ ...formData, user_id: val });
+                        if (val) setCustomerSearchTerm('');
+                      }}
+                      className="w-full p-3 border rounded-lg bg-white"
+                    >
+                      <option value="">Atribuir a nenhum cliente (Universal - Válido para qualquer cliente, inclusive futuros cadastros)</option>
+                      {filteredCustomers.map(customer => {
+                        const displayName = customer.full_name 
+                          ? `${customer.full_name}${customer.phone ? ` (${customer.phone})` : ''}`
+                          : `Cliente sem nome (${customer.phone || customer.id.substring(0, 6)})`;
+                        return (
+                          <option key={customer.id} value={customer.id}>
+                            {displayName}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                )}
+
                 <p className="text-xs text-gray-500 mt-1">
                   Se um cliente for selecionado, apenas ele poderá usar este cupom. Caso contrário, qualquer pessoa (inclusive quem se cadastrar no futuro) poderá usá-lo.
                 </p>

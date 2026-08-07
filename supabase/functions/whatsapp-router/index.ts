@@ -28,11 +28,11 @@ serve(async (req) => {
       let targetWebhookUrl = '';
 
       if (project_type === 'delivery') {
-        targetWebhookUrl = Deno.env.get('N8N_DELIVERY_WEBHOOK_URL') || 'https://achronychous-anabelle-transstellar.ngrok-free.dev/webhook/whatsapp-order-notification-cr';
+        targetWebhookUrl = 'https://n8n.studionailart.space/webhook/whatsapp-order-notification-V2';
       } else if (project_type === 'marketing') {
-        targetWebhookUrl = Deno.env.get('N8N_MARKETING_WEBHOOK_URL') || 'https://achronychous-anabelle-transstellar.ngrok-free.dev/webhook/iniciar-campanha';
+        targetWebhookUrl = Deno.env.get('N8N_MARKETING_WEBHOOK_URL') || 'https://n8n.studionailart.space/webhook/iniciar-campanha';
       } else if (project_type === 'nail-designer' || project_type === 'nail_scheduler') {
-        targetWebhookUrl = Deno.env.get('N8N_NAIL_DESIGNER_WEBHOOK_URL') || 'https://achronychous-anabelle-transstellar.ngrok-free.dev/webhook/nail-designer';
+        targetWebhookUrl = Deno.env.get('N8N_NAIL_DESIGNER_WEBHOOK_URL') || 'https://n8n.studionailart.space/webhook/nail-designer';
       } else {
         const errorMsg = `Tipo de projeto não suportado: ${project_type}`;
         console.error(errorMsg);
@@ -80,7 +80,7 @@ serve(async (req) => {
     console.log('[INCOMING] Webhook recebido da Evolution API. Encaminhando para n8n PIX.');
 
     // Lê a nova Secret. Se não achar, usa a URL do ngrok como fallback (como garantia).
-    const pixWebhookUrl = Deno.env.get('N8N_PIX_WEBHOOK_URL') || 'https://achronychous-anabelle-transstellar.ngrok-free.dev/webhook/pix-academias';
+    const pixWebhookUrl = Deno.env.get('N8N_PIX_WEBHOOK_URL') || 'https://n8n.studionailart.space/webhook/pix-academias';
 
     const n8nIncomingResponse = await fetch(pixWebhookUrl, {
       method: 'POST',
