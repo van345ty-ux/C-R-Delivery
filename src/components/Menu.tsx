@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Gift, Sparkles, Ticket, X } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { ProductCard, ProductCardSkeleton } from './ProductCard';
 import { HighlightCard } from './HighlightCard';
 import { ProductDetailModal } from './ProductDetailModal'; // Importando o novo modal
-import { Product, Highlight } from '../types'; // Corrected import path
+import { Product, Highlight, User, Coupon } from '../types'; // Corrected import path
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
 
@@ -20,6 +20,7 @@ const renderBoldText = (text: string) => {
 };
 
 interface MenuProps {
+  user?: User | null;
   onAddToCart: (product: Product, quantity?: number, observations?: string) => void;
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
@@ -57,6 +58,7 @@ const categories = [
 ];
 
 export const Menu: React.FC<MenuProps> = ({
+  user,
   onAddToCart,
   selectedCategory,
   onCategoryChange,
@@ -92,6 +94,67 @@ export const Menu: React.FC<MenuProps> = ({
   const [showProductDetailModal, setShowProductDetailModal] = useState(false); // Estado para o modal
   const [selectedProductForDetail, setSelectedProductForDetail] = useState<Product | null>(null); // Produto selecionado
   const wcTextRef = useRef<HTMLDivElement>(null);
+
+  // Estados para o banner pulsante de cupons disponíveis
+  const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
+  const [showCouponBanner, setShowCouponBanner] = useState(true);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  // Busca cupons ativos e válidos para o usuário ou universais
+  useEffect(() => {
+    const fetchAvailableCoupons = async () => {
+      try {
+        const { data: couponsData, error } = await supabase
+          .from('coupons')
+          .select('*')
+          .eq('active', true)
+          .eq('is_pending_admin_approval', false);
+
+        if (error || !couponsData) return;
+
+        const today = new Date();
+        const validCoupons = couponsData.filter((coupon: Coupon) => {
+          const validFrom = new Date(coupon.valid_from);
+          const validTo = new Date(coupon.valid_to);
+          validTo.setHours(23, 59, 59, 999);
+
+          const isCurrentlyValid = today >= validFrom && today <= validTo;
+          const hasUsagesLeft =
+            coupon.usage_limit === null ||
+            coupon.usage_limit === undefined ||
+            coupon.usage_count < coupon.usage_limit;
+
+          if (coupon.user_id) {
+            if (!user || user.id !== coupon.user_id) return false;
+          } else {
+            if (coupon.type === 'birthday' || coupon.type === 'loyalty') return false;
+          }
+
+          return isCurrentlyValid && hasUsagesLeft;
+        });
+
+        // Ordena dando prioridade para cupons específicos do usuário e com maior desconto
+        validCoupons.sort((a: Coupon, b: Coupon) => {
+          if (a.user_id && !b.user_id) return -1;
+          if (!a.user_id && b.user_id) return 1;
+          return b.discount - a.discount;
+        });
+
+        setAvailableCoupons(validCoupons);
+      } catch (err) {
+        console.error('Error fetching available coupons for banner:', err);
+      }
+    };
+
+    fetchAvailableCoupons();
+  }, [user?.id]);
+
+  const handleCopyCouponCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    toast.success(`Cupom "${code}" copiado! Use na sacola de compras.`);
+    setTimeout(() => setCopiedCode(null), 3000);
+  };
 
   useEffect(() => {
     if (isWorldCupMode && worldCupTriggerKey !== undefined && worldCupTriggerKey > 0) {
@@ -384,6 +447,74 @@ export const Menu: React.FC<MenuProps> = ({
             />
           </div>
         </div>
+
+        {/* Banner Pulsante de Cupom Disponível */}
+        {availableCoupons.length > 0 && showCouponBanner && (
+          <div className="mb-6 animate-fade-in">
+            <style>{`
+              @keyframes pulseGlow {
+                0%, 100% {
+                  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4), 0 0 30px rgba(245, 158, 11, 0.2);
+                  transform: scale(1);
+                }
+                50% {
+                  box-shadow: 0 0 25px rgba(239, 68, 68, 0.7), 0 0 45px rgba(245, 158, 11, 0.5);
+                  transform: scale(1.008);
+                }
+              }
+              .animate-pulse-glow {
+                animation: pulseGlow 2.5s infinite ease-in-out;
+              }
+            `}</style>
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-600 via-amber-500 to-red-600 p-[2px] shadow-lg animate-pulse-glow">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-gray-900 px-4 py-3.5 sm:px-6 rounded-[14px]">
+                
+                {/* Lado Esquerdo: Ícone + Texto Pulsante */}
+                <div className="flex items-center space-x-3 text-center sm:text-left">
+                  <div className="relative flex-shrink-0">
+                    <span className="absolute -inset-1 rounded-full bg-amber-400 opacity-75 blur animate-ping"></span>
+                    <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-tr from-red-600 to-amber-500 text-white shadow-md">
+                      <Gift className="h-5.5 w-5.5 animate-bounce" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5 justify-center sm:justify-start">
+                      <Sparkles className="h-4 w-4 text-amber-500 animate-spin" style={{ animationDuration: '6s' }} />
+                      <h4 className="font-extrabold text-gray-900 dark:text-white text-sm sm:text-base tracking-tight">
+                        🎉 PARABÉNS! Tem cupom disponível para você!
+                      </h4>
+                    </div>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 font-medium mt-0.5">
+                      Aproveite <strong className="text-red-600 dark:text-red-400">{availableCoupons[0].discount}% OFF</strong> com o código:{' '}
+                      <span className="font-mono font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 px-2 py-0.5 rounded border border-red-200 dark:border-red-800 inline-block">
+                        {availableCoupons[0].code}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Lado Direito: Botão Copiar / Aproveitar & Fechar */}
+                <div className="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                  <button
+                    onClick={() => handleCopyCouponCode(availableCoupons[0].code)}
+                    className="flex-1 sm:flex-initial bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-1.5"
+                  >
+                    <Ticket className="w-4 h-4" />
+                    {copiedCode === availableCoupons[0].code ? 'Copiado! ✓' : 'Copiar Cupom'}
+                  </button>
+                  <button
+                    onClick={() => setShowCouponBanner(false)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    title="Fechar aviso"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Category Filters - Premium Button Styling with Smooth Transitions */}
         <div className="flex gap-3 overflow-x-auto px-2 pb-4 items-center no-scrollbar scroll-smooth" role="tablist" aria-label="Categorias de produtos">

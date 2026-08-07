@@ -397,6 +397,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
       <main className="flex-grow"> {/* Adicionado flex-grow */}
         <Menu
+          user={user}
           onAddToCart={handleAddToCart}
           selectedCategory={menuFilter}
           onCategoryChange={setMenuFilter}
