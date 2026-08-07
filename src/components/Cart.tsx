@@ -220,10 +220,17 @@ export const Cart: React.FC<CartProps> = ({
         validTo.setHours(23, 59, 59, 999);
         const isCurrentlyValid = today >= validFrom && today <= validTo;
         const hasUsagesLeft = coupon.usage_limit === null || coupon.usage_limit === undefined || coupon.usage_count < coupon.usage_limit;
-        if (!coupon.user_id) return false; // Não sugerir cupons universais automaticamente no banner do carrinho
+        if (coupon.user_id && coupon.user_id !== user.id) return false;
         if ((coupon.type === 'birthday' || coupon.type === 'loyalty') && !coupon.user_id) return false;
         return isCurrentlyValid && hasUsagesLeft;
       });
+
+      availableCoupons.sort((a: Coupon, b: Coupon) => {
+        if (a.user_id && !b.user_id) return -1;
+        if (!a.user_id && b.user_id) return 1;
+        return b.discount - a.discount;
+      });
+
       setFirstAvailableCoupon(availableCoupons.length > 0 ? availableCoupons[0] : null);
     };
     checkAvailableCoupons();
@@ -667,15 +674,29 @@ export const Cart: React.FC<CartProps> = ({
           ) : (
             <>
               {firstAvailableCoupon && !appliedCoupon && (
-                <div className="border p-4 rounded-lg text-sm flex items-center justify-between mb-4 bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/50 text-green-800 dark:text-green-300 transition-colors duration-300">
-                  <div className="flex items-center"><Gift className="w-4 h-4 mr-2" /><span>Você tem cupom disponível!</span></div>
-                  <button 
-                    onClick={() => { if (firstAvailableCoupon) handleApplyCoupon(firstAvailableCoupon.code); }} 
-                    className="ml-2 px-3 py-2 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/50 text-green-800 dark:text-green-300" 
-                    disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}
-                  >
-                    Clique para aplicar
-                  </button>
+                <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-700 p-3.5 text-white shadow-md mb-4 animate-fade-in border border-emerald-500/30">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center space-x-2.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm text-yellow-300 shadow-inner flex-shrink-0">
+                        <Gift className="w-5 h-5 animate-bounce" />
+                      </div>
+                      <div>
+                        <p className="font-extrabold text-white text-xs sm:text-sm tracking-tight leading-tight">
+                          🎉 Cupom de {firstAvailableCoupon.discount}% OFF disponível!
+                        </p>
+                        <p className="text-[11px] text-emerald-100 font-medium mt-0.5">
+                          Código: <span className="font-mono font-bold text-yellow-300 bg-black/25 px-1.5 py-0.5 rounded">{firstAvailableCoupon.code}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => { if (firstAvailableCoupon) handleApplyCoupon(firstAvailableCoupon.code); }} 
+                      className="px-3 py-2 rounded-lg font-bold text-xs bg-yellow-400 hover:bg-yellow-300 text-gray-950 shadow-md hover:scale-105 active:scale-95 transition-all flex-shrink-0"
+                      disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}
+                    >
+                      Aplicar Agora ✨
+                    </button>
+                  </div>
                 </div>
               )}
               <div className="flex gap-2 mb-2">
