@@ -34,7 +34,7 @@ O tráfego desta rota é encaminhado diretamente para o webhook centralizador de
 ## 🔗 Variáveis de Ambiente e URLs
 As URLs de destino no n8n estão configuradas para ler variáveis de ambiente do Deno (`Deno.env.get`), mas **possuem fallback hardcoded** no código para segurança. 
 
-O domínio oficial atual do n8n é: `https://n8n.studionailart.space`
+O domínio oficial atual do n8n é: `https://n8n.meuapp-on.online`
 
 As chaves esperadas são:
 - `N8N_DELIVERY_WEBHOOK_URL`

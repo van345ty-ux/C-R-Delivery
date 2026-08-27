@@ -4,16 +4,16 @@ Para que as Edge Functions do Supabase possam se comunicar com o seu workflow do
 
 ## Variável Necessária
 
-| Nome da Variável | Valor | Descrição |
+| Nome da Variável | Valor Recomendado | Descrição |
 | :--- | :--- | :--- |
-| `N8N_WEBHOOK_URL` | `https://primary-production-d411.up.railway.app/webhook/whatsapp-order-notification` | URL de produção do webhook do n8n para receber notificações de pedidos. |
+| `N8N_DELIVERY_WEBHOOK_URL` | `https://n8n.meuapp-on.online/webhook/whatsapp-order-notification-V2` | Webhook principal para notificações de pedidos do delivery (CR Sushi). |
+| `N8N_MARKETING_WEBHOOK_URL` | `https://n8n.meuapp-on.online/webhook/iniciar-campanha` | Webhook para disparo de campanhas de marketing. |
+| `N8N_NAIL_DESIGNER_WEBHOOK_URL` | `https://n8n.meuapp-on.online/webhook/nail-designer` | Webhook para o fluxo de nail designer / agendamento. |
+| `N8N_PIX_WEBHOOK_URL` | `https://n8n.meuapp-on.online/webhook/pix-academias` | Webhook para processamento de entrada de PIX / WhatsApp. |
 
 ## Instruções de Configuração
 
-1.  Acesse o Painel do Supabase.
-2.  Navegue até **Edge Functions**.
-3.  Clique em **Manage Secrets** (Gerenciar Segredos).
-4.  Adicione um novo segredo com o nome `N8N_WEBHOOK_URL` e o valor fornecido acima.
-5.  Salve as alterações.
-
-**Atenção:** As Edge Functions `whatsapp-router` e `order-status-update` dependem desta variável para funcionar corretamente.
+1. Acesse o Painel do Supabase.
+2. Navegue até **Edge Functions** -> **Manage Secrets**.
+3. Adicione ou edite os segredos com os nomes e valores da tabela acima.
+4. Salve as alterações.
