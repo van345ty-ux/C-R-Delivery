@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, User as UserIcon, ShoppingCart, ArrowLeft, Star } from 'lucide-react';
 import { User as UserType } from '../types';
 import { ThemeToggle } from './ThemeToggle';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/theme-context';
 
 interface HeaderProps {
   selectedCity: string;

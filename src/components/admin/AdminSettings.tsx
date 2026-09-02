@@ -91,7 +91,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved })
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleOperatingHoursChange = (dayIndex: number, field: keyof OperatingHour, value: any) => {
+  const handleOperatingHoursChange = <K extends keyof OperatingHour>(dayIndex: number, field: K, value: OperatingHour[K]) => {
     setOperatingHours(prev =>
       prev.map(day =>
         day.day_of_week === dayIndex ? { ...day, [field]: value } : day
@@ -177,7 +177,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved })
       }
     }
 
-    const settingsToSave = {
+    const settingsToSave: Settings = {
       ...settings,
       app_logo_url: newLogoUrl,
       hero_image_url: newHeroImageUrl

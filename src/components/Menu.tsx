@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Gift, Sparkles, Ticket, X } from 'lucide-react';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/theme-context';
 import { ProductCard, ProductCardSkeleton } from './ProductCard';
 import { HighlightCard } from './HighlightCard';
 import { ProductDetailModal } from './ProductDetailModal'; // Importando o novo modal
@@ -47,6 +47,9 @@ interface MenuProps {
   preOrderBannerText?: string; // Texto customizado do banner
 }
 
+// Esta seção já estava desativada; manter independente das promoções e dos banners.
+const SHOW_MENU_HIGHLIGHTS = false;
+
 const categories = [
   'Todos',
   'Combinados',
@@ -62,7 +65,6 @@ export const Menu: React.FC<MenuProps> = ({
   onAddToCart,
   selectedCategory,
   onCategoryChange,
-  isStoreOpen,
   canPlaceOrder, // Nova prop
   heroImageUrl,
   // Novas props
@@ -84,6 +86,7 @@ export const Menu: React.FC<MenuProps> = ({
   selectedCity = '',
   preOrderBannerText = 'Estaremos atendendo a partir das 18h, mas você pode deixar seu pedido agendado em nosso sistema.',
 }) => {
+  const userId = user?.id;
   const isComandatuba = selectedCity ? selectedCity.toLowerCase().includes('comandatuba') : false;
   const { isWorldCupMode } = useTheme();
   console.log('[Menu] Rendering: isWorldCupMode =', isWorldCupMode, 'worldCupTriggerKey =', worldCupTriggerKey);
@@ -125,7 +128,7 @@ export const Menu: React.FC<MenuProps> = ({
             coupon.usage_count < coupon.usage_limit;
 
           if (coupon.user_id) {
-            if (!user || user.id !== coupon.user_id) return false;
+            if (!userId || userId !== coupon.user_id) return false;
           } else {
             if (coupon.type === 'birthday' || coupon.type === 'loyalty') return false;
           }
@@ -147,7 +150,7 @@ export const Menu: React.FC<MenuProps> = ({
     };
 
     fetchAvailableCoupons();
-  }, [user?.id]);
+  }, [userId]);
 
   const handleCopyCouponCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -568,7 +571,7 @@ export const Menu: React.FC<MenuProps> = ({
       </div>
 
       {/* Highlights Section - Premium Styling */}
-      {false && highlights.length > 0 && (
+      {SHOW_MENU_HIGHLIGHTS && highlights.length > 0 && (
         <div className="mb-10">
           <h3 className="text-2xl font-bold mb-6" style={{ fontFamily: 'var(--font-display)', color: '#0A0A0A' }}>Destaques</h3>
           <div className="flex overflow-x-auto space-x-6 pb-4 no-scrollbar">

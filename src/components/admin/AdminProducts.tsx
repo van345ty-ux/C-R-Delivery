@@ -40,7 +40,7 @@ export const AdminProducts: React.FC = () => {
       } else {
         setProducts(data || []);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('AdminProducts: Error fetching products:', err);
       alert('Erro ao carregar produtos.');
     } finally {

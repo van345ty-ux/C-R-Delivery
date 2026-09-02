@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Calendar, Clock, Sparkles, AlertCircle } from 'lucide-react';
+import { X, Sparkles, AlertCircle } from 'lucide-react';
 
 interface WorldCupPreOrderPopupProps {
   onClose: () => void;

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Megaphone, Users, Play, Search, CheckCircle, Clock, AlertCircle, Trash2 } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '../../utils/errors';
 
 interface CustomerProfile {
     id: string;
@@ -82,7 +83,7 @@ export const AdminMarketing: React.FC = () => {
                     table: 'fila_disparos',
                     filter: `campanha_id=eq.${currentCampaignId}`,
                 },
-                (payload) => {
+                () => {
                     fetchFilaStatus(); // Em vez de montar na mão, puxamos a lista atualizada
                 }
             )
@@ -106,8 +107,8 @@ export const AdminMarketing: React.FC = () => {
 
             if (error) throw error;
             setCustomers(data || []);
-        } catch (error: any) {
-            toast.error('Erro ao buscar clientes: ' + error.message);
+        } catch (error) {
+            toast.error('Erro ao buscar clientes: ' + getErrorMessage(error));
         } finally {
             setLoading(false);
         }
@@ -167,9 +168,9 @@ export const AdminMarketing: React.FC = () => {
             setCustomers(prev => prev.filter(c => c.id !== id));
             setSelectedCustomerIds(prev => prev.filter(cid => cid !== id));
             toast.success('Cliente apagado com sucesso do banco de dados!');
-        } catch (err: any) {
+        } catch (err) {
             console.error(err);
-            toast.error('Ocorreu um erro ao apagar o cliente: ' + err.message);
+            toast.error('Ocorreu um erro ao apagar o cliente: ' + getErrorMessage(err));
         }
     };
 
@@ -248,9 +249,9 @@ export const AdminMarketing: React.FC = () => {
             setMessageText('');
             setSelectedCustomerIds([]);
 
-        } catch (error: any) {
+        } catch (error) {
             console.error(error);
-            toast.error('Ocorreu um erro ao iniciar a campanha: ' + error.message);
+            toast.error('Ocorreu um erro ao iniciar a campanha: ' + getErrorMessage(error));
             setIsSending(false);
         }
     };

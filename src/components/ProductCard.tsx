@@ -1,7 +1,7 @@
 import React from 'react';
 import { Product } from '../types';
 import { Plus } from 'lucide-react';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/theme-context';
 import { cn } from '../utils/cn';
 
 interface ProductCardProps {

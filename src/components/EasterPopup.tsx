@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Calendar, ShoppingCart, AlertCircle } from 'lucide-react';
+import { X, ShoppingCart } from 'lucide-react';
 
 interface EasterPopupProps {
   onClose: () => void;

@@ -5,6 +5,7 @@ import { UserOrders } from './UserOrders';
 import { UserCoupons } from './UserCoupons';
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '../utils/errors';
 
 interface UserProfileProps {
   user: User;
@@ -46,9 +47,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, onLogou
       setIsChangingPassword(false);
       setNewPassword('');
       setConfirmNewPassword('');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erro ao mudar senha:', err);
-      toast.error(err.message || 'Erro ao redefinir a senha.');
+      toast.error(getErrorMessage(err, 'Erro ao redefinir a senha.'));
     } finally {
       setPasswordLoading(false);
     }
@@ -137,10 +138,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, onLogou
       toast.success('Perfil atualizado com sucesso!');
       setIsEditing(false);
       onUserUpdate(); // Notifica o App.tsx para recarregar o usuário
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error saving profile:', err);
-      setError(err.message || 'Erro ao salvar o perfil.');
-      toast.error('Erro ao salvar o perfil: ' + (err.message || 'Tente novamente.'));
+      setError(getErrorMessage(err, 'Erro ao salvar o perfil.'));
+      toast.error('Erro ao salvar o perfil: ' + getErrorMessage(err, 'Tente novamente.'));
     } finally {
       setLoading(false);
     }

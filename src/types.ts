@@ -40,6 +40,14 @@ export interface CartItem {
   observations?: string;
 }
 
+export interface StoredOrderItem {
+  product_id?: string;
+  name: string;
+  quantity: number;
+  price: number;
+  observations?: string;
+}
+
 export interface Order {
   id: string;
   orderNumber: number;

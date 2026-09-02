@@ -1,0 +1,734 @@
+{
+  "01_colunas": [
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "coupons",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()",
+      "ordinal_position": 1
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "coupons",
+      "column_name": "name",
+      "is_nullable": "NO",
+      "column_default": null,
+      "ordinal_position": 2
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "coupons",
+      "column_name": "code",
+      "is_nullable": "NO",
+      "column_default": null,
+      "ordinal_position": 3
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "coupons",
+      "column_name": "discount",
+      "is_nullable": "NO",
+      "column_default": null,
+      "ordinal_position": 4
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "coupons",
+      "column_name": "type",
+      "is_nullable": "NO",
+      "column_default": "'promotion'::text",
+      "ordinal_position": 5
+    },
+    {
+      "udt_name": "date",
+      "data_type": "date",
+      "table_name": "coupons",
+      "column_name": "valid_from",
+      "is_nullable": "NO",
+      "column_default": null,
+      "ordinal_position": 6
+    },
+    {
+      "udt_name": "date",
+      "data_type": "date",
+      "table_name": "coupons",
+      "column_name": "valid_to",
+      "is_nullable": "NO",
+      "column_default": null,
+      "ordinal_position": 7
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "coupons",
+      "column_name": "active",
+      "is_nullable": "YES",
+      "column_default": "true",
+      "ordinal_position": 8
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "coupons",
+      "column_name": "usage_limit",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 9
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "coupons",
+      "column_name": "usage_count",
+      "is_nullable": "YES",
+      "column_default": "0",
+      "ordinal_position": 10
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "coupons",
+      "column_name": "created_at",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "ordinal_position": 11
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "coupons",
+      "column_name": "user_id",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 12
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "coupons",
+      "column_name": "is_pending_admin_approval",
+      "is_nullable": "YES",
+      "column_default": "false",
+      "ordinal_position": 13
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "orders",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()",
+      "ordinal_position": 1
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "orders",
+      "column_name": "user_id",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 2
+    },
+    {
+      "udt_name": "jsonb",
+      "data_type": "jsonb",
+      "table_name": "orders",
+      "column_name": "items",
+      "is_nullable": "NO",
+      "column_default": null,
+      "ordinal_position": 3
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "orders",
+      "column_name": "total",
+      "is_nullable": "NO",
+      "column_default": null,
+      "ordinal_position": 4
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "orders",
+      "column_name": "delivery_fee",
+      "is_nullable": "NO",
+      "column_default": null,
+      "ordinal_position": 5
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "orders",
+      "column_name": "delivery_type",
+      "is_nullable": "NO",
+      "column_default": null,
+      "ordinal_position": 6
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "orders",
+      "column_name": "payment_method",
+      "is_nullable": "NO",
+      "column_default": null,
+      "ordinal_position": 7
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "orders",
+      "column_name": "address",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 8
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "orders",
+      "column_name": "status",
+      "is_nullable": "NO",
+      "column_default": "'Pedido recebido'::text",
+      "ordinal_position": 9
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "orders",
+      "column_name": "customer_name",
+      "is_nullable": "NO",
+      "column_default": null,
+      "ordinal_position": 10
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "orders",
+      "column_name": "customer_phone",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 11
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "orders",
+      "column_name": "coupon_used",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 12
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "orders",
+      "column_name": "created_at",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "ordinal_position": 13
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "orders",
+      "column_name": "order_number",
+      "is_nullable": "NO",
+      "column_default": "nextval('orders_order_number_seq'::regclass)",
+      "ordinal_position": 14
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "orders",
+      "column_name": "change_for",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 15
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "orders",
+      "column_name": "sushi_egg_delivery_day",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 16
+    }
+  ],
+  "02_indices": [
+    {
+      "indexdef": "CREATE UNIQUE INDEX orders_order_number_key ON public.orders USING btree (order_number)",
+      "indexname": "orders_order_number_key",
+      "tablename": "orders"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX orders_pkey ON public.orders USING btree (id)",
+      "indexname": "orders_pkey",
+      "tablename": "orders"
+    }
+  ],
+  "03_politicas": [
+    {
+      "cmd": "ALL",
+      "qual": "(get_my_role() = 'admin'::text)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "coupons",
+      "policyname": "Admins have full access to coupons",
+      "schemaname": "public",
+      "with_check": "(get_my_role() = 'admin'::text)"
+    },
+    {
+      "cmd": "DELETE",
+      "qual": "((user_id IS NULL) OR (auth.uid() = user_id))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "coupons",
+      "policyname": "Authenticated users can delete general or their own coupons",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "coupons",
+      "policyname": "Authenticated users can insert general or their own coupons",
+      "schemaname": "public",
+      "with_check": "((user_id IS NULL) OR (auth.uid() = user_id))"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((user_id IS NULL) OR (auth.uid() = user_id))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "coupons",
+      "policyname": "Authenticated users can read general and their own coupons",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "((user_id IS NULL) OR (auth.uid() = user_id))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "coupons",
+      "policyname": "Authenticated users can update general or their own coupons",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "orders",
+      "policyname": "Acesso Inserir Pedidos",
+      "schemaname": "public",
+      "with_check": "((user_id = auth.uid()) OR (get_my_role() = 'admin'::text))"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((user_id = auth.uid()) OR (get_my_role() = 'admin'::text))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "orders",
+      "policyname": "Acesso Leitura Pedidos",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "(get_my_role() = 'admin'::text)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "orders",
+      "policyname": "Admins alteram/deletam pedidos",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "DELETE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM profiles\n  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::text))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "orders",
+      "policyname": "Admins can delete any order",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM profiles\n  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::text))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "orders",
+      "policyname": "Admins can read all orders",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM profiles\n  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::text))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "orders",
+      "policyname": "Admins can update any order",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "orders",
+      "policyname": "Users can insert their own orders",
+      "schemaname": "public",
+      "with_check": "(auth.uid() = user_id)"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(auth.uid() = user_id)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "orders",
+      "policyname": "Users can view their own orders",
+      "schemaname": "public",
+      "with_check": null
+    }
+  ],
+  "04_rls": [
+    {
+      "relname": "coupons",
+      "relrowsecurity": true,
+      "relforcerowsecurity": false
+    },
+    {
+      "relname": "orders",
+      "relrowsecurity": true,
+      "relforcerowsecurity": false
+    }
+  ],
+  "05_privilegios": [
+    {
+      "grantee": "anon",
+      "table_name": "coupons",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "coupons",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "coupons",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "coupons",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "coupons",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "coupons",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "coupons",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "coupons",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "coupons",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "coupons",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "coupons",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "coupons",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "coupons",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "coupons",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "postgres",
+      "table_name": "coupons",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "postgres",
+      "table_name": "coupons",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "postgres",
+      "table_name": "coupons",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "postgres",
+      "table_name": "coupons",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "postgres",
+      "table_name": "coupons",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "postgres",
+      "table_name": "coupons",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "postgres",
+      "table_name": "coupons",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "coupons",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "coupons",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "coupons",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "coupons",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "coupons",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "coupons",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "coupons",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "orders",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "orders",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "orders",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "orders",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "orders",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "orders",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "orders",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "orders",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "orders",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "orders",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "orders",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "orders",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "orders",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "orders",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "postgres",
+      "table_name": "orders",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "postgres",
+      "table_name": "orders",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "postgres",
+      "table_name": "orders",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "postgres",
+      "table_name": "orders",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "postgres",
+      "table_name": "orders",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "postgres",
+      "table_name": "orders",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "postgres",
+      "table_name": "orders",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "orders",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "orders",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "orders",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "orders",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "orders",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "orders",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "orders",
+      "privilege_type": "UPDATE"
+    }
+  ],
+  "06_funcoes": [
+    {
+      "owner": "postgres",
+      "proname": "increment_coupon_usage",
+      "arguments": "p_coupon_id uuid",
+      "definition": "CREATE OR REPLACE FUNCTION public.increment_coupon_usage(p_coupon_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nBEGIN\n  UPDATE coupons \n  SET usage_count = usage_count + 1 \n  WHERE id = p_coupon_id;\nEND;\n$function$\n",
+      "privileges": [
+        "=X/postgres",
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "anon_can_execute": true,
+      "authenticated_can_execute": true
+    }
+  ],
+  "07_gatilhos": []
+}

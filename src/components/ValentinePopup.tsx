@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Heart, Calendar, Clock, Sparkles, AlertCircle } from 'lucide-react';
+import { X, Heart, Sparkles, AlertCircle } from 'lucide-react';
 
 interface ValentinePopupProps {
   onClose: () => void;
