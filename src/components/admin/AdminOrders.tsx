@@ -52,7 +52,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
         console.log(`AdminOrders: ${data?.length || 0} pedidos carregados`);
         setOrders(data || []);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('AdminOrders: Error fetching orders:', err);
       toast.error('Erro ao carregar pedidos.');
     } finally {
@@ -152,7 +152,7 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({ onUserUpdate }) => {
         .single();
 
       if (fullOrder) {
-        const itemsSubtotal = (fullOrder.items || []).reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
+        const itemsSubtotal = (fullOrder.items || []).reduce((sum: number, item: Order['items'][number]) => sum + (item.price * item.quantity), 0);
         const deliveryFeeVal = fullOrder.delivery_fee || 0;
         const discountVal = Math.max(0, itemsSubtotal + deliveryFeeVal - fullOrder.total);
 

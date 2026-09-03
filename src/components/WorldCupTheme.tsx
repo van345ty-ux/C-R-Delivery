@@ -17,7 +17,7 @@ export const WorldCupTheme: React.FC = () => {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    console.log('[WorldCupTheme] Component mounted! visible:', visible);
+    console.log('[WorldCupTheme] Component mounted!');
     const timer = setTimeout(() => {
       console.log('[WorldCupTheme] Hiding animation (timeout reached)');
       setVisible(false);

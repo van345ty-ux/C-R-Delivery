@@ -4,7 +4,7 @@ export const TIMEOUT_MS = 30000; // 30 segundos
 export const MAX_RETRIES = 3;
 
 // Função helper para adicionar timeout a uma Promise
-export function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+export function withTimeout<T>(promise: PromiseLike<T>, timeoutMs: number): Promise<T> {
   return Promise.race([
     promise,
     new Promise<T>((_, reject) =>

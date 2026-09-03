@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, AlertTriangle } from 'lucide-react';
 import { City } from '../types'; // Corrected import path
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/theme-context';
 
 /**
  * LocationSelect Component

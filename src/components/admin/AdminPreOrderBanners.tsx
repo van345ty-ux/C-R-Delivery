@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
-import { Sliders, HelpCircle } from 'lucide-react';
+import { Sliders } from 'lucide-react';
 
 interface Settings {
   [key: string]: string;

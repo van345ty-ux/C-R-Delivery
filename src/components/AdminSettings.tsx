@@ -76,7 +76,7 @@ export const AdminSettings: React.FC = () => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleOperatingHoursChange = (dayIndex: number, field: keyof OperatingHour, value: any) => {
+  const handleOperatingHoursChange = <K extends keyof OperatingHour>(dayIndex: number, field: K, value: OperatingHour[K]) => {
     setOperatingHours(prev =>
       prev.map(day =>
         day.day_of_week === dayIndex ? { ...day, [field]: value } : day

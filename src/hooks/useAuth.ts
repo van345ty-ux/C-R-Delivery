@@ -6,11 +6,13 @@ import { User, Coupon } from '../types';
 
 const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null> => {
   console.log('useAuth: fetchUserProfile: Attempting to fetch profile for user ID:', supabaseUser.id);
-  let { data, error } = await supabase
+  const { data: existingProfile, error } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', supabaseUser.id)
     .single();
+
+  let data = existingProfile;
 
   if (error && error.code === 'PGRST116') {
     console.log('useAuth: fetchUserProfile: Profile not found, attempting to create it.');

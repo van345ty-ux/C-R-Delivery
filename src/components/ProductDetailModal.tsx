@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Minus } from 'lucide-react';
 import { Product } from '../types';
 import toast from 'react-hot-toast';
-import { cn } from '../utils/cn';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/theme-context';
 
 interface ProductDetailModalProps {
   product: Product;

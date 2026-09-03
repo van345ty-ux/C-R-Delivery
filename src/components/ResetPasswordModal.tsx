@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Lock, X } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '../utils/errors';
 
 interface ResetPasswordModalProps {
   onClose: () => void;
@@ -36,9 +37,9 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({ onClose 
 
       toast.success('Senha atualizada com sucesso! Você já pode navegar com segurança.');
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erro ao redefinir senha:', err);
-      toast.error(err.message || 'Erro ao redefinir a senha.');
+      toast.error(getErrorMessage(err, 'Erro ao redefinir a senha.'));
     } finally {
       setLoading(false);
     }

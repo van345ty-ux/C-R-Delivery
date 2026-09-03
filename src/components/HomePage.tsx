@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/theme-context';
 import { Header } from './Header';
 import { Menu } from './Menu';
 import { Cart } from './Cart';
@@ -18,8 +18,8 @@ interface HomePageProps {
   user: User | null;
   cart: CartItem[];
   onAddToCart: (product: Product, quantity?: number, observations?: string) => void;
-  onRemoveFromCart: (productId: string) => void;
-  onUpdateCartItem: (productId: string, quantity: number) => void;
+  onRemoveFromCart: (itemKey: string) => void;
+  onUpdateCartItem: (itemKey: string, quantity: number) => void;
   onLogin: () => void;
   onOrderCreated: (order: Order) => void;
   onBackToLocationSelect: () => void;
@@ -114,9 +114,6 @@ export const HomePage: React.FC<HomePageProps> = ({
   logoUrl,
   isStoreOpen,
   canPlaceOrder, // Nova prop
-  pendingCouponNotificationUserId,
-  setPendingCouponNotificationUserId,
-  setShowUserCouponNotification,
   // Novas props
   heroImageUrl,
   heroTitleText,
@@ -160,7 +157,7 @@ export const HomePage: React.FC<HomePageProps> = ({
     if (BRAZIL_GAMES.includes(todayStr)) {
       return '🇧🇷 HOJE TEM BRASIL! Rumo ao Hexa! ⚽ Peça seu combo da Seleção agora e garanta a torcida mais saborosa com o melhor sushi! 🍣';
     } else if (BRAZIL_GAMES.includes(tomorrowStr)) {
-      if (isComandatuba) {
+      if (selectedCity.toLowerCase().includes('comandatuba')) {
         return '🇧🇷 AMANHÃ TEM BRASIL! A caminhada rumo ao Hexa continua! ⚽ Garanta ou agende seu combo de sushi hoje e prepare a festa de amanhã! 🍣';
       } else {
         return '🇧🇷 AMANHÃ TEM BRASIL! A caminhada rumo ao Hexa continua! ⚽ Garanta seu combo de sushi hoje e prepare a festa de amanhã! 🍣';
@@ -279,7 +276,7 @@ export const HomePage: React.FC<HomePageProps> = ({
     };
 
     fetchPromotionsData();
-  }, [isMercadoPagoReturnFlow, isPixReturnFlow, showPreOrderModal, isValentineThemeActive, isWorldCupMode]);
+  }, [isMercadoPagoReturnFlow, isPixReturnFlow, showPreOrderModal, isValentineThemeActive, isWorldCupMode, isComandatuba, setShowPreOrderModal]);
 
   // Efeito secundário: dispara a animação do Dia dos Namorados assim que o cliente fechar todos os modais iniciais
   useEffect(() => {
@@ -338,7 +335,7 @@ export const HomePage: React.FC<HomePageProps> = ({
     setShowPromotions(false);
   };
 
-  const handleClosePromotionModal = (source?: 'full_menu' | 'x_button') => {
+  const handleClosePromotionModal = () => {
     setShowPromotions(false); // ✅ Apenas fecha o modal
   };
 

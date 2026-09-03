@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Clock, CheckCircle, Package, Truck, Home, AlertTriangle } from 'lucide-react';
-import { Order, CartItem } from '../types';
+import { Order, CartItem, StoredOrderItem } from '../types';
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
+import { getCartItemKey } from '../utils/cart';
 
 interface OrderTrackingProps {
   order: Order;
@@ -13,8 +14,6 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ order: initialOrde
   const [order, setOrder] = useState<Order>(initialOrder);
 
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-
     const fetchOrderStatus = async () => {
       const { data, error } = await supabase
         .from('orders')
@@ -28,7 +27,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ order: initialOrde
       }
 
       if (data) {
-        const formattedItems: CartItem[] = (data.items || []).map((item: any) => ({
+        const formattedItems: CartItem[] = (data.items || []).map((item: StoredOrderItem) => ({
           quantity: item.quantity,
           observations: item.observations,
           product: {
@@ -76,7 +75,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ order: initialOrde
     };
 
     fetchOrderStatus();
-    intervalId = setInterval(fetchOrderStatus, 5000);
+    const intervalId = setInterval(fetchOrderStatus, 5000);
 
     return () => {
       clearInterval(intervalId);
@@ -265,8 +264,8 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ order: initialOrde
           <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Itens do Pedido</h2>
           
           <div className="space-y-4">
-            {order.items.map((item: CartItem) => (
-              <div key={item.product.id} className="flex justify-between items-start border-b pb-3 last:border-0 last:pb-0 transition-colors duration-300" style={{ borderColor: 'var(--border-primary)' }}>
+            {order.items.map((item: CartItem, index) => (
+              <div key={`${getCartItemKey(item)}:${index}`} className="flex justify-between items-start border-b pb-3 last:border-0 last:pb-0 transition-colors duration-300" style={{ borderColor: 'var(--border-primary)' }}>
                 <div className="flex-1">
                   <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{item.product.name}</p>
                   <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>

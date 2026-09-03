@@ -10,6 +10,13 @@ import toast, { Toaster } from 'react-hot-toast';
 import { User, Coupon, Product, CartItem, Order, City, OperatingHour } from './types'; // Importando tipos de types.ts
 import { CookieBanner } from './components/CookieBanner';
 import { ValentineTheme } from './components/ValentineTheme';
+import { Button } from './components/ui/button';
+import { getStoreStatus } from './utils/storeStatus';
+import { addCartItem, removeCartItem, updateCartItemQuantity, removeOrderedItems } from './utils/cart';
+import { orderProtectionEnabled } from './utils/protectedOrderSubmission';
+
+const AUTH_LOAD_TIMEOUT_MS = 12000;
+const AUTH_LOAD_ERROR = 'Não foi possível carregar sua conta. Verifique sua conexão e tente novamente.';
 
 // Code-splitting: componentes pesados carregados sob demanda (reduz ~45% do bundle inicial)
 const AdminPanel = lazy(() => import('./components/AdminPanel').then(m => ({ default: m.AdminPanel })));
@@ -18,7 +25,7 @@ const OrderTracking = lazy(() => import('./components/OrderTracking').then(m => 
 const ResetPasswordModal = lazy(() => import('./components/ResetPasswordModal').then(m => ({ default: m.ResetPasswordModal })));
 
 // Usa fetch nativo para evitar travamento do SDK do Supabase
-const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null> => {
+const fetchUserProfile = async (supabaseUser: SupabaseUser, controller = new AbortController()): Promise<User | null> => {
   console.log('fetchUserProfile: Fetching profile for user ID:', supabaseUser.id);
   const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
   const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -38,11 +45,12 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null
     'Content-Type': 'application/json',
   };
 
+  const timeoutId = setTimeout(() => controller.abort(), AUTH_LOAD_TIMEOUT_MS);
   try {
-    // Busca o perfil
+    // Busca o perfil com limite de tempo, inclusive durante a leitura da resposta.
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/profiles?id=eq.${supabaseUser.id}&select=*&limit=1`,
-      { headers }
+      { headers, signal: controller.signal }
     );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const profiles = await res.json();
@@ -53,6 +61,7 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null
       console.log('fetchUserProfile: Profile not found, creating...');
       const createRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
         method: 'POST',
+        signal: controller.signal,
         headers: { ...headers, 'Prefer': 'return=representation' },
         body: JSON.stringify({
           id: supabaseUser.id,
@@ -80,6 +89,8 @@ const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<User | null
   } catch (err) {
     console.error('fetchUserProfile: Error:', err);
     return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
 };
 
@@ -152,6 +163,9 @@ function App() {
   const [initialAppDataLoading, setInitialAppDataLoading] = useState(true);
   // Inicializa como true se houver sessão armazenada para evitar renderizações precoces
   const [authLoading, setAuthLoading] = useState(hasStoredSession);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authRetryCount, setAuthRetryCount] = useState(0);
+  const profileRequestVersion = useRef(0);
   const [isStoreOpen, setIsStoreOpen] = useState(true);
   const [canPlaceOrder, setCanPlaceOrder] = useState(false); // Novo estado para controlar se pode fazer pedido (incluindo pré-pedido)
   const [showUserCouponNotification, setShowUserCouponNotification] = useState(false);
@@ -412,7 +426,7 @@ function App() {
         setOperatingHours(fetchedOperatingHours);
         console.log('fetchInitialAppData: Hours loaded.', fetchedOperatingHours.length, 'entries');
 
-      } catch (error: any) {
+      } catch (error) {
         console.error('fetchInitialAppData: Error fetching data:', error);
         toast.error('Erro ao carregar dados. Verifique sua conexão.');
       } finally {
@@ -424,52 +438,31 @@ function App() {
     fetchInitialAppData();
   }, []); // Empty dependency array means this runs once on mount
 
-  // Efeito reativo para recalcular o status de funcionamento e o pré-agendamento da Copa
+  // Atualiza a disponibilidade sem refazer consultas nem reabrir/fechar popups a cada ciclo.
   useEffect(() => {
-    if (operatingHours.length === 0) return;
+    const refreshStoreStatus = () => {
+      const status = getStoreStatus(operatingHours, selectedCity);
+      setIsStoreOpen(status.isStoreOpen);
+      setCanPlaceOrder(status.canPlaceOrder);
+      setShowPreOrderBanner(status.showPreOrderBanner);
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') refreshStoreStatus();
+    };
 
-    const isComandatuba = selectedCity ? selectedCity.toLowerCase().includes('comandatuba') : false;
-
-    const now = new Date();
-    const currentDay = now.getDay();
-    const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
-    const todayHours = operatingHours.find(h => h.day_of_week === currentDay);
-
-    let storeCurrentlyOpen = false;
-    let canPreOrder = false;
-    let shouldShowPreOrderModal = false;
-    let shouldShowPreOrderBanner = false;
-
-    // 1. Calcula se a loja física está aberta no momento (apenas se configurado como aberto no banco)
-    if (todayHours && todayHours.is_open) {
-      storeCurrentlyOpen = currentTime >= todayHours.open_time && currentTime < todayHours.close_time;
-    }
-      
-    // 2. O pré-agendamento (pedido agendado) é ativo exclusivamente para a rota de Comandatuba
-    if (isComandatuba) {
-      // O pré-agendamento para Comandatuba fica ativo 24h por dia, mesmo que Una esteja aberta
-      canPreOrder = true;
-
-      // O modal de pré-agendamento (PreOrderModal) foi ocultado a pedido do cliente
-      shouldShowPreOrderModal = false;
-
-      // O aviso de pré-agendamento para Comandatuba sempre deve ser exibido
-      shouldShowPreOrderBanner = true;
-    }
-
-    setIsStoreOpen(storeCurrentlyOpen);
-    setCanPlaceOrder(storeCurrentlyOpen || canPreOrder);
-    setShowPreOrderModal(shouldShowPreOrderModal);
-    setShowPreOrderBanner(shouldShowPreOrderBanner);
-
-    console.log('recalculateStoreStatus (App.tsx):', {
-      selectedCity,
-      isComandatuba,
-      isStoreOpen: storeCurrentlyOpen,
-      canPlaceOrder: storeCurrentlyOpen || canPreOrder,
-      showPreOrderModal: shouldShowPreOrderModal,
-      showPreOrderBanner: shouldShowPreOrderBanner
-    });
+    // Mantém o modal antigo oculto ao carregar a cidade/grade, como já acontecia.
+    if (operatingHours.length > 0) setShowPreOrderModal(false);
+    refreshStoreStatus();
+    const intervalId = setInterval(refreshStoreStatus, 30000);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', refreshStoreStatus);
+    window.addEventListener('pageshow', refreshStoreStatus);
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', refreshStoreStatus);
+      window.removeEventListener('pageshow', refreshStoreStatus);
+    };
   }, [selectedCity, operatingHours]);
 
 
@@ -478,12 +471,22 @@ function App() {
     let authSubscription: ReturnType<typeof supabase.auth.onAuthStateChange>['data']['subscription'] | null = null;
     let lastProcessedUserId: string | null = null;
     let isMounted = true;
+    let profileController: AbortController | null = null;
+    const sessionTimeout = setTimeout(() => {
+      if (!isMounted) return;
+      setAuthError(AUTH_LOAD_ERROR);
+      setAuthLoading(false);
+    }, AUTH_LOAD_TIMEOUT_MS);
 
-    const handleAuthChange = async (event: string, authSession?: any) => {
+    const handleAuthChange = async (event: string, authSession?: Session | null) => {
       if (!isMounted) return;
       console.log(`handleAuthChange: Event received: ${event}, lastProcessedUserId: ${lastProcessedUserId}`);
 
       if (event === 'SIGNED_OUT') {
+        profileRequestVersion.current += 1;
+        profileController?.abort();
+        clearTimeout(sessionTimeout);
+        setAuthError(null);
         console.log('handleAuthChange: SIGNED_OUT event detected. Clearing all user-related states.');
         setSession(null);
         setUser(null);
@@ -514,24 +517,32 @@ function App() {
       }
 
       // Ignora SIGNED_IN duplicados ANTES de buscar sessão (mais eficiente)
-      if (event === 'SIGNED_IN' && lastProcessedUserId !== null) {
+      if (event === 'SIGNED_IN' && lastProcessedUserId !== null && lastProcessedUserId === authSession?.user.id) {
         console.log(`handleAuthChange: SIGNED_IN ignored, user already processed (${lastProcessedUserId})`);
         return;
       }
 
       // Usa a sessão recebida no evento. Se for undefined (como no INITIAL_LOAD manual), busca a sessão
+      const requestVersion = ++profileRequestVersion.current;
+      profileController?.abort();
       let latestSession = authSession;
-      if (authSession === undefined) {
+      if (latestSession === undefined) {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) {
           console.error('handleAuthChange: Erro ao buscar sessão:', sessionError);
-          if (isMounted) setAuthLoading(false);
+          if (isMounted && requestVersion === profileRequestVersion.current) {
+            clearTimeout(sessionTimeout);
+            setAuthError(AUTH_LOAD_ERROR);
+            setAuthLoading(false);
+          }
           return;
         }
         latestSession = session;
       }
 
-      if (!isMounted) return;
+      if (!isMounted || requestVersion !== profileRequestVersion.current) return;
+      clearTimeout(sessionTimeout);
+      setAuthError(null);
 
       console.log(`handleAuthChange: Processing event for user: ${latestSession?.user?.id}`);
       
@@ -540,11 +551,13 @@ function App() {
       if (latestSession?.user) {
         if (isMounted) setAuthLoading(true);
         // Dispara a busca do perfil sem fazer 'await' (isso evita o DEADLOCK do Supabase SDK)
-        fetchUserProfile(latestSession.user).then((profile) => {
-          if (!isMounted) return;
+        profileController = new AbortController();
+        fetchUserProfile(latestSession.user, profileController).then((profile) => {
+          if (!isMounted || requestVersion !== profileRequestVersion.current) return;
           
           setUser(profile);
-          lastProcessedUserId = latestSession.user.id;
+          lastProcessedUserId = profile ? latestSession.user.id : null;
+          setAuthError(profile ? null : AUTH_LOAD_ERROR);
           console.log(`handleAuthChange: User processed and saved: ${lastProcessedUserId}`);
 
           if (profile && event === 'SIGNED_IN' && profile.role === 'customer') {
@@ -561,7 +574,10 @@ function App() {
           if (isMounted) setAuthLoading(false);
         }).catch(err => {
           console.error('Erro ao buscar perfil do usuário de forma assíncrona:', err);
-          if (isMounted) setAuthLoading(false);
+          if (isMounted && requestVersion === profileRequestVersion.current) {
+            setAuthError(AUTH_LOAD_ERROR);
+            setAuthLoading(false);
+          }
         });
       } else {
         if (isMounted) setUser(null);
@@ -577,11 +593,16 @@ function App() {
     // Busca a sessão inicial
     const initializeAuth = async () => {
       console.log('initializeAuth: Starting initial auth check.');
+      const requestVersion = profileRequestVersion.current + 1;
       try {
-        await supabase.auth.getSession();
         await handleAuthChange('INITIAL_LOAD'); // Processa a sessão inicial
       } catch (error) {
         console.error('initializeAuth: Erro ao buscar a sessão inicial:', error);
+        if (isMounted && requestVersion === profileRequestVersion.current) {
+          clearTimeout(sessionTimeout);
+          setAuthError(AUTH_LOAD_ERROR);
+          setAuthLoading(false);
+        }
       }
     };
 
@@ -589,18 +610,27 @@ function App() {
 
     return () => {
       isMounted = false;
+      profileRequestVersion.current++;
+      profileController?.abort();
+      clearTimeout(sessionTimeout);
       if (authSubscription) {
         console.log('Auth subscription unsubscribed.');
         authSubscription.unsubscribe();
       }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [authRetryCount, checkAndShowCouponNotification]);
 
   const refetchUser = useCallback(async () => {
     console.log('refetchUser: Called.');
     if (session?.user) {
+      const requestVersion = ++profileRequestVersion.current;
       const profile = await fetchUserProfile(session.user);
-      setUser(profile);
+      if (requestVersion !== profileRequestVersion.current) return;
+      if (profile) {
+        setUser(profile);
+      } else {
+        toast.error('Não foi possível atualizar seu perfil. Tente novamente.');
+      }
     }
   }, [session]);
 
@@ -626,7 +656,7 @@ function App() {
         // Dispara a notificação de login para o toast do admin e para o histórico de acessos
         supabase.from('login_notifications').insert({
           user_id: user.id,
-          user_name: user.full_name || user.name || 'Usuário',
+          user_name: user.name || 'Usuário',
         }).then(() => {});
       }
     });
@@ -724,39 +754,15 @@ function App() {
   };
 
   const addToCart = (product: Product, quantity: number = 1, observations?: string) => {
-    setCart(prevCart => {
-      const existingItemIndex = prevCart.findIndex(item => item.product.id === product.id);
-
-      if (existingItemIndex > -1) {
-        // Atualiza item existente
-        const updatedCart = [...prevCart];
-        updatedCart[existingItemIndex] = {
-          ...updatedCart[existingItemIndex],
-          quantity: updatedCart[existingItemIndex].quantity + quantity,
-          observations: observations // Mantém ou atualiza observações
-        };
-        return updatedCart;
-      } else {
-        // Adiciona novo item
-        return [...prevCart, { product, quantity, observations }];
-      }
-    });
+    setCart(prevCart => addCartItem(prevCart, product, quantity, observations));
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart(cart.filter(item => item.product.id !== productId));
+  const removeFromCart = (itemKey: string) => {
+    setCart(prevCart => removeCartItem(prevCart, itemKey));
   };
 
-  const updateCartItem = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
-    } else {
-      setCart(cart.map(item =>
-        item.product.id === productId
-          ? { ...item, quantity }
-          : item
-      ));
-    }
+  const updateCartItem = (itemKey: string, quantity: number) => {
+    setCart(prevCart => updateCartItemQuantity(prevCart, itemKey, quantity));
   };
 
   const handleViewOrder = (order: Order) => {
@@ -768,6 +774,28 @@ function App() {
     setIsPixReturnFlow(false); // Clear PIX flag when viewing order tracking
     localStorage.removeItem('isPixReturnFlow');
   };
+
+  if (authError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+        <div role="alert" className="max-w-md rounded-xl bg-white p-6 text-center shadow-lg">
+          <h1 className="text-xl font-semibold text-gray-900">Não foi possível carregar sua conta</h1>
+          <p className="mt-3 text-gray-700">{authError}</p>
+          <p className="mt-2 text-sm text-gray-600">Seu carrinho foi mantido. Tente novamente para continuar.</p>
+          <Button
+            className="mt-5 bg-red-600 text-white hover:bg-red-700"
+            onClick={() => {
+              setAuthError(null);
+              setAuthLoading(true);
+              setAuthRetryCount(count => count + 1);
+            }}
+          >
+            Tentar novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -854,7 +882,7 @@ function App() {
         onUpdateCartItem={updateCartItem}
         onLogin={handleLogin} // Usando a função definida
         onOrderCreated={(order) => {
-          setCart([]);
+          setCart(previous => orderProtectionEnabled ? removeOrderedItems(previous, order.items) : []);
           setCurrentOrder(order);
           setCurrentView('tracking'); // <--- Adicionado esta linha para mudar a view
           setIsMercadoPagoReturnFlow(false); // Clear Mercado Pago flag on order creation

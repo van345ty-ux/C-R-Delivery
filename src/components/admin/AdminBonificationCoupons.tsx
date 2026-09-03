@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { CheckCircle, Clock, User as UserIcon, Gift, XCircle, Sparkles, Award, TrendingUp, Cake } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '../../utils/errors';
 import { Coupon as CouponType } from '../../types'; // Importando o tipo Coupon
 
 // Definindo a interface local para o cupom, garantindo que todas as propriedades do DB estejam presentes
@@ -40,11 +41,7 @@ export const AdminBonificationCoupons: React.FC = () => {
   const currentMonthName = months[currentMonthIndex];
   const currentMonthStr = String(currentMonthIndex + 1).padStart(2, '0'); // ex: "05" para Maio
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     
     // 1. Buscar cupons pendentes (clientes que atingiram 10 compras e aguardam liberação)
@@ -125,7 +122,11 @@ export const AdminBonificationCoupons: React.FC = () => {
     }
 
     setLoading(false);
-  };
+  }, [currentMonthStr]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSendCoupon = async (couponId: string) => {
     setIsUpdating(true);
@@ -242,9 +243,9 @@ export const AdminBonificationCoupons: React.FC = () => {
 
       toast.success(`Cupom antigo de "${name}" removido com sucesso! Agora você pode clicar em "Presentear" para gerar um cupom novo e testar do zero.`);
       fetchData(); // Atualiza a listagem
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting birthday coupon for reactivation:', error);
-      toast.error('Erro ao reiniciar cupom: ' + error.message);
+      toast.error('Erro ao reiniciar cupom: ' + getErrorMessage(error));
     } finally {
       setIsUpdating(false);
     }

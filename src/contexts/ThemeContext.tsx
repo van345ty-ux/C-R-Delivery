@@ -1,18 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../integrations/supabase/client';
-
-type Theme = 'light' | 'dark';
-
-interface ThemeContextType {
-  theme: Theme;
-  toggleTheme: () => void;
-  setTheme: (theme: Theme) => void;
-  allowThemeToggle: boolean;
-  isWorldCupMode: boolean;
-  toggleWorldCupMode: (active: boolean) => Promise<void>;
-}
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+import { ThemeContext, type Theme } from './theme-context';
 
 // ─────────────────────────────────────────────────────────────
 // Helpers
@@ -31,12 +19,6 @@ const applyTheme = (t: Theme) => {
 applyTheme(getStoredTheme() ?? getSystemTheme());
 
 // ─────────────────────────────────────────────────────────────
-
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (!context) throw new Error('useTheme must be used within a ThemeProvider');
-  return context;
-};
 
 interface ThemeProviderProps {
   children: ReactNode;

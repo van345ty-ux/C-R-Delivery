@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Phone, Calendar, ShoppingBag, Trash2, Gift, Pencil, Check, X } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '../../utils/errors';
 
 interface CustomerProfile {
   id: string;
@@ -88,12 +89,12 @@ export const AdminCustomers: React.FC = () => {
     const channel = supabase.channel('online-users');
 
     channel.on('presence', { event: 'sync' }, () => {
-      const newState = channel.presenceState();
+      const newState = channel.presenceState<{ user_id: string; online_at?: string }>();
       const onlineMap = new Map<string, string>();
       for (const id in newState) {
         const presenceList = newState[id];
         if (presenceList && presenceList.length > 0) {
-          const presence = presenceList[0] as { user_id: string; online_at?: string };
+          const presence = presenceList[0];
           if (presence && presence.user_id) {
             // Se não houver online_at, usa a hora atual como fallback
             onlineMap.set(presence.user_id, presence.online_at || new Date().toISOString());
@@ -148,9 +149,9 @@ export const AdminCustomers: React.FC = () => {
       }));
 
       setCustomers(mappedCustomers);
-    } catch (error: any) { // Explicitly type error as any
+    } catch (error) {
       console.error('Erro ao carregar clientes:', error);
-      setError(error.message);
+      setError(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -173,9 +174,9 @@ export const AdminCustomers: React.FC = () => {
       toast.success('Cliente atualizado com sucesso!');
       setEditingCustomerId(null);
       await fetchCustomers();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erro ao atualizar cliente:', err);
-      toast.error('Erro ao atualizar cliente: ' + err.message);
+      toast.error('Erro ao atualizar cliente: ' + getErrorMessage(err));
     }
   };
 
@@ -201,9 +202,9 @@ export const AdminCustomers: React.FC = () => {
 
       toast.success('Cliente excluído e pedidos anonimizados (LGPD) com sucesso!');
       await fetchCustomers();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erro ao excluir cliente:', err);
-      toast.error('Erro ao excluir cliente: ' + err.message);
+      toast.error('Erro ao excluir cliente: ' + getErrorMessage(err));
       setLoading(false);
     }
   };

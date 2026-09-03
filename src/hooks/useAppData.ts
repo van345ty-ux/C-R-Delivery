@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '../utils/errors';
 import { City, OperatingHour } from '../types';
 
 export const useAppData = () => {
@@ -49,9 +50,9 @@ export const useAppData = () => {
         setOperatingHours(hoursResult.data || []);
         console.log('useAppData: fetchInitialAppData: Operating hours loaded.');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("useAppData: fetchInitialAppData: Critical error during app data fetching:", error);
-      toast.error("Falha crítica ao carregar dados do aplicativo: " + (error.message || "Erro desconhecido"));
+      toast.error("Falha crítica ao carregar dados do aplicativo: " + getErrorMessage(error));
     } finally {
       if (!isBackgroundRefresh) {
         setInitialAppDataLoading(false);

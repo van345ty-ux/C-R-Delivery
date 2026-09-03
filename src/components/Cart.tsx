@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Plus, Minus, CreditCard, Smartphone, DollarSign, Gift, ExternalLink, Copy, Heart } from 'lucide-react';
 import { CartItem, Order, User, Coupon } from '../types';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/theme-context';
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
 import { withRetry, withTimeout, TIMEOUT_MS } from '../hooks/useQuery';
 import { PixInstructionsModal } from './PixInstructionsModal';
 import { PixReturnConfirmationModal } from './PixReturnConfirmationModal';
 import { sendWhatsappNotification } from '../utils/whatsapp';
+import { getCartItemKey } from '../utils/cart';
+import { orderProtectionEnabled, protectedOrders } from '../utils/protectedOrderSubmission';
+import type { OrderPayload } from '../utils/orderSubmission';
 
 const renderBoldText = (text: string) => {
   if (!text) return null;
@@ -23,8 +26,8 @@ const renderBoldText = (text: string) => {
 interface CartProps {
   items: CartItem[];
   onClose: () => void;
-  onUpdateQuantity: (productId: string, quantity: number) => void;
-  onRemoveItem: (productId: string) => void;
+  onUpdateQuantity: (itemKey: string, quantity: number) => void;
+  onRemoveItem: (itemKey: string) => void;
   onOrderCreated: (order: Order) => void;
   user: User | null;
   isStoreOpen: boolean;
@@ -74,6 +77,23 @@ export const Cart: React.FC<CartProps> = ({
   });
   const [loadingCoupon, setLoadingCoupon] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
+  const mountedRef = useRef(true);
+  const activeUserRef = useRef(user?.id);
+  activeUserRef.current = user?.id;
+  const [hasPendingOrder, setHasPendingOrder] = useState(() => orderProtectionEnabled && !!user && protectedOrders.hasPending(user.id));
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+  useEffect(() => {
+    submittingRef.current = false;
+    setIsSubmitting(false);
+    const refreshPending = () => setHasPendingOrder(orderProtectionEnabled && !!user?.id && protectedOrders.hasPending(user.id));
+    refreshPending();
+    window.addEventListener('storage', refreshPending);
+    return () => window.removeEventListener('storage', refreshPending);
+  }, [user?.id]);
   const [firstAvailableCoupon, setFirstAvailableCoupon] = useState<Coupon | null>(null);
   const couponInputRef = useRef<HTMLInputElement>(null);
   const [showMercadoPagoWarning, setShowMercadoPagoWarning] = useState(false);
@@ -112,6 +132,12 @@ export const Cart: React.FC<CartProps> = ({
   const hasOvosDesSushi = items.some(item => item.product.category === 'Ovos de Sushi');
 
   const isAwaitingPixPayment = paymentMethod === 'pix' && pixPaymentInitiated && !hasAcknowledgedPixReturnConfirmation;
+  // Permite retomar o pedido iniciado fora do app mesmo se a loja fechar nesse intervalo.
+  // Estes indicadores preservam o fluxo existente; não são confirmação bancária.
+  const hasExternalPaymentInProgress =
+    (paymentMethod === 'card' && isMercadoPagoAcknowledged) ||
+    (paymentMethod === 'pix' && pixPaymentInitiated);
+  const canFinishOrder = canPlaceOrder || hasExternalPaymentInProgress;
 
   // Add/remove cart-open class to body and html to hide scrollbar
   useEffect(() => {
@@ -303,8 +329,56 @@ export const Cart: React.FC<CartProps> = ({
     toast.success('Cupom aplicado com sucesso!');
   };
 
+  const completeOrder = (formattedOrder: Order) => {
+    onOrderCreated(formattedOrder);
+    onClose();
+    setIsSubmitting(false);
+    localStorage.removeItem('hasSeenMercadoPagoWarning');
+    localStorage.removeItem('isMercadoPagoReturnFlow');
+    localStorage.removeItem('hasSeenPixInstructions');
+    localStorage.removeItem('cartPaymentMethod');
+    localStorage.removeItem('cartAppliedCoupon');
+    localStorage.removeItem('cartCouponCode');
+    clearPixFlags();
+    setIsMercadoPagoAcknowledged(false);
+    setHasSeenPixInstructions(false);
+    toast.success('Pedido finalizado com sucesso!');
+  };
+
+  const finishProtectedOrder = async (userId: string, payload?: OrderPayload) => {
+    submittingRef.current = true;
+    setIsSubmitting(true);
+    try {
+      const operation = protectedOrders.send(userId, payload, appliedCoupon?.id ?? null);
+      setHasPendingOrder(protectedOrders.hasPending(userId));
+      const order = await operation;
+      // Não altera a sacola de outra conta nem a tela de um componente já fechado.
+      if (!mountedRef.current || activeUserRef.current !== userId) return;
+      completeOrder(order);
+      protectedOrders.acknowledge(userId, order.clientRequestId);
+    } catch (error) {
+      console.error('Erro ao confirmar a tentativa de pedido:', error);
+      if (mountedRef.current && activeUserRef.current === userId) {
+        toast.error('Não conseguimos confirmar a resposta. Verifique o pedido anterior antes de fazer outro. Não repita o pagamento.');
+      }
+    } finally {
+      if (mountedRef.current && activeUserRef.current === userId) {
+        submittingRef.current = false;
+        setIsSubmitting(false);
+        setHasPendingOrder(protectedOrders.hasPending(userId));
+      }
+    }
+  };
+
   const handleFinishOrder = async () => {
-    if (!canPlaceOrder) {
+    if (submittingRef.current || isSubmitting) return;
+    // Recuperação usa os dados da tentativa persistida, mesmo após fechar a loja,
+    // alterar a sacola ou voltar do pagamento. Não inicia outra cobrança/aviso.
+    if (orderProtectionEnabled && user && protectedOrders.hasPending(user.id)) {
+      await finishProtectedOrder(user.id);
+      return;
+    }
+    if (!canFinishOrder) {
       toast.error('Desculpe, não é possível finalizar o pedido no momento.');
       return;
     }
@@ -362,7 +436,7 @@ export const Cart: React.FC<CartProps> = ({
       }
     }
     setIsSubmitting(true);
-    const orderPayload = {
+    const orderPayload: OrderPayload = {
       user_id: user.id,
       items: items.map(item => ({
         product_id: item.product.id,
@@ -383,6 +457,10 @@ export const Cart: React.FC<CartProps> = ({
       change_for: (paymentMethod === 'cash' && needsChange && parseFloat(changeForAmount) > 0) ? parseFloat(changeForAmount) : null,
       sushi_egg_delivery_day: hasOvosDesSushi ? sushiEggDeliveryDay : null,
     };
+    if (orderProtectionEnabled) {
+      await finishProtectedOrder(user.id, orderPayload);
+      return;
+    }
     // Adicionando timeout para evitar travamento na criação do pedido
     let newOrder, error;
 
@@ -393,10 +471,10 @@ export const Cart: React.FC<CartProps> = ({
           .insert(orderPayload)
           .select('*, order_number')
           .single(),
-        new Promise((_, reject) =>
+        new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Timeout')), 60000)
         )
-      ]) as any;
+      ]);
 
       newOrder = result.data;
       error = result.error;
@@ -447,19 +525,7 @@ export const Cart: React.FC<CartProps> = ({
       console.error('Erro ou timeout no envio do WhatsApp:', err);
     }
 
-    onOrderCreated(formattedOrder);
-    onClose();
-    setIsSubmitting(false);
-    localStorage.removeItem('hasSeenMercadoPagoWarning');
-    localStorage.removeItem('isMercadoPagoReturnFlow');
-    localStorage.removeItem('hasSeenPixInstructions');
-    localStorage.removeItem('cartPaymentMethod');
-    localStorage.removeItem('cartAppliedCoupon');
-    localStorage.removeItem('cartCouponCode');
-    clearPixFlags();
-    setIsMercadoPagoAcknowledged(false);
-    setHasSeenPixInstructions(false);
-    toast.success('Pedido finalizado com sucesso!');
+    completeOrder(formattedOrder);
   };
 
   const handleMercadoPagoConfirm = () => {
@@ -479,7 +545,7 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.setItem('isPixReturnFlow', 'true');
   };
 
-  if (items.length === 0) {
+  if (items.length === 0 && !hasPendingOrder) {
     return (
       <>
         {/* Backdrop to cover scrollbar */}
@@ -591,9 +657,14 @@ export const Cart: React.FC<CartProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {hasPendingOrder && (
+          <div className="rounded-lg bg-blue-100 p-3 text-sm text-blue-900" role="status">
+            Há uma tentativa anterior aguardando confirmação. Verifique esse pedido antes de fazer outro. Não repita o pagamento.
+          </div>
+        )}
         {items.map((item) => (
           <div 
-            key={item.product.id} 
+            key={getCartItemKey(item)}
             className="rounded-lg p-4"
             style={{ backgroundColor: isWorldCupMode ? 'rgba(16, 185, 129, 0.08)' : 'var(--bg-secondary)' }}
           >
@@ -605,11 +676,11 @@ export const Cart: React.FC<CartProps> = ({
                 {item.product.name}
               </h4>
               <button 
-                onClick={() => onRemoveItem(item.product.id)} 
+                onClick={() => onRemoveItem(getCartItemKey(item))}
                 className="text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded px-1"
                 style={{ color: '#ef4444' }}
                 disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}
-                aria-label={`Remover ${item.product.name} do carrinho`}
+                aria-label={`Remover ${item.product.name} do carrinho${item.observations ? ` (${item.observations})` : ''}`}
               >
                 Remover
               </button>
@@ -625,14 +696,14 @@ export const Cart: React.FC<CartProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <button 
-                  onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)} 
+                  onClick={() => onUpdateQuantity(getCartItemKey(item), item.quantity - 1)}
                   className="rounded-full p-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
                   style={{ 
                     backgroundColor: isWorldCupMode ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-tertiary)',
                     color: isWorldCupMode ? '#15803d' : 'var(--text-primary)'
                   }}
                   disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}
-                  aria-label={`Diminuir quantidade de ${item.product.name}`}
+                  aria-label={`Diminuir quantidade de ${item.product.name}${item.observations ? ` (${item.observations})` : ''}`}
                 >
                   <Minus className="w-3 h-3" />
                 </button>
@@ -644,14 +715,14 @@ export const Cart: React.FC<CartProps> = ({
                   {item.quantity}
                 </span>
                 <button 
-                  onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)} 
+                  onClick={() => onUpdateQuantity(getCartItemKey(item), item.quantity + 1)}
                   className="rounded-full p-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
                   style={{ 
                     backgroundColor: isWorldCupMode ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-tertiary)',
                     color: isWorldCupMode ? '#15803d' : 'var(--text-primary)'
                   }}
                   disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}
-                  aria-label={`Aumentar quantidade de ${item.product.name}`}
+                  aria-label={`Aumentar quantidade de ${item.product.name}${item.observations ? ` (${item.observations})` : ''}`}
                 >
                   <Plus className="w-3 h-3" />
                 </button>
@@ -888,7 +959,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={paymentMethod === 'pix'} 
                 onChange={() => { setPaymentMethod('pix'); if (!hasSeenPixInstructions) setShowPixInstructions(true); localStorage.removeItem('hasSeenMercadoPagoWarning'); setIsMercadoPagoAcknowledged(false); }} 
                 className="mr-2" 
-                disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}
+                disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment || (!canPlaceOrder && !pixPaymentInitiated)}
                 aria-label="Pagamento via PIX"
               />
               <Smartphone className="w-4 h-4 mr-2" aria-hidden="true" />
@@ -939,7 +1010,7 @@ export const Cart: React.FC<CartProps> = ({
                 checked={paymentMethod === 'card'} 
                 onChange={() => { setPaymentMethod('card'); setHasSeenPixInstructions(false); localStorage.removeItem('hasSeenPixInstructions'); clearPixFlags(); }} 
                 className="mr-2" 
-                disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment}
+                disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment || (!canPlaceOrder && !isMercadoPagoAcknowledged)}
                 aria-label="Pagamento com cartão via Mercado Pago"
               />
               <CreditCard className="w-4 h-4 mr-2" aria-hidden="true" />
@@ -1072,7 +1143,7 @@ export const Cart: React.FC<CartProps> = ({
           </div>
         </div>
 
-        {!canPlaceOrder && (
+        {!canFinishOrder && !hasPendingOrder && (
           <div className="mb-4 p-3 bg-red-100 text-red-800 text-sm rounded-lg text-center" role="alert">
             O restaurante está fechado. Não é possível finalizar o pedido agora.
           </div>
@@ -1080,6 +1151,11 @@ export const Cart: React.FC<CartProps> = ({
         {canPlaceOrder && !isStoreOpen && (
           <div className="mb-4 p-3 bg-blue-100 text-blue-800 text-sm rounded-lg text-center" role="status">
             O restaurante está fechado, mas você pode agendar seu pedido para mais tarde.
+          </div>
+        )}
+        {!canPlaceOrder && hasExternalPaymentInProgress && (
+          <div className="mb-4 p-3 bg-blue-100 text-blue-800 text-sm rounded-lg text-center" role="status">
+            O restaurante fechou, mas você pode concluir o pedido cujo pagamento já foi iniciado.
           </div>
         )}
         {!user && (
@@ -1091,10 +1167,11 @@ export const Cart: React.FC<CartProps> = ({
           onClick={handleFinishOrder}
           disabled={
             isSubmitting || 
-            !canPlaceOrder || 
             !user || 
-            !paymentMethod || 
-            (paymentMethod === 'pix' && (!pixKeyValue || !hasSeenPixInstructions))
+            (!hasPendingOrder && (
+              !canFinishOrder || !paymentMethod ||
+              (paymentMethod === 'pix' && (!pixKeyValue || !hasSeenPixInstructions))
+            ))
           }
           className={`w-full py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 ${
             isWorldCupMode
@@ -1109,9 +1186,9 @@ export const Cart: React.FC<CartProps> = ({
                   ? 'animate-pulse ring-4 ring-red-300'
                   : ''
           }`}
-          aria-label={isSubmitting ? 'Finalizando pedido, aguarde' : 'Finalizar pedido'}
+          aria-label={isSubmitting ? 'Finalizando pedido, aguarde' : hasPendingOrder ? 'Verificar pedido anterior' : 'Finalizar pedido'}
         >
-          {isSubmitting ? 'Finalizando...' : 'Finalizar Pedido'}
+          {isSubmitting ? 'Finalizando...' : hasPendingOrder ? 'Verificar pedido anterior' : 'Finalizar Pedido'}
         </button>
       </div>
 
