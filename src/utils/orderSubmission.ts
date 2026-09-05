@@ -29,6 +29,7 @@ interface Attempt {
   requestId: string;
   payload: OrderPayload;
   couponId: string | null;
+  quoteId?: string;
 }
 
 export const orderAttemptKey = (userId: string) => `cr-sushi:pending-order:${userId}`;
@@ -88,7 +89,7 @@ export function createOrderSubmitter({ storage, uuid, submit, claimNotification,
     } finally { clearTimeout(timer); }
   }
 
-  function send(userId: string, payload?: OrderPayload, couponId: string | null = null): Promise<ConfirmedOrder> {
+  function send(userId: string, payload?: OrderPayload, couponId: string | null = null, quoteId?: string): Promise<ConfirmedOrder> {
     const active = running.get(userId);
     if (active) return active;
     const operation = (async () => {
@@ -96,7 +97,8 @@ export function createOrderSubmitter({ storage, uuid, submit, claimNotification,
         const attempt = readAttempt(userId);
         if (attempt) return attempt;
         if (!payload || payload.user_id !== userId) throw new Error('Não há tentativa anterior para recuperar.');
-        const created = { requestId: uuid(), payload, couponId };
+        const requestId = quoteId || uuid();
+        const created = { requestId, payload, couponId, ...(quoteId ? { quoteId } : {}) };
         // Persistir antes da rede; se falhar, não inicia gravação sem identidade.
         storage.setItem(orderAttemptKey(userId), JSON.stringify(created));
         return created;

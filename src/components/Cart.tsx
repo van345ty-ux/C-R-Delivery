@@ -11,6 +11,7 @@ import { sendWhatsappNotification } from '../utils/whatsapp';
 import { getCartItemKey } from '../utils/cart';
 import { orderProtectionEnabled, protectedOrders } from '../utils/protectedOrderSubmission';
 import type { OrderPayload } from '../utils/orderSubmission';
+import { orderQuoteEnabled, prepareOrderQuote, type OrderQuote } from '../utils/orderQuote';
 
 const renderBoldText = (text: string) => {
   if (!text) return null;
@@ -65,6 +66,7 @@ export const Cart: React.FC<CartProps> = ({
   worldCupPopupSettings,
 }) => {
   const { isWorldCupMode } = useTheme();
+  const quoteFlowEnabled = orderQuoteEnabled && orderProtectionEnabled;
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>(() => {
     return localStorage.getItem('cartDeliveryType') as 'delivery' | 'pickup' || 'delivery';
   });
@@ -77,6 +79,15 @@ export const Cart: React.FC<CartProps> = ({
   });
   const [loadingCoupon, setLoadingCoupon] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const quoteStorageKey = user?.id ? `cr-sushi:active-quote:${user.id}` : null;
+  const [activeQuote, setActiveQuote] = useState<OrderQuote | null>(() => {
+    if (!quoteFlowEnabled || !user?.id) return null;
+    try {
+      const saved = JSON.parse(localStorage.getItem(`cr-sushi:active-quote:${user.id}`) || 'null');
+      return saved?.user_id === user.id ? saved : null;
+    } catch { return null; }
+  });
+  const [isPreparingQuote, setIsPreparingQuote] = useState(false);
   const submittingRef = useRef(false);
   const mountedRef = useRef(true);
   const activeUserRef = useRef(user?.id);
@@ -262,13 +273,37 @@ export const Cart: React.FC<CartProps> = ({
     checkAvailableCoupons();
   }, [user?.id]);
 
-  const subtotal = items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const browserSubtotal = items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   const isComandatuba = selectedCity ? selectedCity.toLowerCase().includes('comandatuba') : false;
   const currentFeeValue = isComandatuba ? comandatubaDeliveryFeeValue : deliveryFeeValue;
   const isFreeDelivery = isValentineThemeActive && !isComandatuba;
-  const deliveryFee = (deliveryType === 'delivery' && !isFreeDelivery) ? currentFeeValue : 0;
-  const discount = appliedCoupon ? (subtotal * appliedCoupon.discount / 100) : 0;
-  const total = subtotal + deliveryFee - discount;
+  const browserDeliveryFee = (deliveryType === 'delivery' && !isFreeDelivery) ? currentFeeValue : 0;
+  const browserDiscount = appliedCoupon ? (browserSubtotal * appliedCoupon.discount / 100) : 0;
+  const quotedValues = activeQuote?.payment_method === paymentMethod ? activeQuote : null;
+  const subtotal = quotedValues ? Number(quotedValues.subtotal) : browserSubtotal;
+  const deliveryFee = quotedValues ? Number(quotedValues.delivery_fee) : browserDeliveryFee;
+  const discount = quotedValues ? Number(quotedValues.discount_amount) : browserDiscount;
+  const total = quotedValues ? Number(quotedValues.total) : browserSubtotal + browserDeliveryFee - browserDiscount;
+
+  const rememberQuote = (quote: OrderQuote) => {
+    setActiveQuote(quote);
+    if (quoteStorageKey) localStorage.setItem(quoteStorageKey, JSON.stringify(quote));
+  };
+
+  const ensureQuote = async (method: 'pix' | 'card' | 'cash') => {
+    if (!quoteFlowEnabled) return null;
+    if (activeQuote?.payment_method === method && Date.parse(activeQuote.expires_at) > Date.now()) return activeQuote;
+    if (!user) throw new Error('Você precisa fazer login para continuar.');
+    setIsPreparingQuote(true);
+    try {
+      const quote = await prepareOrderQuote({
+        requestId: crypto.randomUUID(), items, deliveryType, paymentMethod: method,
+        cityName: selectedCity, couponId: appliedCoupon?.id,
+      });
+      rememberQuote(quote);
+      return quote;
+    } finally { setIsPreparingQuote(false); }
+  };
 
   const clearPixFlags = () => {
     setPixPaymentInitiated(false);
@@ -339,17 +374,19 @@ export const Cart: React.FC<CartProps> = ({
     localStorage.removeItem('cartPaymentMethod');
     localStorage.removeItem('cartAppliedCoupon');
     localStorage.removeItem('cartCouponCode');
+    if (quoteStorageKey) localStorage.removeItem(quoteStorageKey);
+    setActiveQuote(null);
     clearPixFlags();
     setIsMercadoPagoAcknowledged(false);
     setHasSeenPixInstructions(false);
     toast.success('Pedido finalizado com sucesso!');
   };
 
-  const finishProtectedOrder = async (userId: string, payload?: OrderPayload) => {
+  const finishProtectedOrder = async (userId: string, payload?: OrderPayload, quoteId?: string) => {
     submittingRef.current = true;
     setIsSubmitting(true);
     try {
-      const operation = protectedOrders.send(userId, payload, appliedCoupon?.id ?? null);
+      const operation = protectedOrders.send(userId, payload, appliedCoupon?.id ?? null, quoteId);
       setHasPendingOrder(protectedOrders.hasPending(userId));
       const order = await operation;
       // Não altera a sacola de outra conta nem a tela de um componente já fechado.
@@ -435,6 +472,14 @@ export const Cart: React.FC<CartProps> = ({
         return;
       }
     }
+    let quote: OrderQuote | null = null;
+    try {
+      quote = await ensureQuote(paymentMethod);
+    } catch (error) {
+      console.error('Erro ao preparar cotação:', error);
+      toast.error(error instanceof Error ? error.message : 'Não foi possível confirmar os valores. Nenhum pagamento foi aberto.');
+      return;
+    }
     setIsSubmitting(true);
     const orderPayload: OrderPayload = {
       user_id: user.id,
@@ -445,8 +490,8 @@ export const Cart: React.FC<CartProps> = ({
         price: item.product.price,
         observations: item.observations
       })),
-      total,
-      delivery_fee: deliveryFee,
+      total: quote ? Number(quote.total) : total,
+      delivery_fee: quote ? Number(quote.delivery_fee) : deliveryFee,
       delivery_type: deliveryType,
       payment_method: paymentMethod,
       address: deliveryType === 'delivery' ? address : null,
@@ -458,7 +503,7 @@ export const Cart: React.FC<CartProps> = ({
       sushi_egg_delivery_day: hasOvosDesSushi ? sushiEggDeliveryDay : null,
     };
     if (orderProtectionEnabled) {
-      await finishProtectedOrder(user.id, orderPayload);
+      await finishProtectedOrder(user.id, orderPayload, quote?.id);
       return;
     }
     // Adicionando timeout para evitar travamento na criação do pedido
@@ -528,12 +573,37 @@ export const Cart: React.FC<CartProps> = ({
     completeOrder(formattedOrder);
   };
 
-  const handleMercadoPagoConfirm = () => {
+  const handleMercadoPagoConfirm = async () => {
+    // Mantém o gesto do clique para o bloqueador de pop-ups enquanto a cotação responde.
+    const paymentWindow = quoteFlowEnabled ? window.open('', '_blank') : null;
+    try {
+      await ensureQuote('card');
+    } catch (error) {
+      paymentWindow?.close();
+      console.error('Erro ao preparar cotação do cartão:', error);
+      toast.error(error instanceof Error ? error.message : 'Não foi possível confirmar os valores. O Mercado Pago não foi aberto.');
+      return;
+    }
     setShowMercadoPagoWarning(false);
     localStorage.setItem('hasSeenMercadoPagoWarning', 'true');
     setIsMercadoPagoAcknowledged(true);
     localStorage.setItem('isMercadoPagoReturnFlow', 'true');
-    window.open(mercadoPagoLink, '_blank');
+    if (paymentWindow) paymentWindow.location.href = mercadoPagoLink;
+    else window.open(mercadoPagoLink, '_blank');
+  };
+
+  const handlePixSelection = async () => {
+    setPaymentMethod('pix');
+    localStorage.removeItem('hasSeenMercadoPagoWarning');
+    setIsMercadoPagoAcknowledged(false);
+    if (hasSeenPixInstructions) return;
+    try {
+      await ensureQuote('pix');
+      setShowPixInstructions(true);
+    } catch (error) {
+      console.error('Erro ao preparar cotação do Pix:', error);
+      toast.error(error instanceof Error ? error.message : 'Não foi possível confirmar os valores. A chave Pix não foi exibida.');
+    }
   };
 
   const handlePixInstructionsClose = () => {
@@ -957,9 +1027,9 @@ export const Cart: React.FC<CartProps> = ({
                 type="radio" 
                 name="paymentMethod" 
                 checked={paymentMethod === 'pix'} 
-                onChange={() => { setPaymentMethod('pix'); if (!hasSeenPixInstructions) setShowPixInstructions(true); localStorage.removeItem('hasSeenMercadoPagoWarning'); setIsMercadoPagoAcknowledged(false); }} 
+                onChange={() => { void handlePixSelection(); }} 
                 className="mr-2" 
-                disabled={isMercadoPagoReturnFlow || isAwaitingPixPayment || (!canPlaceOrder && !pixPaymentInitiated)}
+                disabled={isPreparingQuote || isMercadoPagoReturnFlow || isAwaitingPixPayment || (!canPlaceOrder && !pixPaymentInitiated)}
                 aria-label="Pagamento via PIX"
               />
               <Smartphone className="w-4 h-4 mr-2" aria-hidden="true" />
@@ -1198,7 +1268,7 @@ export const Cart: React.FC<CartProps> = ({
             <ExternalLink className="w-12 h-12 mx-auto text-blue-600 mb-4" />
             <h3 className="text-lg font-bold text-gray-800 mb-2">Atenção ao Pagamento!</h3>
             <p className="text-gray-600 mb-4">Você será redirecionado para o pagamento no cartão via link Mercado Pago. Após o pagamento, retorne ao carrinho e finalize o pedido por favor!</p>
-            <button onClick={handleMercadoPagoConfirm} className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">Entendi</button>
+            <button onClick={() => { void handleMercadoPagoConfirm(); }} disabled={isPreparingQuote} className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-60">{isPreparingQuote ? 'Confirmando valores...' : 'Entendi'}</button>
           </div>
         </div>
       )}

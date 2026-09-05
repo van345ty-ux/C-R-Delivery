@@ -12,9 +12,14 @@ export const protectedOrders = createOrderSubmitter({
     ? navigator.locks.request(`cr-sushi:order-reservation:${userId}`, work)
     : Promise.resolve(work()),
   submit: async (attempt, signal) => {
-    const { data, error } = await supabase.rpc('submit_order_once', {
-      p_request_id: attempt.requestId, p_order: attempt.payload, p_coupon_id: attempt.couponId,
-    }).abortSignal(signal);
+    const request = attempt.quoteId
+      ? supabase.rpc('submit_quoted_order_once', {
+          p_quote_id: attempt.quoteId, p_order: attempt.payload,
+        })
+      : supabase.rpc('submit_order_once', {
+          p_request_id: attempt.requestId, p_order: attempt.payload, p_coupon_id: attempt.couponId,
+        });
+    const { data, error } = await request.abortSignal(signal);
     if (error) throw error;
     if (!data?.order) throw new Error('O servidor não retornou o pedido.');
     return data.order as SubmittedOrder;

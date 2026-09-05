@@ -75,6 +75,24 @@ test('nova instância após recarregar usa a tentativa salva com seus dados orig
   assert.deepEqual(env.calls, ['request-1']);
 });
 
+test('cotação usa o mesmo UUID na confirmação e sobrevive ao recarregamento', async () => {
+  const env = setup();
+  let first = true;
+  const client = createOrderSubmitter({ ...env.dependencies, submit: async attempt => {
+    assert.equal(attempt.requestId, 'quote-1');
+    assert.equal(attempt.quoteId, 'quote-1');
+    if (first) { first = false; throw new Error('offline'); }
+    return { ...attempt.payload, id: 'order-quote', client_request_id: attempt.requestId, order_number: 2, created_at: '2026-09-05T12:00:00Z' };
+  } });
+  await assert.rejects(client.send('cliente', payload, 'cupom', 'quote-1'));
+  assert.equal(client.readAttempt('cliente').quoteId, 'quote-1');
+  const restored = createOrderSubmitter({ ...env.dependencies, submit: client.readAttempt('cliente')
+    ? async attempt => ({ ...attempt.payload, id: 'order-quote', client_request_id: attempt.quoteId, order_number: 2, created_at: '2026-09-05T12:00:00Z' })
+    : env.dependencies.submit });
+  const order = await restored.send('cliente');
+  assert.equal(order.clientRequestId, 'quote-1');
+});
+
 test('cliques concorrentes na mesma instância compartilham a operação', async () => {
   const env = setup();
   const client = createOrderSubmitter(env.dependencies);
