@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import { Instagram, Facebook } from 'lucide-react';
-import { PrivacyPolicy } from './PrivacyPolicy';
-import { TermsOfUse } from './TermsOfUse';
+
+const PrivacyPolicy = lazy(() => import('./PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
+const TermsOfUse = lazy(() => import('./TermsOfUse').then(m => ({ default: m.TermsOfUse })));
 
 export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -105,8 +106,10 @@ export const Footer: React.FC = () => {
       </footer>
 
       {/* Modais */}
-      {showPrivacy && <PrivacyPolicy onClose={() => setShowPrivacy(false)} />}
-      {showTerms && <TermsOfUse onClose={() => setShowTerms(false)} />}
+      <Suspense fallback={null}>
+        {showPrivacy && <PrivacyPolicy onClose={() => setShowPrivacy(false)} />}
+        {showTerms && <TermsOfUse onClose={() => setShowTerms(false)} />}
+      </Suspense>
     </>
   );
 };

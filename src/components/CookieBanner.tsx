@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { X, Cookie } from 'lucide-react';
-import { PrivacyPolicy } from './PrivacyPolicy';
-import { TermsOfUse } from './TermsOfUse';
+
+const PrivacyPolicy = lazy(() => import('./PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
+const TermsOfUse = lazy(() => import('./TermsOfUse').then(m => ({ default: m.TermsOfUse })));
 
 export const CookieBanner: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -74,8 +75,10 @@ export const CookieBanner: React.FC = () => {
         </div>
       )}
 
-      {showPrivacy && <PrivacyPolicy onClose={() => setShowPrivacy(false)} />}
-      {showTerms && <TermsOfUse onClose={() => setShowTerms(false)} />}
+      <Suspense fallback={null}>
+        {showPrivacy && <PrivacyPolicy onClose={() => setShowPrivacy(false)} />}
+        {showTerms && <TermsOfUse onClose={() => setShowTerms(false)} />}
+      </Suspense>
     </>
   );
 };

@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { lazy, Suspense, useState, useEffect, useMemo, useRef } from 'react';
 import { useTheme } from '../contexts/theme-context';
 import { Header } from './Header';
 import { Menu } from './Menu';
-import { Cart } from './Cart';
 import { PromotionModal } from './PromotionModal';
 import { Footer } from './Footer'; // Importando o novo componente Footer
 import { User, CartItem, Product, Order } from '../types'; // Corrected import path
@@ -12,6 +11,8 @@ import { EasterPopup } from './EasterPopup'; // Importando o novo popup de Pásc
 import { ValentinePopup } from './ValentinePopup'; // Importando o novo popup de Dia dos Namorados
 import { WorldCupTheme } from './WorldCupTheme';
 import { WorldCupPreOrderPopup } from './WorldCupPreOrderPopup';
+
+const Cart = lazy(() => import('./Cart').then(m => ({ default: m.Cart })));
 
 interface HomePageProps {
   selectedCity: string;
@@ -454,25 +455,27 @@ export const HomePage: React.FC<HomePageProps> = ({
       )}
 
       {showCart && (
-        <Cart
-          items={cart}
-          onClose={handleCloseCart}
-          onUpdateQuantity={onUpdateCartItem}
-          onRemoveItem={onRemoveFromCart}
-          onOrderCreated={onOrderCreated}
-          user={user}
-          isStoreOpen={isStoreOpen}
-          canPlaceOrder={canPlaceOrder}
-          isMercadoPagoReturnFlow={isMercadoPagoReturnFlow}
-          isPixReturnFlow={isPixReturnFlow}
-          isValentineThemeActive={isValentineThemeActive}
-          selectedCity={selectedCity}
-          deliveryFee={deliveryFee}
-          comandatubaDeliveryFee={comandatubaDeliveryFee}
-          pixKey={pixKey}
-          mercadoPagoLink={mercadoPagoLink}
-          worldCupPopupSettings={worldCupPopupSettings}
-        />
+        <Suspense fallback={null}>
+          <Cart
+            items={cart}
+            onClose={handleCloseCart}
+            onUpdateQuantity={onUpdateCartItem}
+            onRemoveItem={onRemoveFromCart}
+            onOrderCreated={onOrderCreated}
+            user={user}
+            isStoreOpen={isStoreOpen}
+            canPlaceOrder={canPlaceOrder}
+            isMercadoPagoReturnFlow={isMercadoPagoReturnFlow}
+            isPixReturnFlow={isPixReturnFlow}
+            isValentineThemeActive={isValentineThemeActive}
+            selectedCity={selectedCity}
+            deliveryFee={deliveryFee}
+            comandatubaDeliveryFee={comandatubaDeliveryFee}
+            pixKey={pixKey}
+            mercadoPagoLink={mercadoPagoLink}
+            worldCupPopupSettings={worldCupPopupSettings}
+          />
+        </Suspense>
       )}
 
       {/* WorldCupPreOrderPopup — ativo apenas para Comandatuba */}

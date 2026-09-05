@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import { Search, Gift, Sparkles, Ticket, X } from 'lucide-react';
 import { useTheme } from '../contexts/theme-context';
 import { ProductCard, ProductCardSkeleton } from './ProductCard';
 import { HighlightCard } from './HighlightCard';
-import { ProductDetailModal } from './ProductDetailModal'; // Importando o novo modal
 import { Product, Highlight, User, Coupon } from '../types'; // Corrected import path
 import { supabase } from '../integrations/supabase/client';
 import toast from 'react-hot-toast';
+
+const ProductDetailModal = lazy(() => import('./ProductDetailModal').then(m => ({ default: m.ProductDetailModal })));
 
 const renderBoldText = (text: string) => {
   if (!text) return null;
@@ -646,13 +647,15 @@ export const Menu: React.FC<MenuProps> = ({
 
       {/* Product Detail Modal */}
       {showProductDetailModal && selectedProductForDetail && (
-        <ProductDetailModal
-          product={selectedProductForDetail}
-          onClose={() => setShowProductDetailModal(false)}
-          onAddToCart={onAddToCart}
-          canPlaceOrder={canPlaceOrder} // Passando o novo estado
-          isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
-        />
+        <Suspense fallback={null}>
+          <ProductDetailModal
+            product={selectedProductForDetail}
+            onClose={() => setShowProductDetailModal(false)}
+            onAddToCart={onAddToCart}
+            canPlaceOrder={canPlaceOrder} // Passando a nova prop
+            isMercadoPagoReturnFlow={isMercadoPagoReturnFlow} // Passando a nova prop
+          />
+        </Suspense>
       )}
     </div>
   );

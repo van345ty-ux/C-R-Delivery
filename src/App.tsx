@@ -1,15 +1,12 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { LocationSelect } from './components/LocationSelect';
 import { HomePage } from './components/HomePage';
-import { UserProfile } from './components/UserProfile';
-import { UserCouponNotification } from './components/UserCouponNotification';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { supabase } from './integrations/supabase/client';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import toast, { Toaster } from 'react-hot-toast';
 import { User, Coupon, Product, CartItem, Order, City, OperatingHour } from './types'; // Importando tipos de types.ts
 import { CookieBanner } from './components/CookieBanner';
-import { ValentineTheme } from './components/ValentineTheme';
 import { Button } from './components/ui/button';
 import { getStoreStatus } from './utils/storeStatus';
 import { addCartItem, removeCartItem, updateCartItemQuantity, removeOrderedItems } from './utils/cart';
@@ -23,6 +20,9 @@ const AdminPanel = lazy(() => import('./components/AdminPanel').then(m => ({ def
 const UserAuth = lazy(() => import('./components/UserAuth').then(m => ({ default: m.UserAuth })));
 const OrderTracking = lazy(() => import('./components/OrderTracking').then(m => ({ default: m.OrderTracking })));
 const ResetPasswordModal = lazy(() => import('./components/ResetPasswordModal').then(m => ({ default: m.ResetPasswordModal })));
+const UserProfile = lazy(() => import('./components/UserProfile').then(m => ({ default: m.UserProfile })));
+const UserCouponNotification = lazy(() => import('./components/UserCouponNotification').then(m => ({ default: m.UserCouponNotification })));
+const ValentineTheme = lazy(() => import('./components/ValentineTheme').then(m => ({ default: m.ValentineTheme })));
 
 // Usa fetch nativo para evitar travamento do SDK do Supabase
 const fetchUserProfile = async (supabaseUser: SupabaseUser, controller = new AbortController()): Promise<User | null> => {
@@ -935,24 +935,30 @@ function App() {
           {renderContent()}
         </Suspense>
         {showProfile && user && (
-          <UserProfile
-            user={user}
-            onClose={() => setShowProfile(false)}
-            onLogout={handleLogout}
-            onViewOrder={handleViewOrder}
-            onUserUpdate={refetchUser}
-            onAdminAccess={handleAdminAccess} // Passando a função de acesso ao painel
-          />
+          <Suspense fallback={null}>
+            <UserProfile
+              user={user}
+              onClose={() => setShowProfile(false)}
+              onLogout={handleLogout}
+              onViewOrder={handleViewOrder}
+              onUserUpdate={refetchUser}
+              onAdminAccess={handleAdminAccess} // Passando a função de acesso ao painel
+            />
+          </Suspense>
         )}
         <Toaster />
         <audio id="login-sound" src="/assets/login-sound.mp3" preload="auto" />
         {showUserCouponNotification && (
-          <UserCouponNotification onClose={() => setShowUserCouponNotification(false)} />
+          <Suspense fallback={null}>
+            <UserCouponNotification onClose={() => setShowUserCouponNotification(false)} />
+          </Suspense>
         )}
         <CookieBanner />
         {/* Overlay do Tema Dia dos Namorados — Apenas no cardápio e quando ativado por clique */}
         {isValentineThemeActive && currentView === 'home' && valentineTriggerKey > 0 && (
-          <ValentineTheme key={valentineTriggerKey} />
+          <Suspense fallback={null}>
+            <ValentineTheme key={valentineTriggerKey} />
+          </Suspense>
         )}
         {showPasswordResetModal && (
           <Suspense fallback={null}>
