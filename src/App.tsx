@@ -171,6 +171,7 @@ function App() {
   const [showUserCouponNotification, setShowUserCouponNotification] = useState(false);
   const [pendingCouponNotificationUserId, setPendingCouponNotificationUserId] = useState<string | null>(null);
   const [operatingHours, setOperatingHours] = useState<OperatingHour[]>([]); // Novo estado para operatingHours
+  const [hasAfterHoursAccess, setHasAfterHoursAccess] = useState(false);
   const [showPreOrderModal, setShowPreOrderModal] = useState(false); // Novo estado para o modal de pré-pedido
   const [showPreOrderBanner, setShowPreOrderBanner] = useState(false); // Novo estado para o banner de pré-pedido
   const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
@@ -438,10 +439,44 @@ function App() {
     fetchInitialAppData();
   }, []); // Empty dependency array means this runs once on mount
 
+  // Consulta apenas a autorizacao do proprio cliente; a lista completa permanece protegida no banco.
+  useEffect(() => {
+    let active = true;
+
+    const refreshAfterHoursAccess = async () => {
+      if (!user || user.role !== 'customer') {
+        if (active) setHasAfterHoursAccess(false);
+        return;
+      }
+      const { data, error } = await supabase.rpc('get_my_after_hours_access');
+      if (!active) return;
+      if (error) {
+        console.error('Não foi possível consultar a liberação fora do horário:', error);
+        setHasAfterHoursAccess(false);
+        return;
+      }
+      setHasAfterHoursAccess(data === true);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') refreshAfterHoursAccess();
+    };
+    refreshAfterHoursAccess();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', refreshAfterHoursAccess);
+    window.addEventListener('pageshow', refreshAfterHoursAccess);
+    return () => {
+      active = false;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', refreshAfterHoursAccess);
+      window.removeEventListener('pageshow', refreshAfterHoursAccess);
+    };
+  }, [user]);
+
   // Atualiza a disponibilidade sem refazer consultas nem reabrir/fechar popups a cada ciclo.
   useEffect(() => {
     const refreshStoreStatus = () => {
-      const status = getStoreStatus(operatingHours, selectedCity);
+      const status = getStoreStatus(operatingHours, selectedCity, new Date(), hasAfterHoursAccess);
       setIsStoreOpen(status.isStoreOpen);
       setCanPlaceOrder(status.canPlaceOrder);
       setShowPreOrderBanner(status.showPreOrderBanner);
@@ -463,7 +498,7 @@ function App() {
       window.removeEventListener('focus', refreshStoreStatus);
       window.removeEventListener('pageshow', refreshStoreStatus);
     };
-  }, [selectedCity, operatingHours]);
+  }, [selectedCity, operatingHours, hasAfterHoursAccess]);
 
 
   // Effect for Supabase Auth Session and User Profile
@@ -896,6 +931,7 @@ function App() {
         heroImageUrl={heroImageUrl}
         isStoreOpen={isStoreOpen}
         canPlaceOrder={canPlaceOrder} // Passando o novo estado
+        hasAfterHoursAccess={hasAfterHoursAccess}
         pendingCouponNotificationUserId={pendingCouponNotificationUserId}
         setPendingCouponNotificationUserId={setPendingCouponNotificationUserId}
         setShowUserCouponNotification={setShowUserCouponNotification}

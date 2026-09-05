@@ -15,7 +15,7 @@ function secondsOfDay(time: string): number | null {
   return match ? Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3] || 0) : null;
 }
 
-export function getStoreStatus(hours: OperatingHour[], city: string, now = new Date()) {
+export function getStoreStatus(hours: OperatingHour[], city: string, now = new Date(), hasAfterHoursAccess = false) {
   const parts = storeClock.formatToParts(now);
   const part = (type: Intl.DateTimeFormatPartTypes) => parts.find(p => p.type === type)?.value || '';
   const day = weekdays.indexOf(part('weekday'));
@@ -36,7 +36,7 @@ export function getStoreStatus(hours: OperatingHour[], city: string, now = new D
   const isComandatuba = city.toLowerCase().includes('comandatuba');
   return {
     isStoreOpen,
-    canPlaceOrder: isStoreOpen || isComandatuba,
+    canPlaceOrder: isStoreOpen || isComandatuba || hasAfterHoursAccess,
     showPreOrderBanner: isComandatuba,
   };
 }

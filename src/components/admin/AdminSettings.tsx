@@ -18,6 +18,14 @@ interface AdminSettingsProps {
   onSettingsSaved?: () => void;
 }
 
+type AfterHoursMode = 'none' | 'selected' | 'all';
+
+interface CustomerOption {
+  id: string;
+  full_name: string | null;
+  phone: string | null;
+}
+
 export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved }) => {
   const [settings, setSettings] = useState<Settings>({
     promotion_modal_title: 'Promoções do Dia',
@@ -51,6 +59,10 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved })
   const [isSaving, setIsSaving] = useState(false);
   const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
   const [selectedHeroFile, setSelectedHeroFile] = useState<File | null>(null);
+  const [afterHoursMode, setAfterHoursMode] = useState<AfterHoursMode>('none');
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
+  const [customers, setCustomers] = useState<CustomerOption[]>([]);
+  const [customerSearch, setCustomerSearch] = useState('');
 
   const daysOfWeek = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
@@ -60,8 +72,13 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved })
 
       const settingsPromise = supabase.from('settings').select('key, value');
       const hoursPromise = supabase.from('operating_hours').select('*').order('day_of_week', { ascending: true });
+      const accessConfigPromise = supabase.from('after_hours_access_config').select('mode').eq('singleton', true).single();
+      const accessMembersPromise = supabase.from('after_hours_access_members').select('user_id');
+      const customersPromise = supabase.from('profiles').select('id, full_name, phone').eq('role', 'customer').order('full_name', { ascending: true });
 
-      const [settingsResult, hoursResult] = await Promise.all([settingsPromise, hoursPromise]);
+      const [settingsResult, hoursResult, accessConfigResult, accessMembersResult, customersResult] = await Promise.all([
+        settingsPromise, hoursPromise, accessConfigPromise, accessMembersPromise, customersPromise
+      ]);
 
       // Handle general settings
       if (settingsResult.error) {
@@ -79,6 +96,16 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved })
         toast.error('Erro ao carregar horários de funcionamento.');
       } else {
         setOperatingHours(hoursResult.data || []);
+      }
+
+      if (accessConfigResult.error || accessMembersResult.error || customersResult.error) {
+        toast.error('Erro ao carregar as liberações fora do horário.');
+        console.error('After-hours access load error:', accessConfigResult.error || accessMembersResult.error || customersResult.error);
+      } else {
+        const mode = accessConfigResult.data?.mode;
+        setAfterHoursMode(mode === 'selected' || mode === 'all' ? mode : 'none');
+        setSelectedCustomerIds((accessMembersResult.data || []).map(member => member.user_id));
+        setCustomers(customersResult.data || []);
       }
 
       setLoading(false);
@@ -153,6 +180,10 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved })
   };
 
   const handleSave = async () => {
+    if (afterHoursMode === 'selected' && selectedCustomerIds.length === 0) {
+      toast.error('Selecione pelo menos um cliente para o atendimento fora do horário.');
+      return;
+    }
     setIsSaving(true);
 
     let newLogoUrl = settings.app_logo_url;
@@ -186,14 +217,19 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved })
 
     const settingsPromise = supabase.from('settings').upsert(settingsPayload, { onConflict: 'key' });
     const hoursPromise = supabase.from('operating_hours').upsert(operatingHours, { onConflict: 'day_of_week' });
+    const accessPromise = supabase.rpc('set_after_hours_access', {
+      p_mode: afterHoursMode,
+      p_user_ids: afterHoursMode === 'selected' ? selectedCustomerIds : []
+    });
 
-    const [settingsResult, hoursResult] = await Promise.all([settingsPromise, hoursPromise]);
+    const [settingsResult, hoursResult, accessResult] = await Promise.all([settingsPromise, hoursPromise, accessPromise]);
 
     setIsSaving(false);
-    if (settingsResult.error || hoursResult.error) {
+    if (settingsResult.error || hoursResult.error || accessResult.error) {
       toast.error('Ocorreu um erro ao salvar as configurações.');
       console.error('Settings Error:', settingsResult.error);
       console.error('Hours Error:', hoursResult.error);
+      console.error('After-hours access error:', accessResult.error);
     } else {
       toast.success('Configurações salvas com sucesso!');
       if (settingsToSave.world_cup_theme_active === 'true') {
@@ -258,6 +294,53 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSettingsSaved })
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="mt-6 border-t pt-6">
+          <h3 className="text-base font-semibold text-gray-900">Quem verá “Atendendo” fora do horário?</h3>
+          <p className="mt-1 text-sm text-gray-600">A liberação exige login e vale somente quando o horário normal estiver fechado.</p>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {([
+              ['none', 'Nenhum cliente'],
+              ['selected', 'Clientes selecionados'],
+              ['all', 'Todos os clientes cadastrados']
+            ] as const).map(([value, label]) => (
+              <label key={value} className={`flex cursor-pointer items-center rounded-lg border p-3 ${afterHoursMode === value ? 'border-red-500 bg-red-50' : 'border-gray-200'}`}>
+                <input type="radio" name="afterHoursMode" value={value} checked={afterHoursMode === value}
+                  onChange={() => setAfterHoursMode(value)} className="mr-3 h-4 w-4 text-red-600 focus:ring-red-500" />
+                <span className="text-sm font-medium text-gray-800">{label}</span>
+              </label>
+            ))}
+          </div>
+
+          {afterHoursMode === 'selected' && (
+            <div className="mt-4 rounded-lg border border-gray-200 p-4">
+              <label htmlFor="afterHoursCustomerSearch" className="block text-sm font-medium text-gray-700">Pesquisar clientes</label>
+              <input id="afterHoursCustomerSearch" type="search" value={customerSearch}
+                onChange={event => setCustomerSearch(event.target.value)}
+                placeholder="Digite o nome ou telefone"
+                className="mt-2 w-full rounded-lg border p-3 text-sm text-black focus:border-red-500 focus:ring-2 focus:ring-red-500" />
+              <p className="mt-2 text-xs text-gray-500">{selectedCustomerIds.length} cliente(s) selecionado(s)</p>
+              <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
+                {customers.filter(customer => {
+                  const search = customerSearch.trim().toLocaleLowerCase('pt-BR');
+                  return !search || customer.full_name?.toLocaleLowerCase('pt-BR').includes(search) || customer.phone?.includes(search);
+                }).map(customer => (
+                  <label key={customer.id} className="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50">
+                    <span>
+                      <span className="block text-sm font-medium text-gray-900">{customer.full_name || 'Cliente sem nome'}</span>
+                      {customer.phone && <span className="block text-xs text-gray-500">{customer.phone}</span>}
+                    </span>
+                    <input type="checkbox" checked={selectedCustomerIds.includes(customer.id)}
+                      onChange={event => setSelectedCustomerIds(current => event.target.checked
+                        ? [...current, customer.id]
+                        : current.filter(id => id !== customer.id))}
+                      className="h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500" />
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

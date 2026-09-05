@@ -28,6 +28,7 @@ interface HomePageProps {
   logoUrl: string;
   isStoreOpen: boolean;
   canPlaceOrder: boolean; // Nova prop
+  hasAfterHoursAccess: boolean;
   pendingCouponNotificationUserId: string | null;
   setPendingCouponNotificationUserId: (id: string | null) => void;
   setShowUserCouponNotification: (show: boolean) => void;
@@ -115,6 +116,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   logoUrl,
   isStoreOpen,
   canPlaceOrder, // Nova prop
+  hasAfterHoursAccess,
   // Novas props
   heroImageUrl,
   heroTitleText,
@@ -465,6 +467,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             user={user}
             isStoreOpen={isStoreOpen}
             canPlaceOrder={canPlaceOrder}
+            hasAfterHoursAccess={hasAfterHoursAccess}
             isMercadoPagoReturnFlow={isMercadoPagoReturnFlow}
             isPixReturnFlow={isPixReturnFlow}
             isValentineThemeActive={isValentineThemeActive}

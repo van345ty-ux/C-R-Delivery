@@ -10,6 +10,13 @@ const { getStoreStatus } = await import(`data:text/javascript;base64,${Buffer.fr
 const regular = [{ day_of_week: 3, is_open: true, open_time: '18:00', close_time: '23:00' }];
 const statusAt = (time, hours = regular, city = 'Una') => getStoreStatus(hours, city, new Date(time));
 
+test('liberação individual permite pedido sem alterar o horário normal da loja', () => {
+  const status = getStoreStatus([], 'Una', new Date('2026-09-03T04:00:00-03:00'), true);
+  assert.equal(status.isStoreOpen, false);
+  assert.equal(status.canPlaceOrder, true);
+  assert.equal(status.showPreOrderBanner, false);
+});
+
 test('abre no horário exato e fecha no limite configurado', () => {
   assert.equal(statusAt('2026-09-02T17:59:59-03:00').isStoreOpen, false);
   assert.equal(statusAt('2026-09-02T18:00:00-03:00').isStoreOpen, true);

@@ -27,7 +27,7 @@ export async function prepareOrderQuote(input: {
   cityName: string;
   couponId?: string;
 }, signal?: AbortSignal): Promise<OrderQuote> {
-  const request = supabase.rpc('prepare_order_quote', {
+  const request = supabase.rpc('prepare_order_quote_with_access', {
     p_request_id: input.requestId,
     p_items: input.items.map(item => ({
       product_id: item.product.id,
@@ -36,7 +36,7 @@ export async function prepareOrderQuote(input: {
     })),
     p_delivery_type: input.deliveryType,
     p_payment_method: input.paymentMethod,
-    p_city_name: input.deliveryType === 'delivery' ? input.cityName : null,
+    p_city_name: input.cityName,
     p_coupon_id: input.couponId || null,
   });
   const { data, error } = signal ? await request.abortSignal(signal) : await request;

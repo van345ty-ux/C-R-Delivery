@@ -33,6 +33,7 @@ interface CartProps {
   user: User | null;
   isStoreOpen: boolean;
   canPlaceOrder: boolean;
+  hasAfterHoursAccess: boolean;
   isMercadoPagoReturnFlow: boolean;
   isPixReturnFlow: boolean;
   isValentineThemeActive?: boolean; // Nova prop
@@ -55,6 +56,7 @@ export const Cart: React.FC<CartProps> = ({
   user,
   isStoreOpen,
   canPlaceOrder,
+  hasAfterHoursAccess,
   isMercadoPagoReturnFlow,
   isPixReturnFlow,
   isValentineThemeActive = false, // Nova prop
@@ -1220,7 +1222,9 @@ export const Cart: React.FC<CartProps> = ({
         )}
         {canPlaceOrder && !isStoreOpen && (
           <div className="mb-4 p-3 bg-blue-100 text-blue-800 text-sm rounded-lg text-center" role="status">
-            O restaurante está fechado, mas você pode agendar seu pedido para mais tarde.
+            {hasAfterHoursAccess
+              ? 'Atendimento liberado especialmente para você.'
+              : 'O restaurante está fechado, mas você pode agendar seu pedido para mais tarde.'}
           </div>
         )}
         {!canPlaceOrder && hasExternalPaymentInProgress && (
