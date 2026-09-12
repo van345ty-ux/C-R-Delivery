@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Megaphone, Users, Play, Search, CheckCircle, Clock, AlertCircle, Trash2 } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import toast from 'react-hot-toast';
@@ -16,6 +16,10 @@ interface FilaStatus {
     status: string;
 }
 
+const N8N_HEALTHCHECK_URL = '/api/n8n-health';
+const SERVER_CHECK_INTERVAL_MS = 30_000;
+const SERVER_CHECK_TIMEOUT_MS = 6_000;
+
 export const AdminMarketing: React.FC = () => {
     const [customers, setCustomers] = useState<CustomerProfile[]>([]);
     const [loading, setLoading] = useState(true);
@@ -31,10 +35,54 @@ export const AdminMarketing: React.FC = () => {
     const [isSending, setIsSending] = useState(false);
     const [currentCampaignId, setCurrentCampaignId] = useState<string | null>(null);
     const [activeFila, setActiveFila] = useState<FilaStatus[]>([]);
+    const [isServerOnline, setIsServerOnline] = useState(false);
+
+    const checkServerAvailability = useCallback(async () => {
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), SERVER_CHECK_TIMEOUT_MS);
+
+        try {
+            const response = await fetch(`${N8N_HEALTHCHECK_URL}?t=${Date.now()}`, {
+                method: 'GET',
+                cache: 'no-store',
+                signal: controller.signal,
+            });
+            if (!response.ok) throw new Error('Servidor indisponível');
+
+            const health = await response.json() as { online?: boolean; status?: string };
+            if (health.online !== true && health.status !== 'ok') {
+                throw new Error('Resposta de saúde inválida');
+            }
+            setIsServerOnline(true);
+            return true;
+        } catch {
+            setIsServerOnline(false);
+            return false;
+        } finally {
+            window.clearTimeout(timeoutId);
+        }
+    }, []);
 
     useEffect(() => {
         fetchCustomers();
     }, []);
+
+    useEffect(() => {
+        const refreshWhenVisible = () => {
+            if (document.visibilityState === 'visible') void checkServerAvailability();
+        };
+
+        void checkServerAvailability();
+        const intervalId = window.setInterval(() => void checkServerAvailability(), SERVER_CHECK_INTERVAL_MS);
+        document.addEventListener('visibilitychange', refreshWhenVisible);
+        window.addEventListener('focus', refreshWhenVisible);
+
+        return () => {
+            window.clearInterval(intervalId);
+            document.removeEventListener('visibilitychange', refreshWhenVisible);
+            window.removeEventListener('focus', refreshWhenVisible);
+        };
+    }, [checkServerAvailability]);
 
     useEffect(() => {
         if (!currentCampaignId) return;
@@ -184,6 +232,11 @@ export const AdminMarketing: React.FC = () => {
             return;
         }
 
+        if (!(await checkServerAvailability())) {
+            toast.error('Servidor C&R off. Aguarde o sinal verde antes de disparar.');
+            return;
+        }
+
         setIsSending(true);
 
         try {
@@ -267,13 +320,33 @@ export const AdminMarketing: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center">
                         <Megaphone className="w-6 h-6 mr-2 text-red-600" />
                         Disparos de Marketing e Notificações
                     </h1>
                     <p className="text-gray-500 text-sm mt-1">Disparo em massa humanizado para WhatsApp</p>
+                </div>
+                <div
+                    className={`inline-flex w-fit items-center gap-3 rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${isServerOnline
+                        ? 'border-green-200 bg-green-50 text-green-800 shadow-sm shadow-green-100'
+                        : 'border-red-200 bg-red-50 text-red-800'
+                        }`}
+                    role="status"
+                    aria-live="polite"
+                    title="Verificação automática do servidor de mensagens"
+                >
+                    <span className={`relative flex h-6 w-6 items-center justify-center ${isServerOnline ? 'server-status-online-icon' : ''}`} aria-hidden="true">
+                        {isServerOnline && (
+                            <>
+                                <span className="server-status-wave server-status-wave-first"></span>
+                                <span className="server-status-wave server-status-wave-second"></span>
+                            </>
+                        )}
+                        <span className={`server-status-dot relative inline-flex h-3 w-3 rounded-full ${isServerOnline ? 'bg-green-500' : 'bg-red-600'}`}></span>
+                    </span>
+                    <span>{isServerOnline ? 'Pode disparar chefe' : 'Servidor C&R off'}</span>
                 </div>
             </div>
 
@@ -408,8 +481,8 @@ export const AdminMarketing: React.FC = () => {
                         <div className="mt-6 flex justify-end">
                             <button
                                 onClick={startCampaign}
-                                disabled={isSending || selectedCustomerIds.length === 0}
-                                className={`flex items-center px-6 py-2 rounded-md font-medium text-white transition-colors ${isSending || selectedCustomerIds.length === 0
+                                disabled={isSending || selectedCustomerIds.length === 0 || !isServerOnline}
+                                className={`flex items-center px-6 py-2 rounded-md font-medium text-white transition-colors ${isSending || selectedCustomerIds.length === 0 || !isServerOnline
                                     ? 'bg-gray-400 cursor-not-allowed'
                                     : 'bg-red-600 hover:bg-red-700'
                                     }`}

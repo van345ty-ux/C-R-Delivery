@@ -10,5 +10,13 @@ export default defineConfig({
   },
   server: {
     port: 8081, // Define a porta do servidor de desenvolvimento para 8081
+    proxy: {
+      '/api/n8n-health': {
+        target: 'https://n8n.meuapp-on.online',
+        changeOrigin: true,
+        secure: true,
+        rewrite: path => path.replace(/^\/api\/n8n-health/, '/healthz'),
+      },
+    },
   },
 });
